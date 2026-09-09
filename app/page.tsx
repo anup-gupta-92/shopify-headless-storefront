@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import ProductCarousel from '../components/ProductCarousel';
+import { siteConfig } from '@/config/site';
 
 // 1. Interface matching our data/products.json structure
 interface ProductItem {
@@ -25,12 +26,12 @@ export default async function HomePage() {
   }));
 
   return (
-    <main className="min-h-screen bg-black text-white p-10 font-sans">
+    <main className="min-h-screen bg-background p-6 text-foreground sm:p-10">
       <div className="max-w-7xl mx-auto">
         <header className="mb-10">
-          <span className="text-sm font-bold tracking-widest text-blue-400 uppercase">Apex Inventory</span>
+          <span className="text-sm font-bold tracking-widest text-primary uppercase">{siteConfig.shortName} Inventory</span>
           <h1 className="text-4xl font-extrabold tracking-tight mt-1">Featured Packing Supplies</h1>
-          <p className="text-zinc-400 mt-2">Premium industrial grade logistics and moving gear.</p>
+          <p className="text-muted mt-2">Premium industrial grade logistics and moving gear.</p>
         </header>
 
         {/* 4. Render our reusable slider and pass the array down */}

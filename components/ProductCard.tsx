@@ -12,9 +12,9 @@ interface ProductCardProps {
 
 export default function ProductCard({ title, price, sku, handle, imageUrl }: ProductCardProps) {
   return (
-    <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 transition hover:border-zinc-700 flex flex-col h-full">
+    <div className="flex h-full flex-col rounded-xl border border-border bg-surface p-6 transition hover:border-primary/50">
         {/* Product Image Box */}
-        <div className="relative aspect-square w-full rounded-lg overflow-hidden bg-zinc-900 mb-4">
+        <div className="relative mb-4 aspect-square w-full overflow-hidden rounded-lg bg-surface-muted">
             <Image 
             src={imageUrl}
             alt={title}
@@ -23,14 +23,14 @@ export default function ProductCard({ title, price, sku, handle, imageUrl }: Pro
             className="object-cover group-hover/card:scale-105 transition duration-300"
             />
         </div>
-      <span className="text-xs text-zinc-500 font-mono block mb-1">{sku}</span>
-      <h3 className="text-lg font-bold text-white mb-1">{title}</h3>
-      <p className="text-emerald-400 font-medium mt-auto">{price}</p>
+      <span className="mb-1 block font-mono text-xs text-muted">{sku}</span>
+      <h3 className="mb-1 text-lg font-bold text-foreground">{title}</h3>
+      <p className="mt-auto font-medium text-accent">{price}</p>
       
       {/* 2. Change <button> to Next.js <Link> pointing to the dynamic path */}
       <Link 
         href={`/products/${handle}`}
-        className="mt-4 w-full bg-white text-black font-semibold py-2 px-4 rounded-lg text-sm hover:bg-zinc-200 transition text-center block"
+        className="mt-4 block w-full rounded-lg bg-foreground px-4 py-2 text-center text-sm font-semibold text-background transition hover:opacity-90"
       >
         View Product
       </Link>

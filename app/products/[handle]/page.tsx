@@ -32,9 +32,9 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
   if (!product) {
     return (
-      <div className="p-10 font-sans text-white max-w-xl">
+      <div className="max-w-xl p-10 text-foreground">
         <h1 className="text-3xl font-bold text-red-500">Product Not Found</h1>
-        <p className="mt-2 text-zinc-400">Sorry, the product "{handle}" does not exist in our inventory.</p>
+        <p className="mt-2 text-muted">Sorry, the product &quot;{handle}&quot; does not exist in our inventory.</p>
       </div>
     );
   }
@@ -46,14 +46,14 @@ export default async function ProductPage({ params }: ProductPageProps) {
     .map(([key, value]) => ({ handle: key, ...value }));
 
   return (
-    <main className="min-h-screen bg-black text-white p-6 md:p-12 font-sans">
+    <main className="min-h-screen bg-background p-6 text-foreground md:p-12">
       <div className="max-w-6xl mx-auto">
         
         {/* Split Layout: Image Left, Details Right */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-start">
           
           {/* Left Column: Image Container with aspect box ratio */}
-          <div className="relative aspect-square w-full rounded-2xl overflow-hidden bg-zinc-900 border border-zinc-800">
+          <div className="relative aspect-square w-full overflow-hidden rounded-2xl border border-border bg-surface">
             <Image
               src={product.image}
               alt={product.title}
@@ -66,7 +66,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
           {/* Right Column: Product Core Details */}
           <div className="flex flex-col h-full justify-center">
-            <span className="text-sm text-blue-400 font-mono font-bold uppercase tracking-wider">
+            <span className="text-sm text-primary font-mono font-bold uppercase tracking-wider">
               {product.category} • SKU: {product.sku}
             </span>
             
@@ -74,25 +74,30 @@ export default async function ProductPage({ params }: ProductPageProps) {
               {product.title}
             </h1>
             
-            <p className="mt-4 text-3xl font-bold text-emerald-400">
+            <p className="mt-4 text-3xl font-bold text-accent">
               {product.price}
             </p>
             
-            <hr className="my-6 border-zinc-850" />
+            <hr className="my-6 border-border" />
             
-            <h2 className="text-xs text-zinc-400 font-bold uppercase tracking-widest mb-2">Overview</h2>
-            <p className="text-zinc-300 leading-relaxed text-lg">
+            <h2 className="text-xs text-muted font-bold uppercase tracking-widest mb-2">Overview</h2>
+            <p className="text-muted leading-relaxed text-lg">
               {product.description}
             </p>
 
-            <button className="mt-8 bg-white text-black font-bold py-3 px-6 rounded-xl hover:bg-zinc-200 transition text-center shadow-lg shadow-white/5">
-              Add to Cart
+            <button
+              type="button"
+              disabled
+              title="Cart functionality is coming soon"
+              className="mt-8 cursor-not-allowed rounded-xl bg-surface-muted px-6 py-3 text-center font-bold text-muted"
+            >
+              Cart coming soon
             </button>
           </div>
         </div>
 
         {/* Dynamic Related Section */}
-        <div className="mt-16 pt-10 border-t border-zinc-900">
+        <div className="mt-16 border-t border-border pt-10">
           <h2 className="text-2xl font-bold mb-6">Frequently Bought Together</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl">
             {relatedProducts.map((related) => (

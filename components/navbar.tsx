@@ -1,37 +1,136 @@
-import Link from 'next/link';
+"use client";
+
+import Image from "next/image";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useEffect, useId, useState } from "react";
+import ThemeToggle from "@/components/ThemeToggle";
+import { siteConfig } from "@/config/site";
+
+function MenuIcon({ open }: { open: boolean }) {
+  return open ? (
+    <svg aria-hidden="true" viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="m6 6 12 12M18 6 6 18" />
+    </svg>
+  ) : (
+    <svg aria-hidden="true" viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M4 7h16M4 12h16M4 17h16" />
+    </svg>
+  );
+}
 
 export default function Navbar() {
+  const pathname = usePathname();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuId = useId();
+
+  useEffect(() => {
+    if (!menuOpen) return;
+
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMenuOpen(false);
+    };
+
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [menuOpen]);
+
+  const isActive = (href: string) => {
+    if (href === "/") return pathname === href;
+    if (href === "/shop" && pathname.startsWith("/products/")) return true;
+    return pathname === href || pathname.startsWith(`${href}/`);
+  };
+
+  const navLinkClasses = (href: string) =>
+    `rounded-md px-2 py-1.5 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
+      isActive(href)
+        ? "bg-primary/10 text-primary"
+        : "text-muted hover:bg-surface-muted hover:text-foreground"
+    }`;
+
   return (
-    <header className="w-full bg-black border-b border-zinc-900 sticky top-0 z-50 font-sans">
-      <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-        
-        {/* Logo / Brand Name */}
-        <Link href="/" className="text-xl font-black tracking-tighter text-white hover:opacity-95 transition">
-          APEX<span className="text-emerald-400">BUSINESS</span>SUPPLIES
+    <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+      <div className="mx-auto flex h-18 max-w-6xl items-center gap-3 px-4 sm:px-6">
+        <Link
+          href="/"
+          className="relative h-14 w-28 shrink-0 overflow-hidden rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          aria-label={`${siteConfig.name} home`}
+        >
+          <Image
+            src={siteConfig.logo.lightTheme}
+            alt={siteConfig.logo.alt}
+            width={540}
+            height={540}
+            priority
+            sizes="112px"
+            className="theme-logo-light absolute top-1/2 h-auto w-full -translate-y-1/2"
+          />
+          <Image
+            src={siteConfig.logo.darkTheme}
+            alt={siteConfig.logo.alt}
+            width={540}
+            height={540}
+            priority
+            sizes="112px"
+            className="theme-logo-dark absolute top-1/2 h-auto w-full -translate-y-1/2"
+          />
         </Link>
 
-        {/* Primary Navigation Menu */}
-        <nav className="hidden sm:flex items-center gap-8 text-sm font-medium text-zinc-400">
-          <Link href="/" className="hover:text-white transition">Home</Link>
-          <Link href="/shop" className="hover:text-white transition">Shop</Link>
-          <Link href="/about" className="hover:text-white transition">About</Link>
-          <Link href="/contact" className="hover:text-white transition">Contact Us</Link>
+        <nav aria-label="Primary navigation" className="ml-auto hidden items-center gap-2 md:flex">
+          {siteConfig.mainNav.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={navLinkClasses(item.href)}
+              aria-current={isActive(item.href) ? "page" : undefined}
+            >
+              {item.label}
+            </Link>
+          ))}
         </nav>
 
-        {/* Action Items: Cart */}
-        <div className="flex items-center gap-4">
-          <Link 
-            href="/cart" 
-            className="flex items-center gap-2 bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-white px-4 py-2 rounded-xl text-sm font-semibold transition"
+        <div className="ml-auto flex items-center gap-2 md:ml-2">
+          <button
+            type="button"
+            disabled
+            title="Cart functionality is coming soon"
+            className="hidden h-10 items-center rounded-lg border border-border bg-surface px-3 text-sm font-semibold text-muted sm:inline-flex"
           >
-            <span>Cart</span>
-            <span className="bg-emerald-500 text-black text-xs font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center">
-              0
-            </span>
-          </Link>
+            Cart <span className="ml-1.5 text-xs font-normal">Soon</span>
+          </button>
+          <ThemeToggle />
+          <button
+            type="button"
+            className="inline-flex size-10 items-center justify-center rounded-lg border border-border bg-surface text-foreground transition-colors hover:bg-surface-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary md:hidden"
+            aria-controls={menuId}
+            aria-expanded={menuOpen}
+            aria-label={menuOpen ? "Close navigation menu" : "Open navigation menu"}
+            onClick={() => setMenuOpen((open) => !open)}
+          >
+            <MenuIcon open={menuOpen} />
+          </button>
         </div>
-
       </div>
+
+      <nav
+        id={menuId}
+        aria-label="Mobile navigation"
+        className={`${menuOpen ? "block" : "hidden"} border-t border-border bg-background px-4 py-3 md:hidden`}
+      >
+        <div className="mx-auto flex max-w-6xl flex-col gap-1">
+          {siteConfig.mainNav.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={navLinkClasses(item.href)}
+              aria-current={isActive(item.href) ? "page" : undefined}
+              onClick={() => setMenuOpen(false)}
+            >
+              {item.label}
+            </Link>
+          ))}
+        </div>
+      </nav>
     </header>
   );
 }
