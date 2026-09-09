@@ -1,0 +1,66 @@
+{
+  "heavy-duty-nitrile-gloves": {
+    "title": "Heavy Duty Nitrile Gloves",
+    "price": "$14.99",
+    "description": "Industrial grade, puncture-resistant orange nitrile gloves offering superior grip and hand protection for heavy labor.",
+    "sku": "APEX-GLV-01",
+    "image": "/images/gloves.webp",
+    "category": "Safety Gear"
+  },
+  "protective-bubble-wrap": {
+    "title": "Protective Bubble Wrap Roll",
+    "price": "$24.50",
+    "description": "High-quality cushioning bubble wrap designed to protect fragile items from shock and damage during transit.",
+    "sku": "APEX-BBL-02",
+    "image": "/images/bubble-wrap.jpg",
+    "category": "Cushioning"
+  },
+  "corrugated-cardboard-boxes": {
+    "title": "Corrugated Cardboard Boxes (Pack of 10)",
+    "price": "$18.99",
+    "description": "Heavy-duty, double-walled corrugated shipping boxes perfect for secure moving, packing, and warehousing.",
+    "sku": "APEX-BOX-03",
+    "image": "/images/carbboard-boxes.jpg",
+    "category": "Containers"
+  },
+  "industrial-colored-tape-dispenser": {
+    "title": "Industrial Colored Tape & Dispenser Set",
+    "price": "$12.25",
+    "description": "Multi-colored marking and packing tape rolls supplied with a heavy-duty manual desktop tape dispenser unit.",
+    "sku": "APEX-TAP-04",
+    "image": "/images/colored-tape.jpg",
+    "category": "Sealing"
+  },
+  "printed-fragile-packing-tape": {
+    "title": "Printed 'FRAGILE' Packing Tape",
+    "price": "$8.50",
+    "description": "High-adhesion warning tape printed with bold red text to ensure high-visibility handling care for delicate shipments.",
+    "sku": "APEX-FRG-05",
+    "image": "/images/fragile-tape.jpg",
+    "category": "Sealing"
+  },
+  "grey-co-extruded-mailing-bags": {
+    "title": "Grey Co-Extruded Mailing Bags",
+    "price": "$16.00",
+    "description": "Waterproof, tear-resistant polythene shipping mailers featuring a secure self-sealing adhesive strip.",
+    "sku": "APEX-BAG-06",
+    "image": "/images/grey-mailing-bags.jpg",
+    "category": "Mailing"
+  },
+  "heavy-duty-rubble-sacks": {
+    "title": "Heavy Duty Rubble Sacks",
+    "price": "$11.99",
+    "description": "Tough, thick-gauge puncture proof sacks designed for clearing site waste, bricks, gravel, and heavy construction debris.",
+    "sku": "APEX-RBL-07",
+    "image": "/images/rubble-sacks.jpg",
+    "category": "Waste Management"
+  },
+  "reinforced-moving-storage-bag": {
+    "title": "Reinforced Moving & Storage Bag",
+    "price": "$9.95",
+    "description": "Extra-large zippered carrying bag with reinforced webbed handles, built to handle heavy moving demands and bulky items.",
+    "sku": "APEX-BAG-08",
+    "image": "/images/moving-bag.jpeg",
+    "category": "Containers"
+  }
+}
