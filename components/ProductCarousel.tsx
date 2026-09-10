@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -18,12 +18,39 @@ interface ProductCarouselProps {
 }
 
 export default function ProductCarousel({ products }: ProductCarouselProps) {
-  // Track the sliding window starting index
+  // Track the first visible product in the carousel.
   const [currentIndex, setCurrentIndex] = useState(0);
-  
-  // Show 4 items on large screens, fallback for safety
-  const itemsPerPage = 4;
+  const [itemsPerPage, setItemsPerPage] = useState(4);
+
+  // Match the responsive card widths below:
+  // mobile = 1, sm = 2, md = 3, lg+ = 4 visible products.
+  useEffect(() => {
+    const updateItemsPerPage = () => {
+      const width = window.innerWidth;
+
+      if (width >= 1024) {
+        setItemsPerPage(4);
+      } else if (width >= 768) {
+        setItemsPerPage(3);
+      } else if (width >= 640) {
+        setItemsPerPage(2);
+      } else {
+        setItemsPerPage(1);
+      }
+    };
+
+    updateItemsPerPage();
+    window.addEventListener('resize', updateItemsPerPage);
+
+    return () => window.removeEventListener('resize', updateItemsPerPage);
+  }, []);
+
   const maxIndex = Math.max(0, products.length - itemsPerPage);
+
+  // Keep the index valid when crossing responsive breakpoints.
+  useEffect(() => {
+    setCurrentIndex((prev) => Math.min(prev, maxIndex));
+  }, [maxIndex]);
 
   const handlePrev = () => {
     setCurrentIndex((prev) => Math.max(0, prev - 1));
@@ -62,7 +89,7 @@ export default function ProductCarousel({ products }: ProductCarouselProps) {
       <div className="overflow-hidden rounded-xl">
         <div 
           className="flex transition-transform duration-500 ease-out"
-          style={{ transform: `translateX(-${currentIndex * 25}%)` }} // Moves viewport by exactly 1 card slot size (25% when displaying 4 items)
+          style={{ transform: `translateX(-${currentIndex * (100 / itemsPerPage)}%)` }}
         >
           {products.map((product) => (
             <div 
@@ -76,7 +103,7 @@ export default function ProductCarousel({ products }: ProductCarouselProps) {
                     src={product.image}
                     alt={product.title}
                     fill
-                    sizes="(max-width: 768px) 100vw, 25vw"
+                    sizes="(max-width: 639px) 100vw, (max-width: 767px) 50vw, (max-width: 1023px) 33vw, 25vw"
                     className="object-cover group-hover/card:scale-105 transition duration-300"
                   />
                 </div>
