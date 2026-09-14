@@ -1,11 +1,32 @@
 {
   "heavy-duty-nitrile-gloves": {
     "title": "Heavy Duty Nitrile Gloves",
-    "price": "$14.99",
+    "price": "£14.99",
     "description": "Industrial grade, puncture-resistant orange nitrile gloves offering superior grip and hand protection for heavy labor.",
     "sku": "APEX-GLV-01",
     "image": "/images/gloves.webp",
-    "category": "Safety Gear"
+    "category": "Safety Gear",
+    "productCode": "APEX-GLV-10",
+    "variants": [
+      {
+        "id": "glove-pack-10",
+        "title": "Pack of 10",
+        "price": "£14.99",
+        "priceExVat": "£12.49",
+        "productCode": "APEX-GLV-10",
+        "unitPrice": "£1.50 / pair",
+        "available": true
+      },
+      {
+        "id": "glove-pack-50",
+        "title": "Pack of 50",
+        "price": "£59.99",
+        "priceExVat": "£49.99",
+        "productCode": "APEX-GLV-50",
+        "unitPrice": "£1.20 / pair",
+        "available": true
+      }
+    ]
   },
   "protective-bubble-wrap": {
     "title": "Protective Bubble Wrap Roll",
@@ -13,15 +34,37 @@
     "description": "High-quality cushioning bubble wrap designed to protect fragile items from shock and damage during transit.",
     "sku": "APEX-BBL-02",
     "image": "/images/bubble-wrap.jpg",
-    "category": "Cushioning"
+    "category": "Cushioning",
+    "productCode": "APEX-BBL-02"
   },
   "corrugated-cardboard-boxes": {
-    "title": "Corrugated Cardboard Boxes (Pack of 10)",
-    "price": "$18.99",
+    "title": "Corrugated Cardboard Boxes",
+    "price": "£18.99",
     "description": "Heavy-duty, double-walled corrugated shipping boxes perfect for secure moving, packing, and warehousing.",
     "sku": "APEX-BOX-03",
     "image": "/images/carbboard-boxes.jpg",
-    "category": "Containers"
+    "category": "Containers",
+    "productCode": "APEX-BOX-10",
+    "variants": [
+      {
+        "id": "box-pack-10",
+        "title": "Pack of 10",
+        "price": "£18.99",
+        "priceExVat": "£15.83",
+        "productCode": "APEX-BOX-10",
+        "unitPrice": "£1.90 / box",
+        "available": true
+      },
+      {
+        "id": "box-pack-50",
+        "title": "Pack of 50",
+        "price": "£79.99",
+        "priceExVat": "£66.66",
+        "productCode": "APEX-BOX-50",
+        "unitPrice": "£1.60 / box",
+        "available": true
+      }
+    ]
   },
   "industrial-colored-tape-dispenser": {
     "title": "Industrial Colored Tape & Dispenser Set",
@@ -29,23 +72,67 @@
     "description": "Multi-colored marking and packing tape rolls supplied with a heavy-duty manual desktop tape dispenser unit.",
     "sku": "APEX-TAP-04",
     "image": "/images/colored-tape.jpg",
-    "category": "Sealing"
+    "category": "Sealing",
+    "productCode": "APEX-TAP-04"
   },
   "printed-fragile-packing-tape": {
     "title": "Printed 'FRAGILE' Packing Tape",
-    "price": "$8.50",
+    "price": "£8.50",
     "description": "High-adhesion warning tape printed with bold red text to ensure high-visibility handling care for delicate shipments.",
     "sku": "APEX-FRG-05",
     "image": "/images/fragile-tape.jpg",
-    "category": "Sealing"
+    "category": "Sealing",
+    "productCode": "APEX-FRG-06",
+    "variants": [
+      {
+        "id": "fragile-pack-6",
+        "title": "Pack of 6",
+        "price": "£8.50",
+        "priceExVat": "£7.08",
+        "productCode": "APEX-FRG-06",
+        "unitPrice": "£1.42 / roll",
+        "available": true
+      },
+      {
+        "id": "fragile-pack-36",
+        "title": "Pack of 36",
+        "price": "£44.99",
+        "priceExVat": "£37.49",
+        "productCode": "APEX-FRG-36",
+        "unitPrice": "£1.25 / roll",
+        "available": true
+      }
+    ]
   },
   "grey-co-extruded-mailing-bags": {
     "title": "Grey Co-Extruded Mailing Bags",
-    "price": "$16.00",
+    "price": "£16.00",
     "description": "Waterproof, tear-resistant polythene shipping mailers featuring a secure self-sealing adhesive strip.",
     "sku": "APEX-BAG-06",
     "image": "/images/grey-mailing-bags.jpg",
-    "category": "Mailing"
+    "category": "Mailing",
+    "productCode": "APEX-MAIL-100",
+    "variants": [
+      {
+        "id": "mail-pack-100",
+        "title": "Pack of 100",
+        "price": "£16.00",
+        "priceExVat": "£13.33",
+        "productCode": "APEX-MAIL-100",
+        "unitPrice": "£0.16 / bag",
+        "available": true
+      },
+      {
+        "id": "mail-pack-500",
+        "title": "Pack of 500",
+        "price": "£69.99",
+        "priceExVat": "£58.33",
+        "productCode": "APEX-MAIL-500",
+        "unitPrice": "£0.14 / bag",
+        "available": true
+      }
+    ],
+    "defaultVariantId": "mail-pack-100"
   },
   "heavy-duty-rubble-sacks": {
     "title": "Heavy Duty Rubble Sacks",
@@ -53,7 +140,8 @@
     "description": "Tough, thick-gauge puncture proof sacks designed for clearing site waste, bricks, gravel, and heavy construction debris.",
     "sku": "APEX-RBL-07",
     "image": "/images/rubble-sacks.jpg",
-    "category": "Waste Management"
+    "category": "Waste Management",
+    "productCode": "APEX-RBL-07"
   },
   "reinforced-moving-storage-bag": {
     "title": "Reinforced Moving & Storage Bag",
@@ -61,6 +149,7 @@
     "description": "Extra-large zippered carrying bag with reinforced webbed handles, built to handle heavy moving demands and bulky items.",
     "sku": "APEX-BAG-08",
     "image": "/images/moving-bag.jpeg",
-    "category": "Containers"
+    "category": "Containers",
+    "productCode": "APEX-BAG-08"
   }
 }

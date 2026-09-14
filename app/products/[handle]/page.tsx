@@ -1,7 +1,10 @@
 import fs from 'fs';
 import path from 'path';
 import Image from 'next/image';
-import ProductCard from '@/components/ProductCard'; // Adjusted path to pull from sibling folder
+import ProductCard from '@/components/ProductCard';
+import Link from 'next/link';
+import ProductInformation from '@/components/ProductInformation';
+import { getDefaultVariant, type Product } from '@/types/product';
 
 interface ProductPageProps {
   params: Promise<{
@@ -9,15 +12,6 @@ interface ProductPageProps {
   }>;
 }
 
-// 1. Updated interface to match your new products.json schema perfectly
-interface ProductData {
-  title: string;
-  price: string;
-  description: string;
-  sku: string;
-  image: string;
-  category: string;
-}
 
 export default async function ProductPage({ params }: ProductPageProps) {
   const { handle } = await params;
@@ -25,7 +19,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
   // 2. Read the centralized database file securely on the server side
   const filePath = path.join(process.cwd(), 'data', 'products.json');
   const fileData = fs.readFileSync(filePath, 'utf8');
-  const productsDatabase: Record<string, ProductData> = JSON.parse(fileData);
+  const productsDatabase: Record<string, Product> = JSON.parse(fileData);
 
   // 3. Look up the specific item by its dynamic URL key
   const product = productsDatabase[handle];
@@ -49,6 +43,13 @@ export default async function ProductPage({ params }: ProductPageProps) {
     <main className="min-h-screen bg-background p-6 text-foreground md:p-12">
       <div className="max-w-6xl mx-auto">
         
+        <nav aria-label="Breadcrumb" className="mb-6 text-sm text-muted">
+          <ol className="flex flex-wrap items-center gap-2">
+            <li><Link href="/" className="rounded hover:text-foreground focus-visible:outline-2 focus-visible:outline-primary">Home</Link></li>
+            <li aria-hidden="true">&gt;</li>
+            <li aria-current="page" className="min-w-0 break-words">{product.title}</li>
+          </ol>
+        </nav>
         {/* Split Layout: Image Left, Details Right */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-start">
           
@@ -64,36 +65,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
             />
           </div>
 
-          {/* Right Column: Product Core Details */}
-          <div className="flex flex-col h-full justify-center">
-            <span className="text-sm text-primary font-mono font-bold uppercase tracking-wider">
-              {product.category} • SKU: {product.sku}
-            </span>
-            
-            <h1 className="mt-2 text-3xl md:text-5xl font-extrabold tracking-tight">
-              {product.title}
-            </h1>
-            
-            <p className="mt-4 text-3xl font-bold text-accent">
-              {product.price}
-            </p>
-            
-            <hr className="my-6 border-border" />
-            
-            <h2 className="text-xs text-muted font-bold uppercase tracking-widest mb-2">Overview</h2>
-            <p className="text-muted leading-relaxed text-lg">
-              {product.description}
-            </p>
-
-            <button
-              type="button"
-              disabled
-              title="Cart functionality is coming soon"
-              className="mt-8 cursor-not-allowed rounded-xl bg-surface-muted px-6 py-3 text-center font-bold text-muted"
-            >
-              Cart coming soon
-            </button>
-          </div>
+          <ProductInformation key={handle} product={product} />
         </div>
 
         {/* Dynamic Related Section */}
@@ -104,9 +76,9 @@ export default async function ProductPage({ params }: ProductPageProps) {
               <ProductCard
                 key={related.handle}
                 title={related.title}
-                price={related.price}
+                price={getDefaultVariant(related)?.price ?? related.price}
                 imageUrl={related.image}
-                sku={related.sku}
+                sku={getDefaultVariant(related)?.productCode ?? related.productCode ?? related.sku}
                 handle={related.handle} 
               />
             ))}
