@@ -2,12 +2,33 @@
 
 import { useId, useState } from "react";
 import { getDefaultVariant, type Product } from "@/types/product";
+import { useSearchParams } from "next/navigation";
+import { resolveVariant, variantUrlId } from "@/lib/product-options";
+import { formatMoney } from "@/lib/shopify/pricing";
 
 export default function ProductInformation({ product }: { product: Product }) {
-  const [selectedVariantId, setSelectedVariantId] = useState(() => getDefaultVariant(product)?.id);
+  const searchParams = useSearchParams();
+  const variants = product.variants ?? [];
+  const requestedId = searchParams.get("variant");
+  const selectedVariant = variants.find((variant) => variantUrlId(variant.id) === requestedId || variant.id === requestedId)
+    ?? variants.find((variant) => variant.available !== false) ?? getDefaultVariant(product);
+  const selections = Object.fromEntries(selectedVariant?.selectedOptions?.map(({ name, value }) => [name, value]) ?? []);
+  const options = (product.options ?? []).filter((option) => !(option.name === "Title" && option.values.length === 1 && option.values[0] === "Default Title"));
+  function chooseVariant(id: string) {
+    const url = new URL(window.location.href);
+    url.searchParams.set("variant", variantUrlId(id));
+    window.history.pushState(null, "", url);
+  }
+  function chooseOption(name: string, value: string) {
+    const exact = resolveVariant(variants, { ...selections, [name]: value });
+    // If a combination does not exist, retain the changed dimension and select
+    // an available real variant. The other selectors reflect the resolved variant.
+    const candidates = variants.filter((variant) => variant.selectedOptions?.some((option) => option.name === name && option.value === value));
+    const next = exact ?? candidates.find((variant) => variant.available !== false) ?? candidates[0];
+    if (next) chooseVariant(next.id);
+  }
   const [quantity, setQuantity] = useState(1);
   const selectId = useId();
-  const selectedVariant = product.variants?.find((variant) => variant.id === selectedVariantId);
   // Never inherit optional product-level values for a variant that omits them.
   const configuration = selectedVariant ?? product;
   const productCode = selectedVariant ? selectedVariant.productCode : product.productCode ?? product.sku;
@@ -24,21 +45,28 @@ export default function ProductInformation({ product }: { product: Product }) {
           <span className="text-3xl font-bold text-accent">{configuration.price}</span>
           <span className="text-sm text-muted">(Inc. VAT)</span>
         </p>
+        {selectedVariant?.compareAtPrice && selectedVariant.money && Number(selectedVariant.compareAtPrice.amount) > Number(selectedVariant.money.amount) && <p className="text-muted"><span className="sr-only">Previous price: </span><del>{formatMoney(selectedVariant.compareAtPrice)}</del></p>}
         {configuration.unitPrice && <p className="text-muted">{configuration.unitPrice}</p>}
         {configuration.priceExVat && <p className="text-sm text-muted">Excl. VAT: {configuration.priceExVat}</p>}
         {configuration.available === false && <p className="font-medium text-muted">Currently unavailable</p>}
       </div>
 
-      {hasOptions && (
-        <div className="mt-6">
-          <label htmlFor={selectId} className="mb-2 block text-sm font-semibold">Pack Size</label>
-          <select id={selectId} value={selectedVariantId} onChange={(event) => setSelectedVariantId(event.target.value)} className="min-h-12 w-full min-w-0 rounded-lg border border-border bg-surface px-3 text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
-            {product.variants?.map((variant) => (
-              <option key={variant.id} value={variant.id}>{variant.title}{variant.available === false ? " — Unavailable" : ""}</option>
-            ))}
-          </select>
-        </div>
-      )}
+      {options.map((option, index) => <div key={option.name} className="mt-5">
+        <label htmlFor={`${selectId}-${index}`} className="mb-2 block text-sm font-semibold">{option.name}</label>
+        <select id={`${selectId}-${index}`} value={selections[option.name] ?? ""} onChange={(event) => chooseOption(option.name, event.target.value)} className="min-h-12 w-full min-w-0 rounded-lg border border-border bg-surface px-3 text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+          {option.values.map((value) => {
+            const match = resolveVariant(variants, { ...selections, [option.name]: value });
+            const possible = variants.some((variant) => variant.selectedOptions?.some((entry) => entry.name === option.name && entry.value === value));
+            return <option key={value} value={value} disabled={!possible}>{value}{match?.available === false ? " — Unavailable" : !match ? " — Other options change" : ""}</option>;
+          })}
+        </select>
+      </div>)}
+      {!options.length && hasOptions && <div className="mt-5">
+        <label htmlFor={selectId} className="mb-2 block text-sm font-semibold">Options</label>
+        <select id={selectId} value={selectedVariant?.id ?? ""} onChange={(event) => chooseVariant(event.target.value)} className="min-h-12 w-full rounded-lg border border-border bg-surface px-3">
+          {variants.map((variant) => <option key={variant.id} value={variant.id}>{variant.title}{variant.available === false ? " — Unavailable" : ""}</option>)}
+        </select>
+      </div>}
 
       <fieldset className="mt-6">
         <legend className="mb-2 text-sm font-semibold">Quantity</legend>
@@ -47,14 +75,11 @@ export default function ProductInformation({ product }: { product: Product }) {
           <output aria-live="polite" aria-label="Purchase quantity" className="min-w-8 text-center font-semibold tabular-nums">{quantity}</output>
           <button type="button" aria-label="Increase quantity" onClick={() => setQuantity((value) => value + 1)} className={controlClass}>+</button>
         </div>
-        {selectedVariant && <p className="mt-2 text-sm text-muted">Quantity is the number of packs.</p>}
+        {selectedVariant && <p className="mt-2 text-sm text-muted">Quantity is the number of the selected item.</p>}
       </fieldset>
 
-      <button type="button" disabled className="mt-6 min-h-12 w-full cursor-not-allowed rounded-xl bg-surface-muted px-6 py-3 font-bold text-muted">Add to Cart</button>
-      <p className="mt-2 text-sm text-muted">Cart functionality is coming soon.</p>
-      <hr className="my-6 border-border" />
-      <h2 className="mb-2 text-xs font-bold uppercase tracking-widest text-muted">Overview</h2>
-      <p className="text-lg leading-relaxed text-muted">{product.description}</p>
+      <button type="button" disabled={!selectedVariant || selectedVariant.available === false} aria-describedby={`${selectId}-cart-note`} className="mt-6 min-h-12 w-full rounded-xl bg-primary px-6 py-3 font-bold text-primary-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:bg-surface-muted disabled:text-muted">Add to Cart</button>
+      <p id={`${selectId}-cart-note`} className="mt-2 text-sm text-muted">Cart functionality is coming soon. This button does not place an order.</p>
     </section>
   );
 }

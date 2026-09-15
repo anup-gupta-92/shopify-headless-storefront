@@ -4,17 +4,10 @@ import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 
-interface ProductCardData {
-  handle: string;
-  title: string;
-  price: string;
-  sku: string;
-  image: string;
-  category: string;
-}
+import type { ProductSummary } from '@/types/product';
 
 interface ProductCarouselProps {
-  products: ProductCardData[];
+  products: ProductSummary[];
 }
 
 export default function ProductCarousel({ products }: ProductCarouselProps) {
@@ -93,19 +86,19 @@ export default function ProductCarousel({ products }: ProductCarouselProps) {
         >
           {products.map((product) => (
             <div 
-              key={product.handle} 
+              key={product.id}
               className="w-full sm:w-1/2 md:w-1/3 lg:w-1/4 flex-shrink-0 p-2"
             >
               <div className="group/card flex h-full flex-col rounded-xl border border-border bg-surface p-4 transition hover:border-primary/50">
                 {/* Product Image Box */}
                 <div className="relative mb-4 aspect-square w-full overflow-hidden rounded-lg bg-surface-muted">
-                  <Image 
+                  {product.image ? <Image
                     src={product.image}
-                    alt={product.title}
+                    alt={product.imageAlt || product.title}
                     fill
                     sizes="(max-width: 639px) 100vw, (max-width: 767px) 50vw, (max-width: 1023px) 33vw, 25vw"
                     className="object-cover group-hover/card:scale-105 transition duration-300"
-                  />
+                  /> : <div className="flex h-full items-center justify-center text-sm text-muted">Image unavailable</div>}
                 </div>
 
                 {/* Info */}
