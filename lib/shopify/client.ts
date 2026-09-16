@@ -2,13 +2,22 @@ import "server-only";
 
 export const CATALOG_REVALIDATE_SECONDS = 300;
 
+interface StorefrontRequestOptions {
+  buyerIp?: string;
+  cache?: "no-store";
+}
+
 function requiredEnv(name: string): string {
   const value = process.env[name]?.trim();
   if (!value) throw new Error(`Missing required Shopify environment variable: ${name}`);
   return value;
 }
 
-export async function storefrontRequest<T>(query: string, variables: Record<string, unknown> = {}): Promise<T> {
+export async function storefrontRequest<T>(
+  query: string,
+  variables: Record<string, unknown> = {},
+  options: StorefrontRequestOptions = {},
+): Promise<T> {
   const domain = requiredEnv("SHOPIFY_STORE_DOMAIN").replace(/^https:\/\//, "").replace(/\/$/, "");
   if (!/^[a-zA-Z0-9][a-zA-Z0-9.-]+$/.test(domain)) throw new Error("Invalid SHOPIFY_STORE_DOMAIN: expected a hostname");
   const token = requiredEnv("SHOPIFY_STOREFRONT_PRIVATE_TOKEN");
@@ -16,11 +25,19 @@ export async function storefrontRequest<T>(query: string, variables: Record<stri
   if (!/^\d{4}-\d{2}$/.test(version)) throw new Error("Invalid SHOPIFY_STOREFRONT_API_VERSION: expected YYYY-MM");
   let response: Response;
   try {
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+      "Shopify-Storefront-Private-Token": token,
+    };
+    if (options.buyerIp) headers["Shopify-Storefront-Buyer-IP"] = options.buyerIp;
+
     response = await fetch(`https://${domain}/api/${version}/graphql.json`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", "Shopify-Storefront-Private-Token": token },
+      headers,
       body: JSON.stringify({ query, variables }),
-      next: { revalidate: CATALOG_REVALIDATE_SECONDS, tags: ["shopify-catalog"] },
+      ...(options.cache === "no-store"
+        ? { cache: "no-store" as const }
+        : { next: { revalidate: CATALOG_REVALIDATE_SECONDS, tags: ["shopify-catalog"] } }),
       signal: AbortSignal.timeout(15000),
     });
   } catch {

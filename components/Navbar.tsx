@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useId, useState } from "react";
 import ThemeToggle from "@/components/ThemeToggle";
+import { useCart } from "@/components/CartProvider";
 import { siteConfig } from "@/config/site";
 
 function MenuIcon({ open }: { open: boolean }) {
@@ -23,6 +24,7 @@ export default function Navbar() {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuId = useId();
+  const { totalQuantity, loading: cartLoading, openDrawer } = useCart();
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -92,11 +94,12 @@ export default function Navbar() {
         <div className="ml-auto flex items-center gap-2 md:ml-2">
           <button
             type="button"
-            disabled
-            title="Cart functionality is coming soon"
-            className="hidden h-10 items-center rounded-lg border border-border bg-surface px-3 text-sm font-semibold text-muted sm:inline-flex"
+            onClick={openDrawer}
+            aria-label={`Open cart with ${totalQuantity} ${totalQuantity === 1 ? "item" : "items"}`}
+            title="Open cart"
+            className="inline-flex h-10 items-center rounded-lg border border-border bg-surface px-3 text-sm font-semibold text-foreground transition-colors hover:bg-surface-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
           >
-            Cart <span className="ml-1.5 text-xs font-normal">Soon</span>
+            Cart <span aria-hidden="true" className="ml-1.5 tabular-nums">({cartLoading && totalQuantity === 0 ? "…" : totalQuantity})</span>
           </button>
           <ThemeToggle />
           <button

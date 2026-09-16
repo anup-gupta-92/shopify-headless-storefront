@@ -48,8 +48,8 @@ export default function ProductGallery({ images, title }: { images: ProductImage
           </button>)}
         </div>
       </div>
-      {multiple && <div className="mt-3 flex flex-wrap justify-center" aria-label="Choose product image">
-        {images.map((image, index) => <button key={image.url} type="button" onClick={() => select(index)} aria-label={`Show image ${index + 1}`} aria-pressed={active === index} className="flex size-11 items-center justify-center rounded focus-visible:outline-2 focus-visible:outline-primary"><span className={`size-2 rounded-full ${active === index ? "bg-primary" : "bg-border"}`} /></button>)}
+      {multiple && <div className="mt-3 flex flex-wrap justify-center gap-1" aria-label="Choose product image">
+        {images.map((image, index) => <button key={image.url} type="button" onClick={() => select(index)} aria-label={`Show image ${index + 1}`} aria-pressed={active === index} className="flex size-6 items-center justify-center rounded focus-visible:outline-2 focus-visible:outline-primary"><span className={`size-2 rounded-full ${active === index ? "bg-primary" : "bg-border"}`} /></button>)}
       </div>}
       <p className="mt-2 text-center text-xs text-muted">Tap an image to enlarge{multiple ? " · Swipe to browse" : ""}</p>
       <dialog ref={dialog} onCancel={(event) => { event.preventDefault(); setExpanded(false); }} onClose={() => setExpanded(false)} aria-label={`${title} expanded images`} className="fixed inset-0 m-auto h-[100dvh] max-h-none w-screen max-w-none bg-background p-4 text-foreground backdrop:bg-background/90" onKeyDown={(event) => { if (multiple && event.key === "ArrowRight") select(active + 1); if (multiple && event.key === "ArrowLeft") select(active - 1); }}>

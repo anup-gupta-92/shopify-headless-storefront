@@ -5,6 +5,7 @@ import { getDefaultVariant, type Product } from "@/types/product";
 import { useSearchParams } from "next/navigation";
 import { resolveVariant, variantUrlId } from "@/lib/product-options";
 import { formatMoney } from "@/lib/shopify/pricing";
+import { useCart } from "@/components/CartProvider";
 
 export default function ProductInformation({ product }: { product: Product }) {
   const searchParams = useSearchParams();
@@ -28,12 +29,28 @@ export default function ProductInformation({ product }: { product: Product }) {
     if (next) chooseVariant(next.id);
   }
   const [quantity, setQuantity] = useState(1);
+  const [adding, setAdding] = useState(false);
+  const [cartError, setCartError] = useState<string | null>(null);
+  const { addItem, loading: cartLoading } = useCart();
   const selectId = useId();
   // Never inherit optional product-level values for a variant that omits them.
   const configuration = selectedVariant ?? product;
   const productCode = selectedVariant ? selectedVariant.productCode : product.productCode ?? product.sku;
   const hasOptions = (product.variants?.length ?? 0) > 1;
   const controlClass = "inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-border bg-surface text-foreground hover:bg-surface-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-40";
+
+  async function handleAddToCart() {
+    if (!selectedVariant || selectedVariant.available === false || adding || cartLoading) return;
+    setAdding(true);
+    setCartError(null);
+    try {
+      await addItem(selectedVariant.id, quantity);
+    } catch (reason) {
+      setCartError(reason instanceof Error ? reason.message : "Your item could not be added. Please try again.");
+    } finally {
+      setAdding(false);
+    }
+  }
 
   return (
     <section className="min-w-0">
@@ -78,8 +95,15 @@ export default function ProductInformation({ product }: { product: Product }) {
         {selectedVariant && <p className="mt-2 text-sm text-muted">Quantity is the number of the selected item.</p>}
       </fieldset>
 
-      <button type="button" disabled={!selectedVariant || selectedVariant.available === false} aria-describedby={`${selectId}-cart-note`} className="mt-6 min-h-12 w-full rounded-xl bg-primary px-6 py-3 font-bold text-primary-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:bg-surface-muted disabled:text-muted">Add to Cart</button>
-      <p id={`${selectId}-cart-note`} className="mt-2 text-sm text-muted">Cart functionality is coming soon. This button does not place an order.</p>
+      <button
+        type="button"
+        disabled={!selectedVariant || selectedVariant.available === false || adding || cartLoading}
+        aria-describedby={`${selectId}-cart-note`}
+        onClick={() => void handleAddToCart()}
+        className="mt-6 min-h-12 w-full rounded-xl bg-primary px-6 py-3 font-bold text-primary-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:bg-surface-muted disabled:text-muted"
+      >{adding ? "Adding…" : "Add to Cart"}</button>
+      <p id={`${selectId}-cart-note`} className="mt-2 text-sm text-muted">Adds the selected option and quantity to your Shopify cart.</p>
+      {cartError && <p role="alert" className="mt-3 rounded-lg border border-border bg-surface-muted p-3 text-sm text-foreground">{cartError}</p>}
     </section>
   );
 }
