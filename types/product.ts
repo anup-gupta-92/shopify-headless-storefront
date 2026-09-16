@@ -9,7 +9,12 @@ export interface UnitPriceMeasurement {
 export interface ProductSummary {
   id: string; handle: string; title: string; category: string; image: string;
   imageAlt?: string; price: string; currencyCode: string; available: boolean;
+  vendor: string;
   priceRange: { minVariantPrice: Money; maxVariantPrice: Money };
+  cardAction:
+    | { kind: "add"; variantId: string }
+    | { kind: "options" }
+    | { kind: "unavailable" };
 }
 
 export interface ProductVariant {

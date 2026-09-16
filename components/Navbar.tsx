@@ -52,7 +52,7 @@ export default function Navbar() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
-      <div className="mx-auto flex h-18 max-w-6xl items-center gap-3 px-4 sm:px-6">
+      <div className="site-container flex h-18 items-center gap-3">
         <Link
           href="/"
           className="relative h-14 w-28 shrink-0 overflow-hidden rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
@@ -118,9 +118,9 @@ export default function Navbar() {
       <nav
         id={menuId}
         aria-label="Mobile navigation"
-        className={`${menuOpen ? "block" : "hidden"} border-t border-border bg-background px-4 py-3 md:hidden`}
+        className={`${menuOpen ? "block" : "hidden"} border-t border-border bg-background py-3 md:hidden`}
       >
-        <div className="mx-auto flex max-w-6xl flex-col gap-1">
+        <div className="site-container flex flex-col gap-1">
           {siteConfig.mainNav.map((item) => (
             <Link
               key={item.href}

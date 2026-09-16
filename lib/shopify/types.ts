@@ -11,9 +11,10 @@ export interface VariantConnection {
   pageInfo: { hasNextPage: boolean; endCursor: string | null };
 }
 export interface ShopifyProductSummary {
-  id: string; handle: string; title: string; productType: string; availableForSale: boolean;
+  id: string; handle: string; title: string; productType: string; vendor: string; availableForSale: boolean;
   featuredImage: ProductImage | null;
   priceRange: { minVariantPrice: Money; maxVariantPrice: Money };
+  variants: { nodes: Array<Pick<ShopifyVariant, "id" | "availableForSale">> };
 }
 export interface ShopifyProduct extends ShopifyProductSummary {
   description: string; descriptionHtml: string; vendor: string;

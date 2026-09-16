@@ -1,9 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from 'react';
-import Image from 'next/image';
-import Link from 'next/link';
-
+import ProductCard from '@/components/ProductCard';
 import type { ProductSummary } from '@/types/product';
 
 interface ProductCarouselProps {
@@ -116,7 +114,7 @@ export default function ProductCarousel({ products }: ProductCarouselProps) {
       <div
         ref={carouselRef}
         onScroll={handleScroll}
-        className="touch-pan-x snap-x snap-mandatory overflow-x-auto overscroll-x-contain rounded-xl scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="touch-auto snap-x snap-mandatory overflow-x-auto overscroll-x-contain rounded-xl scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         <div className="flex">
           {products.map((product) => (
@@ -124,41 +122,37 @@ export default function ProductCarousel({ products }: ProductCarouselProps) {
               key={product.id}
               className="w-full flex-shrink-0 snap-start p-2 [scroll-snap-stop:always] sm:w-1/2 md:w-1/3 lg:w-1/4"
             >
-              <Link
-                href={`/products/${product.handle}`}
-                aria-label={`View ${product.title}`}
-                className="group/card flex h-full flex-col rounded-xl border border-border bg-surface p-4 transition hover:border-primary/50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-              >
-                {/* Product Image Box */}
-                <div className="relative mb-4 aspect-square w-full overflow-hidden rounded-lg bg-surface-muted">
-                  {product.image ? <Image
-                    src={product.image}
-                    alt={product.imageAlt || product.title}
-                    fill
-                    sizes="(max-width: 639px) 100vw, (max-width: 767px) 50vw, (max-width: 1023px) 33vw, 25vw"
-                    className="object-cover group-hover/card:scale-105 transition duration-300"
-                  /> : <div className="flex h-full items-center justify-center text-sm text-muted">Image unavailable</div>}
-                </div>
-
-                {/* Info */}
-                <span className="block font-mono text-xs text-muted">{product.category}</span>
-                <h3 className="mt-1 line-clamp-1 text-base font-bold text-foreground transition group-hover/card:text-primary">
-                  {product.title}
-                </h3>
-                <p className="mt-auto pt-3 text-sm font-semibold text-accent">
-                  {product.price}
-                </p>
-
-                <span
-                  className="mt-3 block w-full rounded-lg bg-surface-muted py-2 text-center text-xs font-medium text-foreground transition hover:bg-border"
-                >
-                  View Details
-                </span>
-              </Link>
+              <ProductCard
+                title={product.title}
+                price={product.price}
+                vendor={product.vendor}
+                category={product.category}
+                available={product.available}
+                imageUrl={product.image}
+                imageAlt={product.imageAlt}
+                handle={product.handle}
+                cardAction={product.cardAction}
+              />
             </div>
           ))}
         </div>
       </div>
+      {maxIndex > 0 && <div className="mt-3 flex justify-center lg:hidden">
+        <div className="flex max-w-full items-center rounded-full border border-border bg-surface px-1.5 py-1" aria-label="Choose carousel position">
+          {Array.from({ length: maxIndex + 1 }, (_, index) => (
+            <button
+              key={index}
+              type="button"
+              onClick={() => scrollToIndex(index)}
+              aria-label={`Show product position ${index + 1} of ${maxIndex + 1}`}
+              aria-current={visibleIndex === index ? "true" : undefined}
+              className="flex size-4 shrink-0 items-center justify-center rounded-full focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary"
+            >
+              <span className={`h-1.5 rounded-full transition-all ${visibleIndex === index ? "w-3 bg-primary" : "w-1.5 bg-border"}`} />
+            </button>
+          ))}
+        </div>
+      </div>}
     </div>
   );
 }

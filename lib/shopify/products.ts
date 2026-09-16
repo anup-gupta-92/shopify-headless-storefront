@@ -23,7 +23,7 @@ export function eligibleProducts(products: ShopifyProductSummary[], limit: numbe
 export const getProductRecommendations = cache(async (productId: string): Promise<ProductSummary[]> => {
   try {
     const data = await storefrontRequest<{ productRecommendations: ShopifyProductSummary[] | null }>(PRODUCT_RECOMMENDATIONS_QUERY, { productId });
-    return eligibleProducts(data.productRecommendations ?? [], RECOMMENDATION_LIMIT, productId).map(mapSummary);
+    return eligibleProducts(data.productRecommendations ?? [], RECOMMENDATION_LIMIT, productId).map(mapProductSummary);
   } catch {
     // Optional recommendations must not take down the primary product page.
     console.warn("Shopify recommendations temporarily unavailable");
@@ -33,15 +33,22 @@ export const getProductRecommendations = cache(async (productId: string): Promis
 
 export const getShop = cache(async () => (await storefrontRequest<{ shop: { name: string } }>(SHOP_QUERY)).shop);
 
-function mapSummary(product: ShopifyProductSummary): ProductSummary {
+export function mapProductSummary(product: ShopifyProductSummary): ProductSummary {
   const min = product.priceRange.minVariantPrice;
   const max = product.priceRange.maxVariantPrice;
+  const cardVariants = product.variants.nodes;
+  const soleVariant = cardVariants.length === 1 ? cardVariants[0] : undefined;
   return {
     id: product.id, handle: product.handle, title: product.title,
-    category: product.productType, available: product.availableForSale,
+    category: product.productType, vendor: product.vendor, available: product.availableForSale,
     image: product.featuredImage?.url ?? "", imageAlt: product.featuredImage?.altText ?? product.title,
     price: `${min.amount !== max.amount ? "From " : ""}${formatMoney(min)}`,
     currencyCode: min.currencyCode, priceRange: product.priceRange,
+    cardAction: !product.availableForSale
+      ? { kind: "unavailable" }
+      : soleVariant?.availableForSale
+        ? { kind: "add", variantId: soleVariant.id }
+        : { kind: "options" },
   };
 }
 
@@ -61,7 +68,7 @@ function mapVariant(variant: ShopifyVariant): ProductVariant {
 
 export const getHomepageProducts = cache(async (): Promise<ProductSummary[]> => {
   const data = await storefrontRequest<{ products: { nodes: ShopifyProductSummary[] } }>(HOMEPAGE_PRODUCTS_QUERY, { first: HOMEPAGE_CANDIDATE_LIMIT });
-  return eligibleProducts(data.products.nodes, HOMEPAGE_PRODUCT_LIMIT).map(mapSummary);
+  return eligibleProducts(data.products.nodes, HOMEPAGE_PRODUCT_LIMIT).map(mapProductSummary);
 });
 
 export const getProductByHandle = cache(async (handle: string): Promise<Product | null> => {
@@ -77,7 +84,7 @@ export const getProductByHandle = cache(async (handle: string): Promise<Product 
     page = result.product.variants.pageInfo;
   }
   return {
-    ...mapSummary(product), description: product.description, descriptionHtml: product.descriptionHtml,
+    ...mapProductSummary(product), description: product.description, descriptionHtml: product.descriptionHtml,
     vendor: product.vendor, images: product.images.nodes, options: product.options,
     sku: "", variants: variants.map(mapVariant),
     available: variants.length > 0 && product.availableForSale,

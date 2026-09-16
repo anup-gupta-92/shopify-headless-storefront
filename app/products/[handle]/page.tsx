@@ -26,8 +26,8 @@ export default async function ProductPage({ params }: ProductPageProps) {
   ].map((image) => [image.url, image])).values()];
 
   return (
-    <main className="min-h-screen bg-background p-6 text-foreground md:p-12">
-      <div className="max-w-6xl mx-auto">
+    <main className="min-h-screen bg-background py-8 text-foreground md:py-12">
+      <div className="site-container">
         
         <nav aria-label="Breadcrumb" className="mb-6 text-sm text-muted">
           <ol className="flex flex-wrap items-center gap-2">
@@ -49,7 +49,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
         {recommendations.length > 0 && <section className="mt-12" aria-labelledby="recommendations">
           <h2 id="recommendations" className="mb-6 text-2xl font-bold">You May Also Like</h2>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {recommendations.map((related) => <ProductCard key={related.id} title={related.title} price={related.price} imageUrl={related.image} imageAlt={related.imageAlt} handle={related.handle} />)}
+            {recommendations.map((related) => <ProductCard key={related.id} title={related.title} price={related.price} vendor={related.vendor} category={related.category} available={related.available} imageUrl={related.image} imageAlt={related.imageAlt} handle={related.handle} cardAction={related.cardAction} />)}
           </div>
         </section>}
       </div>

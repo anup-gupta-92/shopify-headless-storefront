@@ -5,7 +5,7 @@ export default function Footer() {
 
   return (
     <footer className="mt-20 w-full border-t border-border bg-background">
-      <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-6 py-8 text-sm text-muted sm:flex-row">
+      <div className="site-container flex flex-col items-center justify-between gap-4 py-8 text-sm text-muted sm:flex-row">
         <p>
           © {currentYear} {siteConfig.footer.businessName}. All rights reserved.
         </p>

@@ -6,8 +6,8 @@ export default async function HomePage() {
   const productsArray = await getHomepageProducts();
 
   return (
-    <main className="min-h-screen bg-background p-6 text-foreground sm:p-10">
-      <div className="max-w-7xl mx-auto">
+    <main className="min-h-screen bg-background py-8 text-foreground sm:py-10">
+      <div className="site-container">
         <header className="mb-10">
           <span className="text-sm font-bold tracking-widest text-primary uppercase">{siteConfig.shortName} Inventory</span>
           <h1 className="text-4xl font-extrabold tracking-tight mt-1">Featured Packing Supplies</h1>

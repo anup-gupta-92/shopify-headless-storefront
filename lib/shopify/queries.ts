@@ -7,14 +7,16 @@ const variantFields = `
   unitPrice { amount currencyCode }
   unitPriceMeasurement { measuredType quantityUnit quantityValue referenceUnit referenceValue }
 `;
+const cardVariantFields = `variants(first: 2) { nodes { id availableForSale } }`;
 
 export const HOMEPAGE_PRODUCTS_QUERY = `
   query HomepageProducts($first: Int!) {
     products(first: $first, sortKey: BEST_SELLING) {
       nodes {
-        id handle title productType availableForSale
+        id handle title productType vendor availableForSale
         featuredImage { ${imageFields} }
         priceRange { minVariantPrice { amount currencyCode } maxVariantPrice { amount currencyCode } }
+        ${cardVariantFields}
       }
     }
   }
@@ -51,9 +53,39 @@ export const PRODUCT_VARIANTS_QUERY = `
 export const PRODUCT_RECOMMENDATIONS_QUERY = `
   query RelatedProducts($productId: ID!) {
     productRecommendations(productId: $productId, intent: RELATED) {
-      id handle title productType availableForSale
+      id handle title productType vendor availableForSale
       featuredImage { ${imageFields} }
       priceRange { minVariantPrice { amount currencyCode } maxVariantPrice { amount currencyCode } }
+      ${cardVariantFields}
+    }
+  }
+`;
+
+export const SHOP_PRODUCTS_QUERY = `
+  query ShopProducts(
+    $first: Int!
+    $after: String
+    $sortKey: ProductSortKeys!
+    $reverse: Boolean!
+    $query: String
+  ) {
+    products(first: $first, after: $after, sortKey: $sortKey, reverse: $reverse, query: $query) {
+      nodes {
+        id handle title productType vendor availableForSale
+        featuredImage { ${imageFields} }
+        priceRange { minVariantPrice { amount currencyCode } maxVariantPrice { amount currencyCode } }
+        ${cardVariantFields}
+      }
+      pageInfo { hasNextPage endCursor }
+    }
+  }
+`;
+
+export const SHOP_FACETS_QUERY = `
+  query ShopFacets($first: Int!, $after: String) {
+    products(first: $first, after: $after, sortKey: ID) {
+      nodes { id vendor productType availableForSale }
+      pageInfo { hasNextPage endCursor }
     }
   }
 `;
