@@ -16,7 +16,7 @@ export default function ProductCard({ title, price, sku, handle, imageUrl, image
     <Link href={`/products/${handle}`} className="group/card flex h-full flex-col rounded-xl border border-border bg-surface p-6 transition hover:border-primary/50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
         {/* Product Image Box */}
         <div className="relative mb-4 aspect-square w-full overflow-hidden rounded-lg bg-surface-muted">
-            {imageUrl ? <Image 
+            {imageUrl ? <Image
             src={imageUrl}
             alt={imageAlt || title}
             fill
