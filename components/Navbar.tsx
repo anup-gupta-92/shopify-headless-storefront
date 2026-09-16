@@ -19,6 +19,24 @@ function MenuIcon({ open }: { open: boolean }) {
     </svg>
   );
 }
+function CartIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      className="size-5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M3 4h2l2.2 10.2a2 2 0 0 0 2 1.6h7.7a2 2 0 0 0 2-1.6L20 8H6.2" />
+      <circle cx="10" cy="19" r="1" />
+      <circle cx="17" cy="19" r="1" />
+    </svg>
+  );
+}
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -95,11 +113,22 @@ export default function Navbar() {
           <button
             type="button"
             onClick={openDrawer}
-            aria-label={`Open cart with ${totalQuantity} ${totalQuantity === 1 ? "item" : "items"}`}
+            aria-label={`Open cart with ${totalQuantity} ${
+              totalQuantity === 1 ? "item" : "items"
+            }`}
             title="Open cart"
-            className="inline-flex h-10 items-center rounded-lg border border-border bg-surface px-3 text-sm font-semibold text-foreground transition-colors hover:bg-surface-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            className="relative inline-flex size-10 items-center justify-center rounded-lg border border-border bg-surface text-foreground transition-colors hover:bg-surface-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
           >
-            Cart <span aria-hidden="true" className="ml-1.5 tabular-nums">({cartLoading && totalQuantity === 0 ? "…" : totalQuantity})</span>
+            <CartIcon />
+
+            {totalQuantity > 0 && (
+              <span
+                aria-hidden="true"
+                className="absolute -right-1.5 -top-1.5 flex min-h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold leading-none text-primary-foreground"
+              >
+                {cartLoading ? "…" : totalQuantity}
+              </span>
+            )}
           </button>
           <ThemeToggle />
           <button
