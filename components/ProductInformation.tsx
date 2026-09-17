@@ -55,13 +55,20 @@ export default function ProductInformation({ product }: { product: Product }) {
 
   return (
     <section className="min-w-0">
-      {product.collection ? (
-        <Link
-          href={`/collections/${encodeURIComponent(product.collection.handle)}`}
-          className="inline-block rounded text-sm font-bold uppercase tracking-wider text-primary underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-        >
-          {product.category}
-        </Link>
+      {product.collections?.length ? (
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm font-bold uppercase tracking-wider text-primary">
+          {product.collections.map((collection, index) => (
+            <span key={collection.handle} className="inline-flex items-center gap-x-2">
+              {index > 0 && <span aria-hidden="true">•</span>}
+              <Link
+                href={`/collections/${encodeURIComponent(collection.handle)}`}
+                className="rounded underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              >
+                {collection.title}
+              </Link>
+            </span>
+          ))}
+        </div>
       ) : (
         <p className="text-sm font-bold uppercase tracking-wider text-primary">{product.category}</p>
       )}

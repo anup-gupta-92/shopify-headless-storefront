@@ -1,4 +1,9 @@
 import "server-only";
+import {
+  getShopifyStoreDomain,
+  getShopifyStorefrontApiVersion,
+  getShopifyStorefrontPrivateToken,
+} from "./config";
 
 export const CATALOG_REVALIDATE_SECONDS = 300;
 
@@ -7,22 +12,14 @@ interface StorefrontRequestOptions {
   cache?: "no-store";
 }
 
-function requiredEnv(name: string): string {
-  const value = process.env[name]?.trim();
-  if (!value) throw new Error(`Missing required Shopify environment variable: ${name}`);
-  return value;
-}
-
 export async function storefrontRequest<T>(
   query: string,
   variables: Record<string, unknown> = {},
   options: StorefrontRequestOptions = {},
 ): Promise<T> {
-  const domain = requiredEnv("SHOPIFY_STORE_DOMAIN").replace(/^https:\/\//, "").replace(/\/$/, "");
-  if (!/^[a-zA-Z0-9][a-zA-Z0-9.-]+$/.test(domain)) throw new Error("Invalid SHOPIFY_STORE_DOMAIN: expected a hostname");
-  const token = requiredEnv("SHOPIFY_STOREFRONT_PRIVATE_TOKEN");
-  const version = requiredEnv("SHOPIFY_STOREFRONT_API_VERSION");
-  if (!/^\d{4}-\d{2}$/.test(version)) throw new Error("Invalid SHOPIFY_STOREFRONT_API_VERSION: expected YYYY-MM");
+  const domain = getShopifyStoreDomain();
+  const token = getShopifyStorefrontPrivateToken();
+  const version = getShopifyStorefrontApiVersion();
   let response: Response;
   try {
     const headers: Record<string, string> = {

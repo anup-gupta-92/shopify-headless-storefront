@@ -3,10 +3,11 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useState, useSyncExternalStore } from "react";
 import ThemeToggle from "@/components/ThemeToggle";
 import { useCart } from "@/components/CartProvider";
 import { siteConfig } from "@/config/site";
+import { CUSTOMER_SESSION_HINT_COOKIE } from "@/lib/customer-account-constants";
 
 function MenuIcon({ open }: { open: boolean }) {
   return open ? (
@@ -47,9 +48,23 @@ function AccountIcon() {
   );
 }
 
+function subscribeToCustomerSession(callback: () => void) {
+  window.addEventListener("focus", callback);
+  window.addEventListener("pageshow", callback);
+  return () => {
+    window.removeEventListener("focus", callback);
+    window.removeEventListener("pageshow", callback);
+  };
+}
+
+function customerSessionSnapshot() {
+  return document.cookie.split("; ").some((cookie) => cookie.startsWith(`${CUSTOMER_SESSION_HINT_COOKIE}=`));
+}
+
 export default function Navbar() {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
+  const customerSignedIn = useSyncExternalStore(subscribeToCustomerSession, customerSessionSnapshot, () => false);
   const menuId = useId();
   const { totalQuantity, loading: cartLoading, openDrawer } = useCart();
 
@@ -140,9 +155,9 @@ export default function Navbar() {
             )}
           </button>
           <Link
-            href="/account"
-            aria-label="Customer account"
-            title="Customer account"
+            href={customerSignedIn ? "/account" : "/account/login"}
+            aria-label={customerSignedIn ? "Open customer account" : "Sign in to customer account"}
+            title={customerSignedIn ? "Customer account" : "Sign in"}
             className="inline-flex size-10 items-center justify-center rounded-lg border border-border bg-surface text-foreground transition-colors hover:bg-surface-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
           >
             <AccountIcon />

@@ -62,13 +62,13 @@ export default async function CollectionPage({ params, searchParams }: Collectio
               <ShopifyRichText html={collection.descriptionHtml} text={collection.description} />
             </div>}
           </div>
-          {collection.image && <div className="relative aspect-[16/9] overflow-hidden rounded-xl border border-border bg-surface">
+          {collection.image && <div className="relative aspect-[16/9] overflow-hidden rounded-xl border border-border bg-white">
             <Image
               src={collection.image.url}
               alt={collection.image.altText || collection.title}
               fill
               sizes="(min-width: 768px) 288px, 100vw"
-              className="object-cover"
+              className="object-contain p-2"
             />
           </div>}
         </header>
