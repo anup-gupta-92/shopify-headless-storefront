@@ -8,9 +8,11 @@ import { getShopifyStorefrontPrivateToken } from "../config";
 
 export const OAUTH_COOKIE = "apex_customer_oauth";
 export const SESSION_COOKIE = "apex_customer_session";
+export const LOGOUT_HANDOFF_COOKIE = "apex_customer_logout";
 
 const OAUTH_MAX_AGE_SECONDS = 10 * 60;
 const REFRESH_SESSION_MAX_AGE_SECONDS = 30 * 24 * 60 * 60;
+const LOGOUT_HANDOFF_MAX_AGE_SECONDS = 60;
 
 export interface PendingOAuthSession {
   state: string;
@@ -25,6 +27,11 @@ export interface CustomerSession {
   expiresAt: number;
   idToken: string;
   refreshToken?: string;
+}
+
+interface LogoutHandoff {
+  idToken: string;
+  createdAt: number;
 }
 
 function encryptionKey(): Buffer {
@@ -85,6 +92,8 @@ export function clearPendingOAuth(response: NextResponse): void {
     sameSite: "lax",
     path: "/account",
     maxAge: 0,
+    expires: new Date(0),
+    priority: "high",
   });
 }
 
@@ -127,6 +136,8 @@ export function clearCustomerSession(response: NextResponse): void {
     sameSite: "lax",
     path: "/",
     maxAge: 0,
+    expires: new Date(0),
+    priority: "high",
   });
   response.cookies.set(CUSTOMER_SESSION_HINT_COOKIE, "", {
     httpOnly: false,
@@ -134,6 +145,42 @@ export function clearCustomerSession(response: NextResponse): void {
     sameSite: "lax",
     path: "/",
     maxAge: 0,
+    expires: new Date(0),
+  });
+}
+
+export function setLogoutHandoff(response: NextResponse, idToken: string): void {
+  response.cookies.set(LOGOUT_HANDOFF_COOKIE, seal({ idToken, createdAt: Date.now() }), {
+    httpOnly: true,
+    secure: secureCookies(),
+    sameSite: "lax",
+    path: "/account/logout/shopify",
+    maxAge: LOGOUT_HANDOFF_MAX_AGE_SECONDS,
+    priority: "high",
+  });
+}
+
+export async function readLogoutHandoff(): Promise<string | null> {
+  const value = (await cookies()).get(LOGOUT_HANDOFF_COOKIE)?.value;
+  const handoff = unseal<LogoutHandoff>(value);
+  if (
+    !handoff ||
+    typeof handoff.idToken !== "string" ||
+    typeof handoff.createdAt !== "number" ||
+    Date.now() - handoff.createdAt > LOGOUT_HANDOFF_MAX_AGE_SECONDS * 1000
+  ) return null;
+  return handoff.idToken;
+}
+
+export function clearLogoutHandoff(response: NextResponse): void {
+  response.cookies.set(LOGOUT_HANDOFF_COOKIE, "", {
+    httpOnly: true,
+    secure: secureCookies(),
+    sameSite: "lax",
+    path: "/account/logout/shopify",
+    maxAge: 0,
+    expires: new Date(0),
+    priority: "high",
   });
 }
 

@@ -1,8 +1,11 @@
+import RouteLoadingSignal from "@/components/RouteLoadingSignal";
+
 export default function ProductLoading() {
   const line = "rounded bg-surface-muted";
 
   return (
     <main className="min-h-screen bg-background py-8 text-foreground md:py-12" aria-busy="true" aria-label="Loading product">
+      <RouteLoadingSignal />
       <div className="site-container motion-safe:animate-pulse">
         <div className={`mb-6 h-4 w-56 ${line}`} />
         <div className="grid grid-cols-1 items-start gap-10 md:grid-cols-2">

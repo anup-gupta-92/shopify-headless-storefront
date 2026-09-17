@@ -16,6 +16,10 @@ export const metadata: Metadata = {
   description: "Your Apex Business Supplies customer account.",
 };
 
+// Customer identity is always resolved from the current request cookie and is
+// never eligible for the public catalogue response cache.
+export const revalidate = 0;
+
 export default async function AccountPage() {
   const session = await readCustomerSession();
   if (!session) redirect("/account/login");
@@ -35,7 +39,7 @@ export default async function AccountPage() {
         </p>
         <div className="mt-8 flex flex-wrap gap-3">
           <Link href="/account" className="rounded-lg bg-primary px-5 py-3 font-semibold text-primary-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">Try again</Link>
-          <Link href="/account/logout" className="rounded-lg border border-border bg-surface px-5 py-3 font-semibold hover:bg-surface-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">Sign out</Link>
+          <a href="/account/logout" className="rounded-lg border border-border bg-surface px-5 py-3 font-semibold hover:bg-surface-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">Sign out</a>
         </div>
       </main>
     );
@@ -69,9 +73,9 @@ export default async function AccountPage() {
         ))}
       </div>
 
-      <Link href="/account/logout" className="mt-8 inline-flex rounded-lg border border-border bg-surface px-5 py-3 font-semibold hover:bg-surface-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+      <a href="/account/logout" className="mt-8 inline-flex rounded-lg border border-border bg-surface px-5 py-3 font-semibold hover:bg-surface-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
         Sign out
-      </Link>
+      </a>
     </main>
   );
 }

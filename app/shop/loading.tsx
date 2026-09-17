@@ -1,8 +1,10 @@
 import ProductCardSkeleton from "@/components/ProductCardSkeleton";
+import RouteLoadingSignal from "@/components/RouteLoadingSignal";
 
 export default function ShopLoading() {
   return (
     <main className="min-h-screen bg-background py-8 text-foreground sm:py-10" aria-busy="true" aria-label="Loading products">
+      <RouteLoadingSignal />
       <div className="site-container motion-safe:animate-pulse">
         <div className="h-4 w-28 rounded bg-surface-muted" />
         <div className="mt-8 h-3 w-40 rounded bg-surface-muted" />
