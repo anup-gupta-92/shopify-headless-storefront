@@ -28,6 +28,7 @@ export const PRODUCT_QUERY = `
       id handle title description descriptionHtml productType vendor availableForSale
       featuredImage { ${imageFields} }
       images(first: 15) { nodes { ${imageFields} } }
+      collections(first: 20) { nodes { handle title } }
       options { name values }
       priceRange { minVariantPrice { amount currencyCode } maxVariantPrice { amount currencyCode } }
       variants(first: 100) {
@@ -86,6 +87,49 @@ export const SHOP_FACETS_QUERY = `
     products(first: $first, after: $after, sortKey: ID) {
       nodes { id vendor productType availableForSale }
       pageInfo { hasNextPage endCursor }
+    }
+  }
+`;
+
+export const COLLECTION_QUERY = `
+  query CollectionByHandle($handle: String!) {
+    collection(handle: $handle) {
+      id handle title description descriptionHtml
+      image { ${imageFields} }
+    }
+  }
+`;
+
+export const COLLECTION_PRODUCTS_QUERY = `
+  query CollectionProducts(
+    $handle: String!
+    $first: Int!
+    $after: String
+    $sortKey: ProductCollectionSortKeys!
+    $reverse: Boolean!
+    $filters: [ProductFilter!]
+  ) {
+    collection(handle: $handle) {
+      products(first: $first, after: $after, sortKey: $sortKey, reverse: $reverse, filters: $filters) {
+        nodes {
+          id handle title productType vendor availableForSale
+          featuredImage { ${imageFields} }
+          priceRange { minVariantPrice { amount currencyCode } maxVariantPrice { amount currencyCode } }
+          ${cardVariantFields}
+        }
+        pageInfo { hasNextPage endCursor }
+      }
+    }
+  }
+`;
+
+export const COLLECTION_FACETS_QUERY = `
+  query CollectionFacets($handle: String!, $first: Int!, $after: String) {
+    collection(handle: $handle) {
+      products(first: $first, after: $after, sortKey: ID) {
+        nodes { id vendor availableForSale }
+        pageInfo { hasNextPage endCursor }
+      }
     }
   }
 `;

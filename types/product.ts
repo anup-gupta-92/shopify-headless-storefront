@@ -42,6 +42,7 @@ export interface Product {
   vendor?: string;
   images?: ProductImage[];
   options?: ProductOption[];
+  collection?: { handle: string; title: string };
   title: string;
   description: string;
   image: string;

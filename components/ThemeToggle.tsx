@@ -3,9 +3,6 @@
 import { useSyncExternalStore } from "react";
 import { useTheme } from "next-themes";
 
-const themeOrder = ["system", "light", "dark"] as const;
-type ThemeName = (typeof themeOrder)[number];
-
 const emptySubscribe = () => () => {};
 
 function SunIcon() {
@@ -25,40 +22,25 @@ function MoonIcon() {
   );
 }
 
-function SystemIcon() {
-  return (
-    <svg aria-hidden="true" viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="1.8">
-      <rect x="3" y="4" width="18" height="13" rx="2" />
-      <path d="M8 21h8M12 17v4" />
-    </svg>
-  );
-}
-
-const icons: Record<ThemeName, () => React.JSX.Element> = {
-  system: SystemIcon,
-  light: SunIcon,
-  dark: MoonIcon,
-};
-
 export default function ThemeToggle() {
-  const { theme, setTheme } = useTheme();
+  const { resolvedTheme, setTheme } = useTheme();
   const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
-  const currentTheme: ThemeName = themeOrder.includes(theme as ThemeName)
-    ? (theme as ThemeName)
-    : "system";
-  const Icon = icons[currentTheme];
-  const nextTheme = themeOrder[(themeOrder.indexOf(currentTheme) + 1) % themeOrder.length];
+  const dark = mounted && resolvedTheme === "dark";
 
   return (
     <button
       type="button"
-      onClick={() => setTheme(nextTheme)}
+      role="switch"
+      aria-checked={dark}
+      onClick={() => setTheme(dark ? "light" : "dark")}
       disabled={!mounted}
-      className="inline-flex size-10 items-center justify-center rounded-lg border border-border bg-surface text-foreground transition-colors hover:bg-surface-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-wait disabled:opacity-60"
-      aria-label={mounted ? `Theme: ${currentTheme}. Switch to ${nextTheme}.` : "Loading theme preference"}
-      title={mounted ? `Theme: ${currentTheme}. Switch to ${nextTheme}.` : "Loading theme preference"}
+      className="relative inline-flex h-10 w-14 items-center justify-between rounded-full border border-border bg-surface px-1.5 text-muted transition-colors hover:bg-surface-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-wait disabled:opacity-60"
+      aria-label={mounted ? `Use ${dark ? "light" : "dark"} theme` : "Loading theme preference"}
+      title={mounted ? `Switch to ${dark ? "light" : "dark"} theme` : "Loading theme preference"}
     >
-      {mounted ? <Icon /> : <SystemIcon />}
+      <span className={`relative z-10 ${dark ? "" : "text-primary-foreground"}`}><SunIcon /></span>
+      <span className={`relative z-10 ${dark ? "text-primary-foreground" : ""}`}><MoonIcon /></span>
+      <span aria-hidden="true" className={`absolute left-1 top-1/2 size-6 -translate-y-1/2 rounded-full bg-primary shadow-sm transition-transform ${dark ? "translate-x-6" : "translate-x-0"}`} />
     </button>
   );
 }

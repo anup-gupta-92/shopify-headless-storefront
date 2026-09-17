@@ -139,7 +139,7 @@ interface FacetProductPage {
   };
 }
 
-function countFacet(values: string[]) {
+export function countFacet(values: string[]) {
   const counts = new Map<string, { value: string; count: number }>();
   for (const rawValue of values) {
     const value = rawValue.trim();
@@ -173,7 +173,7 @@ export const getCatalogFacets = cache(async (): Promise<CatalogFacets> => {
     availability: {
       inStock: products.filter((product) => product.availableForSale).length,
     },
-    vendors: countFacet(products.map((product) => product.vendor)),
+    vendors: countFacet(products.filter((product) => product.availableForSale).map((product) => product.vendor)),
     productTypes: countFacet(products.filter((product) => product.availableForSale).map((product) => product.productType)),
   };
 });

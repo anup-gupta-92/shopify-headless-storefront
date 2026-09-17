@@ -1,4 +1,5 @@
 import { getProductByHandle, getProductRecommendations } from '@/lib/shopify/products';
+import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { Suspense } from 'react';
 import ProductGallery from '@/components/ProductGallery';
@@ -13,6 +14,19 @@ interface ProductPageProps {
   }>;
 }
 
+export async function generateMetadata({ params }: ProductPageProps): Promise<Metadata> {
+  const { handle } = await params;
+  const product = await getProductByHandle(handle);
+  if (!product) return { title: 'Product not found' };
+
+  return {
+    title: product.title,
+    description: product.description || undefined,
+    alternates: {
+      canonical: `/products/${encodeURIComponent(product.handle || handle)}`,
+    },
+  };
+}
 
 export default async function ProductPage({ params }: ProductPageProps) {
   const { handle } = await params;
@@ -32,6 +46,8 @@ export default async function ProductPage({ params }: ProductPageProps) {
         <nav aria-label="Breadcrumb" className="mb-6 text-sm text-muted">
           <ol className="flex flex-wrap items-center gap-2">
             <li><Link href="/" className="rounded hover:text-foreground focus-visible:outline-2 focus-visible:outline-primary">Home</Link></li>
+            <li aria-hidden="true">&gt;</li>
+            <li><Link href="/shop" className="rounded hover:text-foreground focus-visible:outline-2 focus-visible:outline-primary">Shop</Link></li>
             <li aria-hidden="true">&gt;</li>
             <li aria-current="page" className="min-w-0 break-words">{product.title}</li>
           </ol>

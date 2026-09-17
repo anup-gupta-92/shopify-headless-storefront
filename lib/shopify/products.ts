@@ -74,6 +74,10 @@ export const getHomepageProducts = cache(async (): Promise<ProductSummary[]> => 
 export const getProductByHandle = cache(async (handle: string): Promise<Product | null> => {
   const { product } = await storefrontRequest<{ product: ShopifyProduct | null }>(PRODUCT_QUERY, { handle });
   if (!product) return null;
+  const normalizedProductType = product.productType.trim().toLocaleLowerCase();
+  const matchingCollection = normalizedProductType
+    ? product.collections.nodes.find((collection) => collection.title.trim().toLocaleLowerCase() === normalizedProductType)
+    : undefined;
   const variants = [...product.variants.nodes];
   let page = product.variants.pageInfo;
   while (page.hasNextPage) {
@@ -86,6 +90,7 @@ export const getProductByHandle = cache(async (handle: string): Promise<Product 
   return {
     ...mapProductSummary(product), description: product.description, descriptionHtml: product.descriptionHtml,
     vendor: product.vendor, images: product.images.nodes, options: product.options,
+    collection: matchingCollection,
     sku: "", variants: variants.map(mapVariant),
     available: variants.length > 0 && product.availableForSale,
   };

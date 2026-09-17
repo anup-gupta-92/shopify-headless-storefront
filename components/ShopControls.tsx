@@ -9,6 +9,9 @@ interface ShopControlsProps {
   filters: CatalogFilterState;
   facets: CatalogFacets;
   queryString: string;
+  basePath?: string;
+  showCategories?: boolean;
+  facetDescription?: string;
   children: ReactNode;
 }
 
@@ -59,10 +62,12 @@ function isSelected(selected: string[], value: string) {
   return selected.some((candidate) => candidate.toLocaleLowerCase() === key);
 }
 
-function FilterForm({ filters, facets, idPrefix, closeAfterApply, onPriceChange, onToggleSelection, onClear }: {
+function FilterForm({ filters, facets, idPrefix, showCategories, facetDescription, closeAfterApply, onPriceChange, onToggleSelection, onClear }: {
   filters: CatalogFilterState;
   facets: CatalogFacets;
   idPrefix: string;
+  showCategories: boolean;
+  facetDescription: string;
   closeAfterApply?: () => void;
   onPriceChange: (name: PriceName, value: string) => void;
   onToggleSelection: (name: SelectionName, value: string, checked: boolean) => void;
@@ -120,7 +125,7 @@ function FilterForm({ filters, facets, idPrefix, closeAfterApply, onPriceChange,
         </fieldset>
       </FilterSection>
 
-      <FilterSection title="Category" defaultOpen={false}>
+      {showCategories && <FilterSection title="Category" defaultOpen={false}>
         <fieldset className="max-h-72 space-y-1 overflow-y-auto pr-1">
           <legend className="sr-only">Choose categories</legend>
           {facets.productTypes.map((productType) => {
@@ -131,10 +136,10 @@ function FilterForm({ filters, facets, idPrefix, closeAfterApply, onPriceChange,
             </label>;
           })}
         </fieldset>
-      </FilterSection>
+      </FilterSection>}
 
       <div>
-        <p className="mb-3 text-xs text-muted">Brand counts cover the published catalogue. Category counts include in-stock products only.</p>
+        <p className="mb-3 text-xs text-muted">{facetDescription}</p>
         <button type="button" onClick={() => { closeAfterApply?.(); onClear(); }} className="inline-flex min-h-11 w-full items-center justify-center rounded-lg border border-border bg-background px-3 font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">Clear filters</button>
       </div>
     </div>
@@ -177,7 +182,15 @@ function GridSkeleton() {
   );
 }
 
-export default function ShopControls({ filters, facets, queryString, children }: ShopControlsProps) {
+export default function ShopControls({
+  filters,
+  facets,
+  queryString,
+  basePath = "/shop",
+  showCategories = true,
+  facetDescription = "Brand and category counts include in-stock products only.",
+  children,
+}: ShopControlsProps) {
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [optimisticCatalog, setOptimisticCatalog] = useOptimistic({ filters, queryString });
@@ -192,8 +205,8 @@ export default function ShopControls({ filters, facets, queryString, children }:
   const activeFilterCount = displayFilters.vendors.length + displayFilters.productTypes.length + (priceActive ? 1 : 0);
 
   function navigate(params: URLSearchParams, nextFilters: CatalogFilterState) {
-    const target = params.size ? `/shop?${params.toString()}` : "/shop";
-    const current = queryString ? `/shop?${queryString}` : "/shop";
+    const target = params.size ? `${basePath}?${params.toString()}` : basePath;
+    const current = queryString ? `${basePath}?${queryString}` : basePath;
     if (target === current) return;
     startTransition(() => {
       setOptimisticCatalog({ filters: nextFilters, queryString: params.toString() });
@@ -239,7 +252,7 @@ export default function ShopControls({ filters, facets, queryString, children }:
     startTransition(() => {
       const nextFilters: CatalogFilterState = { inStock: true, vendors: [], productTypes: [], sort: "best-selling" };
       setOptimisticCatalog({ filters: nextFilters, queryString: "" });
-      router.push("/shop", { scroll: false });
+      router.push(basePath, { scroll: false });
     });
   }
 
@@ -278,7 +291,15 @@ export default function ShopControls({ filters, facets, queryString, children }:
     };
   }, [mobileOpen]);
 
-  const desktopFormProps = { filters: displayFilters, facets, onPriceChange: changePrice, onToggleSelection: toggleSelection, onClear: clearFilters };
+  const desktopFormProps = {
+    filters: displayFilters,
+    facets,
+    showCategories,
+    facetDescription,
+    onPriceChange: changePrice,
+    onToggleSelection: toggleSelection,
+    onClear: clearFilters,
+  };
   const closeMobile = () => setMobileOpen(false);
   const mobilePills = <ActiveFilterPills
     filters={displayFilters}

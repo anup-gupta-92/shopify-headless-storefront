@@ -38,6 +38,15 @@ function CartIcon() {
   );
 }
 
+function AccountIcon() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="8" r="4" />
+      <path d="M4.5 21a7.5 7.5 0 0 1 15 0" />
+    </svg>
+  );
+}
+
 export default function Navbar() {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -57,7 +66,7 @@ export default function Navbar() {
 
   const isActive = (href: string) => {
     if (href === "/") return pathname === href;
-    if (href === "/shop" && pathname.startsWith("/products/")) return true;
+    if (href === "/shop") return pathname === "/shop" || pathname.startsWith("/shop/") || pathname.startsWith("/collections/");
     return pathname === href || pathname.startsWith(`${href}/`);
   };
 
@@ -73,7 +82,7 @@ export default function Navbar() {
       <div className="site-container flex h-18 items-center gap-3">
         <Link
           href="/"
-          className="relative h-14 w-28 shrink-0 overflow-hidden rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          className="relative h-14 w-20 shrink-0 overflow-hidden rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary sm:w-28"
           aria-label={`${siteConfig.name} home`}
         >
           <Image
@@ -82,7 +91,7 @@ export default function Navbar() {
             width={540}
             height={540}
             priority
-            sizes="112px"
+            sizes="(min-width: 640px) 112px, 80px"
             className="theme-logo-light absolute top-1/2 h-auto w-full -translate-y-1/2"
           />
           <Image
@@ -91,7 +100,7 @@ export default function Navbar() {
             width={540}
             height={540}
             priority
-            sizes="112px"
+            sizes="(min-width: 640px) 112px, 80px"
             className="theme-logo-dark absolute top-1/2 h-auto w-full -translate-y-1/2"
           />
         </Link>
@@ -109,7 +118,7 @@ export default function Navbar() {
           ))}
         </nav>
 
-        <div className="ml-auto flex items-center gap-2 md:ml-2">
+        <div className="ml-auto flex items-center gap-1.5 sm:gap-2 md:ml-2">
           <button
             type="button"
             onClick={openDrawer}
@@ -130,6 +139,14 @@ export default function Navbar() {
               </span>
             )}
           </button>
+          <Link
+            href="/account"
+            aria-label="Customer account"
+            title="Customer account"
+            className="inline-flex size-10 items-center justify-center rounded-lg border border-border bg-surface text-foreground transition-colors hover:bg-surface-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          >
+            <AccountIcon />
+          </Link>
           <ThemeToggle />
           <button
             type="button"

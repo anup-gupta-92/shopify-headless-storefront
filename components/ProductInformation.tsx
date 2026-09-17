@@ -1,6 +1,7 @@
 "use client";
 
 import { useId, useState } from "react";
+import Link from "next/link";
 import { getDefaultVariant, type Product } from "@/types/product";
 import { useSearchParams } from "next/navigation";
 import { resolveVariant, variantUrlId } from "@/lib/product-options";
@@ -54,7 +55,16 @@ export default function ProductInformation({ product }: { product: Product }) {
 
   return (
     <section className="min-w-0">
-      <p className="text-sm font-bold uppercase tracking-wider text-primary">{product.category}</p>
+      {product.collection ? (
+        <Link
+          href={`/collections/${encodeURIComponent(product.collection.handle)}`}
+          className="inline-block rounded text-sm font-bold uppercase tracking-wider text-primary underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+        >
+          {product.category}
+        </Link>
+      ) : (
+        <p className="text-sm font-bold uppercase tracking-wider text-primary">{product.category}</p>
+      )}
       <h1 className="mt-2 break-words text-3xl font-extrabold tracking-tight md:text-4xl lg:text-5xl">{product.title}</h1>
       <div aria-live="polite" aria-atomic="true" className="mt-3 space-y-2">
         {productCode && <p className="break-words font-mono text-sm text-muted">Product Code: {productCode}</p>}

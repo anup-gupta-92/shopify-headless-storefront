@@ -19,5 +19,15 @@ export interface ShopifyProductSummary {
 export interface ShopifyProduct extends ShopifyProductSummary {
   description: string; descriptionHtml: string; vendor: string;
   images: { nodes: ProductImage[] }; options: ProductOption[];
+  collections: { nodes: Array<{ handle: string; title: string }> };
   variants: VariantConnection;
+}
+
+export interface ShopifyCollection {
+  id: string;
+  handle: string;
+  title: string;
+  description: string;
+  descriptionHtml: string;
+  image: ProductImage | null;
 }
