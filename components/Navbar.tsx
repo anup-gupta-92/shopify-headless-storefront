@@ -4,11 +4,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useId, useState, useSyncExternalStore } from "react";
+import { flushSync } from "react-dom";
 import ThemeToggle from "@/components/ThemeToggle";
 import { useCart } from "@/components/CartProvider";
 import { siteConfig } from "@/config/site";
 import { CUSTOMER_SESSION_HINT_COOKIE } from "@/lib/customer-account-constants";
 import NavigationProgress from "@/components/NavigationProgress";
+import { startNavigationProgress } from "@/components/RouteLoadingSignal";
 
 function MenuIcon({ open }: { open: boolean }) {
   return open ? (
@@ -93,6 +95,21 @@ export default function Navbar() {
         : "text-muted hover:bg-surface-muted hover:text-foreground"
     }`;
 
+  function handleLoggedOutAccountNavigation(event: React.MouseEvent<HTMLAnchorElement>) {
+    if (
+      event.defaultPrevented ||
+      event.button !== 0 ||
+      event.metaKey ||
+      event.ctrlKey ||
+      event.shiftKey ||
+      event.altKey
+    ) return;
+
+    event.preventDefault();
+    flushSync(() => startNavigationProgress());
+    window.location.assign(event.currentTarget.href);
+  }
+
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
       <div className="site-container flex h-18 items-center gap-3">
@@ -155,15 +172,27 @@ export default function Navbar() {
               </span>
             )}
           </button>
-          <Link
-            href={customerSignedIn ? "/account" : "/account/login"}
-            prefetch={false}
-            aria-label={customerSignedIn ? "Open customer account" : "Sign in to customer account"}
-            title={customerSignedIn ? "Customer account" : "Sign in"}
-            className="inline-flex size-10 items-center justify-center rounded-lg border border-border bg-surface text-foreground transition-colors hover:bg-surface-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-          >
-            <AccountIcon />
-          </Link>
+          {customerSignedIn ? (
+            <Link
+              href="/account"
+              prefetch={false}
+              aria-label="Open customer account"
+              title="Customer account"
+              className="inline-flex size-10 items-center justify-center rounded-lg border border-border bg-surface text-foreground transition-colors hover:bg-surface-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            >
+              <AccountIcon />
+            </Link>
+          ) : (
+            <a
+              href="/account/login"
+              onClick={handleLoggedOutAccountNavigation}
+              aria-label="Sign in to customer account"
+              title="Sign in"
+              className="inline-flex size-10 items-center justify-center rounded-lg border border-border bg-surface text-foreground transition-colors hover:bg-surface-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            >
+              <AccountIcon />
+            </a>
+          )}
           <ThemeToggle />
           <button
             type="button"

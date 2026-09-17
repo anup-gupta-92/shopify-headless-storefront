@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import {
+  NAVIGATION_PROGRESS_START_EVENT,
   ROUTE_LOADING_COMPLETE_EVENT,
   ROUTE_LOADING_START_EVENT,
 } from "@/components/RouteLoadingSignal";
@@ -93,11 +94,13 @@ export default function NavigationProgress() {
 
     document.addEventListener("click", handleClick);
     window.addEventListener("popstate", handleHistoryNavigation);
+    window.addEventListener(NAVIGATION_PROGRESS_START_EVENT, start);
     window.addEventListener(ROUTE_LOADING_START_EVENT, handleLoadingStart);
     window.addEventListener(ROUTE_LOADING_COMPLETE_EVENT, handleLoadingComplete);
     return () => {
       document.removeEventListener("click", handleClick);
       window.removeEventListener("popstate", handleHistoryNavigation);
+      window.removeEventListener(NAVIGATION_PROGRESS_START_EVENT, start);
       window.removeEventListener(ROUTE_LOADING_START_EVENT, handleLoadingStart);
       window.removeEventListener(ROUTE_LOADING_COMPLETE_EVENT, handleLoadingComplete);
       clearTimers();
