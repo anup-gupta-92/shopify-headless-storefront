@@ -18,7 +18,7 @@ export class CustomerAccountRequestError extends Error {}
 
 interface GraphQlResponse<T> {
   data?: T;
-  errors?: Array<{ message?: string; path?: Array<string | number> }>;
+  errors?: Array<{ message?: string; path?: Array<string | number>; extensions?: { code?: string } }>;
 }
 
 async function customerAccountRequest<T>(
@@ -167,6 +167,31 @@ function requireData<T>(body: GraphQlResponse<T>, message: string): T {
   return body.data;
 }
 
+function requireMutationPayload<T extends { userErrors: CustomerMutationError[] }>(
+  operation: string,
+  body: GraphQlResponse<unknown>,
+  payload: T | null | undefined,
+): T {
+  if (body.errors?.length || payload?.userErrors.length) {
+    // Diagnostic data is deliberately limited to Shopify's operation/path/code/message.
+    // Variables, customer data, IDs and access credentials are never logged.
+    console.error(`[Customer Account API] ${operation} failed`, {
+      graphqlErrors: body.errors?.map((error) => ({
+        code: error.extensions?.code,
+        ...(process.env.NODE_ENV === "development" ? { message: error.message } : {}),
+        path: error.path,
+      })),
+      userErrors: payload?.userErrors.map((error) => ({
+        field: error.field,
+        ...(process.env.NODE_ENV === "development" ? { message: error.message } : {}),
+      })),
+    });
+  }
+  if (body.errors?.length) throw new CustomerAccountRequestError(`${operation} was rejected by the customer account service`);
+  if (!payload) throw new CustomerAccountRequestError(`${operation} did not return a result`);
+  return payload;
+}
+
 export function encodeOrderKey(id: string): string {
   return Buffer.from(id, "utf8").toString("base64url");
 }
@@ -263,26 +288,26 @@ export async function updateCustomerProfile(accessToken: string, input: { firstN
   const body = await customerAccountRequest<{
     customerUpdate?: { customer: CustomerIdentity | null; userErrors: CustomerMutationError[] };
   }>(accessToken, CUSTOMER_UPDATE_MUTATION, { input });
-  return requireData(body, "Profile could not be updated").customerUpdate ?? { customer: null, userErrors: [] };
+  return requireMutationPayload("customerUpdate", body, body.data?.customerUpdate);
 }
 
 export async function createCustomerAddress(accessToken: string, address: CustomerAddressInput, defaultAddress: boolean) {
   const body = await customerAccountRequest<{
     customerAddressCreate?: { customerAddress: RawAddress | null; userErrors: CustomerMutationError[] };
   }>(accessToken, ADDRESS_CREATE_MUTATION, { address, defaultAddress });
-  return requireData(body, "Address could not be created").customerAddressCreate ?? { customerAddress: null, userErrors: [] };
+  return requireMutationPayload("customerAddressCreate", body, body.data?.customerAddressCreate);
 }
 
 export async function updateCustomerAddress(accessToken: string, addressId: string, address: CustomerAddressInput | null, defaultAddress?: boolean) {
   const body = await customerAccountRequest<{
     customerAddressUpdate?: { customerAddress: RawAddress | null; userErrors: CustomerMutationError[] };
   }>(accessToken, ADDRESS_UPDATE_MUTATION, { addressId, address, defaultAddress });
-  return requireData(body, "Address could not be updated").customerAddressUpdate ?? { customerAddress: null, userErrors: [] };
+  return requireMutationPayload("customerAddressUpdate", body, body.data?.customerAddressUpdate);
 }
 
 export async function deleteCustomerAddress(accessToken: string, addressId: string) {
   const body = await customerAccountRequest<{
     customerAddressDelete?: { deletedAddressId: string | null; userErrors: CustomerMutationError[] };
   }>(accessToken, ADDRESS_DELETE_MUTATION, { addressId });
-  return requireData(body, "Address could not be deleted").customerAddressDelete ?? { deletedAddressId: null, userErrors: [] };
+  return requireMutationPayload("customerAddressDelete", body, body.data?.customerAddressDelete);
 }

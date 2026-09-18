@@ -16,27 +16,42 @@ function value(formData: FormData, name: string): string {
   return String(formData.get(name) ?? "").trim();
 }
 
+function optionalValue(formData: FormData, name: string): string | undefined {
+  return value(formData, name) || undefined;
+}
+
 function mutationErrors(errors: CustomerMutationError[]): AccountActionState {
   const fieldErrors: Record<string, string> = {};
+  const fieldAliases: Record<string, string> = {
+    country: "territoryCode",
+    countryCode: "territoryCode",
+    province: "zoneCode",
+    provinceCode: "zoneCode",
+    postalCode: "zip",
+    postcode: "zip",
+    phone: "phoneNumber",
+  };
   for (const error of errors) {
-    const field = error.field?.at(-1);
+    const rawField = error.field?.at(-1);
+    const field = rawField ? fieldAliases[rawField] ?? rawField : undefined;
     if (field) fieldErrors[field] = error.message;
   }
   return { status: "error", message: errors[0]?.message || "Please check the highlighted information.", fieldErrors };
 }
 
 function addressInput(formData: FormData): { input?: CustomerAddressInput; error?: AccountActionState } {
+  const submittedPhone = optionalValue(formData, "phoneNumber");
   const input: CustomerAddressInput = {
     firstName: value(formData, "firstName"),
     lastName: value(formData, "lastName"),
-    company: value(formData, "company"),
     address1: value(formData, "address1"),
-    address2: value(formData, "address2"),
     city: value(formData, "city"),
-    zoneCode: value(formData, "zoneCode"),
     territoryCode: value(formData, "territoryCode").toUpperCase(),
     zip: value(formData, "zip"),
-    phoneNumber: value(formData, "phoneNumber"),
+    company: optionalValue(formData, "company"),
+    address2: optionalValue(formData, "address2"),
+    zoneCode: optionalValue(formData, "zoneCode")?.toUpperCase(),
+    phoneNumber: submittedPhone?.replace(/[\s().-]/g, ""),
   };
   const fieldErrors: Record<string, string> = {};
   for (const field of ["firstName", "lastName", "address1", "city", "territoryCode", "zip"] as const) {

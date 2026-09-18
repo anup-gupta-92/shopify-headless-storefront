@@ -23,7 +23,7 @@ export default function ProfileForm({ customer }: { customer: CustomerIdentity }
       <div className="text-sm"><span className="font-medium">Email</span><p className="mt-2 break-all text-muted">{customer.emailAddress?.emailAddress || "Not supplied"}</p></div>
       <div className="text-sm"><span className="font-medium">Phone</span><p className="mt-2 text-muted">{customer.phoneNumber?.phoneNumber || "Not supplied"}</p></div>
     </div>
-    <p className="mt-5 text-sm text-muted">Email, phone and sign-in details are managed by Shopify&rsquo;s hosted customer account.</p>
+    <p className="mt-5 text-sm text-muted">The Customer Account API currently allows this storefront to update your name only. Email, phone and sign-in details remain managed by Shopify&rsquo;s hosted customer account.</p>
     <div className="mt-5"><SubmitButton idle="Save profile" pending="Saving…" /></div>
     {state.status !== "idle" && <p aria-live="polite" className={`mt-3 text-sm ${state.status === "error" ? "text-red-600 dark:text-red-300" : "text-primary"}`}>{state.message}</p>}
   </form>;
