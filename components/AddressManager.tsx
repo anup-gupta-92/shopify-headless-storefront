@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useId, useState } from "react";
+import { useActionState, useEffect, useId, useRef, useState } from "react";
 import {
   createAddressAction,
   deleteAddressAction,
@@ -79,10 +79,20 @@ function AddressFields({ address, errors = {} }: { address?: CustomerAddress; er
 
 function AddAddressForm() {
   const [state, action] = useActionState(createAddressAction, INITIAL_ACCOUNT_ACTION_STATE);
-  return <details className="rounded-xl border border-border bg-surface p-5">
+  const detailsRef = useRef<HTMLDetailsElement>(null);
+  const formRef = useRef<HTMLFormElement>(null);
+  const [resetVersion, setResetVersion] = useState(0);
+
+  useEffect(() => {
+    if (state.status !== "success") return;
+    formRef.current?.reset();
+    if (detailsRef.current) detailsRef.current.open = false;
+  }, [state]);
+
+  return <details ref={detailsRef} className="rounded-xl border border-border bg-surface p-5">
     <summary className="cursor-pointer rounded font-bold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">Add a new address</summary>
-    <form action={action} className="mt-5">
-      <AddressFields errors={state.fieldErrors} />
+    <form ref={formRef} action={action} onReset={() => setResetVersion((version) => version + 1)} className="mt-5">
+      <AddressFields key={resetVersion} errors={state.fieldErrors} />
       <label className="mt-4 flex items-center gap-3 text-sm"><input type="checkbox" name="defaultAddress" className="size-4 accent-primary" />Set as default address</label>
       <div className="mt-5"><SubmitButton idle="Add address" pending="Adding…" /></div>
       <Feedback state={state} />
@@ -94,8 +104,14 @@ function AddressActions({ address }: { address: CustomerAddress }) {
   const [updateState, updateAction] = useActionState(updateAddressAction, INITIAL_ACCOUNT_ACTION_STATE);
   const [defaultState, defaultAction] = useActionState(setDefaultAddressAction, INITIAL_ACCOUNT_ACTION_STATE);
   const [deleteState, deleteAction] = useActionState(deleteAddressAction, INITIAL_ACCOUNT_ACTION_STATE);
+  const editDetailsRef = useRef<HTMLDetailsElement>(null);
+
+  useEffect(() => {
+    if (updateState.status === "success" && editDetailsRef.current) editDetailsRef.current.open = false;
+  }, [updateState]);
+
   return <div className="mt-5 border-t border-border pt-4">
-    <details>
+    <details ref={editDetailsRef}>
       <summary className="cursor-pointer rounded text-sm font-semibold text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">Edit address</summary>
       <form action={updateAction} className="mt-5">
         <input type="hidden" name="addressId" value={address.id} />
