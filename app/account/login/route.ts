@@ -7,11 +7,15 @@ import {
   randomBase64Url,
 } from "@/lib/shopify/customer-account/oauth";
 import { clearPendingOAuth, setPendingOAuth } from "@/lib/shopify/customer-account/session";
+import { isCustomerAccountFixtureEnabled } from "@/lib/shopify/customer-account/development-fixtures";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
   const origin = request.nextUrl.origin;
+  if (isCustomerAccountFixtureEnabled()) {
+    return NextResponse.redirect(new URL("/account", origin));
+  }
   const redirectUri = `${origin}/account/authorize`;
 
   try {

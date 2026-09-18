@@ -16,12 +16,14 @@ export default function ProductCarousel({ products }: ProductCarouselProps) {
   const [itemsPerPage, setItemsPerPage] = useState(4);
 
   // Match the responsive card widths below:
-  // mobile = 1, sm = 2, md = 3, lg+ = 4 visible products.
+  // mobile = 1, sm = 2, md = 3, lg = 4 and wide desktop = 5 products.
   useEffect(() => {
     const updateItemsPerPage = () => {
       const width = window.innerWidth;
 
-      if (width >= 1024) {
+      if (width >= 1536) {
+        setItemsPerPage(5);
+      } else if (width >= 1024) {
         setItemsPerPage(4);
       } else if (width >= 768) {
         setItemsPerPage(3);
@@ -120,7 +122,7 @@ export default function ProductCarousel({ products }: ProductCarouselProps) {
           {products.map((product) => (
             <div 
               key={product.id}
-              className="w-full flex-shrink-0 snap-start p-2 [scroll-snap-stop:always] sm:w-1/2 md:w-1/3 lg:w-1/4"
+              className="w-full flex-shrink-0 snap-start p-2 [scroll-snap-stop:always] sm:w-1/2 md:w-1/3 lg:w-1/4 2xl:w-1/5"
             >
               <ProductCard
                 title={product.title}

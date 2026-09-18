@@ -14,7 +14,7 @@ export default function ShopLoading() {
           <div className="hidden h-[30rem] rounded-xl border border-border bg-surface lg:block" />
           <div className="min-w-0">
             <div className="mb-5 ml-auto h-11 w-44 rounded-lg bg-surface-muted" />
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
               {Array.from({ length: 9 }, (_, index) => <ProductCardSkeleton key={index} />)}
             </div>
           </div>
