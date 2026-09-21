@@ -7,15 +7,16 @@ import type { Review, ReviewPage } from "@/lib/judgeme/types";
 
 function ReviewCard({ review }: { review: Review }) {
   return <article className="min-w-0 rounded-xl border border-border bg-surface p-5 sm:p-6">
+    <header className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted">
+      <span className="font-semibold text-foreground">{review.reviewerName}</span>
+      {review.verifiedBuyer && <span className="rounded-full bg-primary/10 px-2 py-0.5 font-medium text-primary">Verified buyer</span>}
+      {review.date && <time dateTime={review.date}>{new Intl.DateTimeFormat("en-GB", { dateStyle: "medium" }).format(new Date(review.date))}</time>}
+    </header>
     <ReviewStars average={review.rating} count={1} compact showCount={false} />
     {review.title && <h3 className="mt-3 break-words font-bold">{review.title}</h3>}
     {review.body && <p className="mt-3 whitespace-pre-line break-words text-sm leading-relaxed text-foreground">{review.body}</p>}
     {review.images.length > 0 && <div className="mt-4 flex flex-wrap gap-3">{review.images.map((url, index) => <Image key={url} src={url} alt={`Photo ${index + 1} attached to review by ${review.reviewerName}`} width={112} height={112} unoptimized className="size-28 rounded-lg border border-border object-cover" />)}</div>}
-    <footer className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted">
-      <span className="font-semibold text-foreground">{review.reviewerName}</span>
-      {review.verifiedBuyer && <span className="rounded-full bg-primary/10 px-2 py-0.5 font-medium text-primary">Verified buyer</span>}
-      {review.date && <time dateTime={review.date}>{new Intl.DateTimeFormat("en-GB", { dateStyle: "medium" }).format(new Date(review.date))}</time>}
-    </footer>
+    
   </article>;
 }
 
