@@ -1,4 +1,5 @@
 export interface Money { amount: string; currencyCode: string }
+import type { ReviewRating } from "@/lib/judgeme/types";
 export interface ProductImage { url: string; altText: string | null; width: number | null; height: number | null }
 export interface SelectedOption { name: string; value: string }
 export interface ProductOption { name: string; values: string[] }
@@ -8,6 +9,7 @@ export interface UnitPriceMeasurement {
 }
 export interface ProductSummary {
   id: string; handle: string; title: string; category: string; image: string;
+  reviewRating?: ReviewRating;
   imageAlt?: string; price: string; currencyCode: string; available: boolean;
   vendor: string;
   priceRange: { minVariantPrice: Money; maxVariantPrice: Money };
@@ -35,6 +37,7 @@ export interface ProductVariant {
 
 export interface Product {
   id?: string;
+  reviewRating?: ReviewRating;
   handle?: string;
   currencyCode?: string;
   imageAlt?: string;

@@ -74,6 +74,7 @@ export default function ShopProductGrid({
           imageAlt={product.imageAlt}
           handle={product.handle}
           cardAction={product.cardAction}
+          reviewRating={product.reviewRating}
         />)}
         {loading && Array.from({ length: 3 }, (_, index) => <ProductCardSkeleton key={`loading-${index}`} />)}
       </div>

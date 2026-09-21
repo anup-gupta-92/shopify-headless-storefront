@@ -5,6 +5,7 @@ import { storefrontRequest } from "./client";
 import { HOMEPAGE_PRODUCTS_QUERY, PRODUCT_QUERY, PRODUCT_VARIANTS_QUERY, SHOP_QUERY, PRODUCT_RECOMMENDATIONS_QUERY } from "./queries";
 import { formatMoney, formatUkPriceExcludingVat } from "./pricing";
 import type { ShopifyProduct, ShopifyProductSummary, ShopifyVariant, VariantConnection } from "./types";
+import { ratingFromMetafields } from "@/lib/judgeme/product";
 
 export const HOMEPAGE_PRODUCT_LIMIT = 12;
 export const HOMEPAGE_CANDIDATE_LIMIT = 36;
@@ -40,6 +41,7 @@ export function mapProductSummary(product: ShopifyProductSummary): ProductSummar
   const soleVariant = cardVariants.length === 1 ? cardVariants[0] : undefined;
   return {
     id: product.id, handle: product.handle, title: product.title,
+    reviewRating: ratingFromMetafields(product),
     category: product.productType, vendor: product.vendor, available: product.availableForSale,
     image: product.featuredImage?.url ?? "", imageAlt: product.featuredImage?.altText ?? product.title,
     price: `${min.amount !== max.amount ? "From " : ""}${formatMoney(min)}`,

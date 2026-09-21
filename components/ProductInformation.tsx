@@ -7,6 +7,7 @@ import { useSearchParams } from "next/navigation";
 import { resolveVariant, variantUrlId } from "@/lib/product-options";
 import { formatMoney } from "@/lib/shopify/pricing";
 import { useCart } from "@/components/CartProvider";
+import ReviewStars from "@/components/ReviewStars";
 
 export default function ProductInformation({ product }: { product: Product }) {
   const searchParams = useSearchParams();
@@ -73,6 +74,7 @@ export default function ProductInformation({ product }: { product: Product }) {
         <p className="text-sm font-bold uppercase tracking-wider text-primary">{product.category}</p>
       )}
       <h1 className="mt-2 break-words text-3xl font-extrabold tracking-tight md:text-4xl lg:text-5xl">{product.title}</h1>
+      {product.reviewRating && <a href="#customer-reviews" className="mt-3 inline-flex min-h-10 items-center rounded text-sm hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary" aria-label={`Read ${product.reviewRating.count} customer reviews`}><ReviewStars {...product.reviewRating} /></a>}
       <div aria-live="polite" aria-atomic="true" className="mt-3 space-y-2">
         {productCode && <p className="break-words font-mono text-sm text-muted">Product Code: {productCode}</p>}
         <p className="mt-4 flex flex-wrap items-baseline gap-2">

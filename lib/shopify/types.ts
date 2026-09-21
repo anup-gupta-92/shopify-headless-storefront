@@ -1,4 +1,5 @@
 import type { Money, ProductImage, ProductOption, SelectedOption, UnitPriceMeasurement } from "@/types/product";
+import type { RatingMetafields } from "@/lib/judgeme/product";
 
 export interface ShopifyVariant {
   id: string; title: string; sku: string | null; availableForSale: boolean;
@@ -10,7 +11,7 @@ export interface VariantConnection {
   nodes: ShopifyVariant[];
   pageInfo: { hasNextPage: boolean; endCursor: string | null };
 }
-export interface ShopifyProductSummary {
+export interface ShopifyProductSummary extends RatingMetafields {
   id: string; handle: string; title: string; productType: string; vendor: string; availableForSale: boolean;
   featuredImage: ProductImage | null;
   priceRange: { minVariantPrice: Money; maxVariantPrice: Money };

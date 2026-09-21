@@ -134,6 +134,7 @@ export default function ProductCarousel({ products }: ProductCarouselProps) {
                 imageAlt={product.imageAlt}
                 handle={product.handle}
                 cardAction={product.cardAction}
+                reviewRating={product.reviewRating}
               />
             </div>
           ))}

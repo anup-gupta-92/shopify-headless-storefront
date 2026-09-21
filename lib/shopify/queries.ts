@@ -8,6 +8,8 @@ const variantFields = `
   unitPriceMeasurement { measuredType quantityUnit quantityValue referenceUnit referenceValue }
 `;
 const cardVariantFields = `variants(first: 2) { nodes { id availableForSale } }`;
+const reviewFields = `reviewRating: metafield(namespace: "reviews", key: "rating") { value }
+  reviewCount: metafield(namespace: "reviews", key: "rating_count") { value }`;
 
 export const HOMEPAGE_PRODUCTS_QUERY = `
   query HomepageProducts($first: Int!) {
@@ -17,6 +19,7 @@ export const HOMEPAGE_PRODUCTS_QUERY = `
         featuredImage { ${imageFields} }
         priceRange { minVariantPrice { amount currencyCode } maxVariantPrice { amount currencyCode } }
         ${cardVariantFields}
+        ${reviewFields}
       }
     }
   }
@@ -35,6 +38,7 @@ export const PRODUCT_QUERY = `
         nodes { ${variantFields} }
         pageInfo { hasNextPage endCursor }
       }
+      ${reviewFields}
     }
   }
 `;
@@ -58,6 +62,7 @@ export const PRODUCT_RECOMMENDATIONS_QUERY = `
       featuredImage { ${imageFields} }
       priceRange { minVariantPrice { amount currencyCode } maxVariantPrice { amount currencyCode } }
       ${cardVariantFields}
+      ${reviewFields}
     }
   }
 `;
@@ -76,6 +81,7 @@ export const SHOP_PRODUCTS_QUERY = `
         featuredImage { ${imageFields} }
         priceRange { minVariantPrice { amount currencyCode } maxVariantPrice { amount currencyCode } }
         ${cardVariantFields}
+        ${reviewFields}
       }
       pageInfo { hasNextPage endCursor }
     }
@@ -116,6 +122,7 @@ export const COLLECTION_PRODUCTS_QUERY = `
           featuredImage { ${imageFields} }
           priceRange { minVariantPrice { amount currencyCode } maxVariantPrice { amount currencyCode } }
           ${cardVariantFields}
+          ${reviewFields}
         }
         pageInfo { hasNextPage endCursor }
       }

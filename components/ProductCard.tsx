@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useCart } from "@/components/CartProvider";
 import type { ProductSummary } from "@/types/product";
+import ReviewStars from "@/components/ReviewStars";
 
 interface ProductCardProps {
   title: string;
@@ -17,9 +18,10 @@ interface ProductCardProps {
   handle: string;
   imageUrl: string;
   cardAction: ProductSummary["cardAction"];
+  reviewRating?: ProductSummary["reviewRating"];
 }
 
-export default function ProductCard({ title, price, sku, vendor, category, available = true, handle, imageUrl, imageAlt, cardAction }: ProductCardProps) {
+export default function ProductCard({ title, price, sku, vendor, category, available = true, handle, imageUrl, imageAlt, cardAction, reviewRating }: ProductCardProps) {
   const { addItem, loading: cartLoading } = useCart();
   const [adding, setAdding] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -51,6 +53,7 @@ export default function ProductCard({ title, price, sku, vendor, category, avail
       {sku && <span className="pointer-events-none mb-1 block font-mono text-xs text-muted">Product Code: {sku}</span>}
       {meta && <span className="pointer-events-none mb-1 block text-xs font-medium uppercase tracking-wide text-muted">{meta}</span>}
       <h3 className="pointer-events-none mb-1 text-lg font-bold text-foreground transition group-hover/card:text-primary">{title}</h3>
+      <div className="pointer-events-none min-h-5">{reviewRating && <ReviewStars {...reviewRating} compact />}</div>
       <p className="pointer-events-none mt-auto pt-2 font-medium text-accent">{price}</p>
       {!available && <p className="pointer-events-none mt-2 text-sm font-medium text-muted">Currently unavailable</p>}
 
