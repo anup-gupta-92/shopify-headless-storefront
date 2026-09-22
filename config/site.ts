@@ -19,6 +19,9 @@ export const siteConfig = {
     businessName: "Apex Business Supplies",
     tagline: "Packaging and workplace essentials",
   },
+  contact: {
+    email: "info@apexbusinesssupplies.co.uk",
+  },
 } as const;
 
 export type MainNavItem = (typeof siteConfig.mainNav)[number];

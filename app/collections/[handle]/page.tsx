@@ -79,7 +79,7 @@ export default async function CollectionPage({ params, searchParams }: Collectio
           queryString={queryString}
           basePath={basePath}
           showCategories={false}
-          facetDescription="Brand counts include in-stock products in this collection only."
+          facetDescription=""
         >
           <ShopProductGrid
             key={queryString || "default"}
