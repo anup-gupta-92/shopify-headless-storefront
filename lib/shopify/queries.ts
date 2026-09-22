@@ -67,6 +67,16 @@ export const PRODUCT_RECOMMENDATIONS_QUERY = `
   }
 `;
 
+// Resolves current storefront products for historical Customer Account order
+// lines in one request. Unpublished or deleted products return null nodes.
+export const PRODUCTS_BY_IDS_QUERY = `
+  query ProductsByIds($ids: [ID!]!) {
+    nodes(ids: $ids) {
+      ... on Product { id handle }
+    }
+  }
+`;
+
 export const SHOP_PRODUCTS_QUERY = `
   query ShopProducts(
     $first: Int!

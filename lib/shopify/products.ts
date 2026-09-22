@@ -2,7 +2,7 @@ import "server-only";
 import { cache } from "react";
 import type { Product, ProductSummary, ProductVariant } from "@/types/product";
 import { storefrontRequest } from "./client";
-import { HOMEPAGE_PRODUCTS_QUERY, PRODUCT_QUERY, PRODUCT_VARIANTS_QUERY, SHOP_QUERY, PRODUCT_RECOMMENDATIONS_QUERY } from "./queries";
+import { HOMEPAGE_PRODUCTS_QUERY, PRODUCT_QUERY, PRODUCT_VARIANTS_QUERY, SHOP_QUERY, PRODUCT_RECOMMENDATIONS_QUERY, PRODUCTS_BY_IDS_QUERY } from "./queries";
 import { formatMoney, formatUkPriceExcludingVat } from "./pricing";
 import type { ShopifyProduct, ShopifyProductSummary, ShopifyVariant, VariantConnection } from "./types";
 import { ratingFromMetafields } from "@/lib/judgeme/product";
@@ -10,6 +10,18 @@ import { ratingFromMetafields } from "@/lib/judgeme/product";
 export const HOMEPAGE_PRODUCT_LIMIT = 12;
 export const HOMEPAGE_CANDIDATE_LIMIT = 36;
 export const RECOMMENDATION_LIMIT = 4;
+
+export interface ProductReference {
+  id: string;
+  handle: string;
+}
+
+export async function getProductReferencesByIds(productIds: string[]): Promise<Map<string, ProductReference>> {
+  const ids = [...new Set(productIds.filter((id) => /^gid:\/\/shopify\/Product\/[1-9]\d*$/.test(id)))].slice(0, 100);
+  if (ids.length === 0) return new Map();
+  const data = await storefrontRequest<{ nodes: Array<ProductReference | null> }>(PRODUCTS_BY_IDS_QUERY, { ids });
+  return new Map(data.nodes.filter((product): product is ProductReference => Boolean(product?.id && product.handle)).map((product) => [product.id, product]));
+}
 
 // Shopify defines availableForSale as at least one variant being purchasable.
 export function eligibleProducts(products: ShopifyProductSummary[], limit: number, excludeId?: string) {

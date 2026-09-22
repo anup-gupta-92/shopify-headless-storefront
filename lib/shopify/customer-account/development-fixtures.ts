@@ -80,8 +80,8 @@ export const DEVELOPMENT_ORDERS: CustomerOrderDetail[] = [
     totalShipping: { amount: "0.00", currencyCode: "GBP" },
     totalTax: { amount: "11.24", currencyCode: "GBP" },
     lines: [
-      { id: "fixture-line-1", name: "Corrugated Cardboard Boxes", quantity: 2, sku: "FIX-BOX-50", variantTitle: "Pack of 50", variantOptions: [{ name: "Pack", value: "50" }], image: placeholderImage, price: { amount: "24.99", currencyCode: "GBP" }, totalPrice: { amount: "49.98", currencyCode: "GBP" }, totalDiscount: { amount: "0.00", currencyCode: "GBP" } },
-      { id: "fixture-line-2", name: "Packaging Tape", quantity: 1, sku: "FIX-TAPE-BRN", variantTitle: "Brown", variantOptions: [{ name: "Colour", value: "Brown" }], image: placeholderImage, price: { amount: "6.26", currencyCode: "GBP" }, totalPrice: { amount: "6.26", currencyCode: "GBP" }, totalDiscount: { amount: "0.00", currencyCode: "GBP" } },
+      { id: "fixture-line-1", productId: null, name: "Corrugated Cardboard Boxes", quantity: 2, sku: "FIX-BOX-50", variantTitle: "Pack of 50", variantOptions: [{ name: "Pack", value: "50" }], image: placeholderImage, price: { amount: "24.99", currencyCode: "GBP" }, totalPrice: { amount: "49.98", currencyCode: "GBP" }, totalDiscount: { amount: "0.00", currencyCode: "GBP" } },
+      { id: "fixture-line-2", productId: null, name: "Packaging Tape", quantity: 1, sku: "FIX-TAPE-BRN", variantTitle: "Brown", variantOptions: [{ name: "Colour", value: "Brown" }], image: placeholderImage, price: { amount: "6.26", currencyCode: "GBP" }, totalPrice: { amount: "6.26", currencyCode: "GBP" }, totalDiscount: { amount: "0.00", currencyCode: "GBP" } },
     ],
     shippingAddress: DEVELOPMENT_ADDRESSES.addresses[0],
     billingAddress: DEVELOPMENT_ADDRESSES.addresses[0],
@@ -102,7 +102,7 @@ export const DEVELOPMENT_ORDERS: CustomerOrderDetail[] = [
     totalShipping: { amount: "5.00", currencyCode: "GBP" },
     totalTax: { amount: "20.00", currencyCode: "GBP" },
     lines: [
-      { id: "fixture-line-3", name: "Protective Work Gloves", quantity: 2, sku: "FIX-GLV-L", variantTitle: "Large / Pack of 50", variantOptions: [{ name: "Size", value: "Large" }, { name: "Pack", value: "50" }], image: placeholderImage, price: { amount: "49.99", currencyCode: "GBP" }, totalPrice: { amount: "99.98", currencyCode: "GBP" }, totalDiscount: { amount: "5.00", currencyCode: "GBP" } },
+      { id: "fixture-line-3", productId: "gid://shopify/Product/8039274905824", name: "Protective Work Gloves", quantity: 2, sku: "FIX-GLV-L", variantTitle: "Large / Pack of 50", variantOptions: [{ name: "Size", value: "Large" }, { name: "Pack", value: "50" }], image: placeholderImage, price: { amount: "49.99", currencyCode: "GBP" }, totalPrice: { amount: "99.98", currencyCode: "GBP" }, totalDiscount: { amount: "5.00", currencyCode: "GBP" } },
     ],
     shippingAddress: DEVELOPMENT_ADDRESSES.addresses[1],
     billingAddress: DEVELOPMENT_ADDRESSES.addresses[0],
@@ -122,7 +122,7 @@ export const DEVELOPMENT_ORDERS: CustomerOrderDetail[] = [
     totalDiscounts: { amount: "0.00", currencyCode: "GBP" },
     totalShipping: { amount: "0.00", currencyCode: "GBP" },
     totalTax: { amount: "3.00", currencyCode: "GBP" },
-    lines: [{ id: "fixture-line-4", name: "Mailing Bags", quantity: 1, sku: "FIX-MAIL-100", variantTitle: "Pack of 100", variantOptions: [{ name: "Pack", value: "100" }], image: placeholderImage, price: { amount: "15.00", currencyCode: "GBP" }, totalPrice: { amount: "15.00", currencyCode: "GBP" }, totalDiscount: { amount: "0.00", currencyCode: "GBP" } }],
+    lines: [{ id: "fixture-line-4", productId: null, name: "Mailing Bags", quantity: 1, sku: "FIX-MAIL-100", variantTitle: "Pack of 100", variantOptions: [{ name: "Pack", value: "100" }], image: placeholderImage, price: { amount: "15.00", currencyCode: "GBP" }, totalPrice: { amount: "15.00", currencyCode: "GBP" }, totalDiscount: { amount: "0.00", currencyCode: "GBP" } }],
     shippingAddress: DEVELOPMENT_ADDRESSES.addresses[0],
     billingAddress: DEVELOPMENT_ADDRESSES.addresses[0],
     fulfillments: [],

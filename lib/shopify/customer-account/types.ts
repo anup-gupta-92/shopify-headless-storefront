@@ -50,6 +50,7 @@ export interface CustomerOrderSummary {
 
 export interface CustomerOrderLine {
   id: string;
+  productId: string | null;
   name: string;
   quantity: number;
   sku: string | null;

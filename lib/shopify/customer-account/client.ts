@@ -97,7 +97,7 @@ const CUSTOMER_ORDER_QUERY = `
       totalTax { ${MONEY_FIELDS} }
       lineItems(first: 100) {
         nodes {
-          id name quantity sku variantTitle
+          id productId name quantity sku variantTitle
           variantOptions { name value }
           image { ${IMAGE_FIELDS} }
           price { ${MONEY_FIELDS} }

@@ -63,7 +63,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
         </div>
 
         <ProductDescription html={product.descriptionHtml} text={product.description} />
-        {product.id && <Suspense fallback={<ReviewsSkeleton />}><ProductReviews productId={product.id} /></Suspense>}
+        {product.id && <Suspense fallback={<ReviewsSkeleton />}><ProductReviews productId={product.id} productTitle={product.title} rating={product.reviewRating} /></Suspense>}
         {recommendations.length > 0 && <section className="mt-12" aria-labelledby="recommendations">
           <h2 id="recommendations" className="mb-6 text-2xl font-bold">You May Also Like</h2>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
