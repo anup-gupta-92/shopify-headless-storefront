@@ -21,7 +21,6 @@ export interface CartLine {
 }
 
 export interface Cart {
-  checkoutUrl: string;
   totalQuantity: number;
   lines: CartLine[];
   cost: {

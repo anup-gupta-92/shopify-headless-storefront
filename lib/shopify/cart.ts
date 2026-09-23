@@ -21,7 +21,6 @@ interface ShopifyCartLine {
 
 interface ShopifyCart {
   id: string;
-  checkoutUrl: string;
   totalQuantity: number;
   lines: { nodes: ShopifyCartLine[] };
   cost: { subtotalAmount: Money; totalAmount: Money };
@@ -44,7 +43,6 @@ interface CartLineInput {
 
 const CART_FIELDS = `
   id
-  checkoutUrl
   totalQuantity
   cost {
     subtotalAmount { amount currencyCode }
@@ -66,6 +64,40 @@ const CART_FIELDS = `
           product { title handle }
         }
       }
+    }
+  }
+`;
+
+interface ShopifyCheckoutCart {
+  checkoutUrl: string;
+  totalQuantity: number;
+  lines: { nodes: Array<{ id: string }> };
+}
+
+interface CheckoutBuyerIdentityPayload {
+  cart: ShopifyCheckoutCart | null;
+  userErrors: CartUserError[];
+}
+
+const CART_CHECKOUT_QUERY = `
+  query CartCheckout($id: ID!) {
+    cart(id: $id) {
+      checkoutUrl
+      totalQuantity
+      lines(first: 1) { nodes { id } }
+    }
+  }
+`;
+
+const CART_CHECKOUT_BUYER_IDENTITY_MUTATION = `
+  mutation CartCheckoutBuyerIdentity($cartId: ID!, $buyerIdentity: CartBuyerIdentityInput!) {
+    cartBuyerIdentityUpdate(cartId: $cartId, buyerIdentity: $buyerIdentity) {
+      cart {
+        checkoutUrl
+        totalQuantity
+        lines(first: 1) { nodes { id } }
+      }
+      userErrors { field message }
     }
   }
 `;
@@ -138,7 +170,6 @@ function mapLine(line: ShopifyCartLine): CartLine {
 
 export function toPublicCart(cart: ShopifyCart): Cart {
   return {
-    checkoutUrl: cart.checkoutUrl,
     totalQuantity: cart.totalQuantity,
     lines: cart.lines.nodes.map(mapLine),
     cost: cart.cost,
@@ -159,6 +190,29 @@ export async function getCart(cartId: string, buyerIp?: string): Promise<Shopify
     requestOptions(buyerIp),
   );
   return data.cart;
+}
+
+export async function getCartForCheckout(cartId: string, buyerIp?: string): Promise<ShopifyCheckoutCart | null> {
+  const data = await storefrontRequest<{ cart: ShopifyCheckoutCart | null }>(
+    CART_CHECKOUT_QUERY,
+    { id: cartId },
+    requestOptions(buyerIp),
+  );
+  return data.cart;
+}
+
+export async function getAuthenticatedCartForCheckout(
+  cartId: string,
+  customerAccessToken: string,
+  buyerIp?: string,
+): Promise<ShopifyCheckoutCart | null> {
+  const data = await storefrontRequest<{ cartBuyerIdentityUpdate: CheckoutBuyerIdentityPayload }>(
+    CART_CHECKOUT_BUYER_IDENTITY_MUTATION,
+    { cartId, buyerIdentity: { customerAccessToken } },
+    requestOptions(buyerIp),
+  );
+  if (data.cartBuyerIdentityUpdate.userErrors.length) throw new CartOperationError();
+  return data.cartBuyerIdentityUpdate.cart;
 }
 
 export async function cartCreate(lines: CartLineInput[], buyerIp?: string): Promise<ShopifyCart> {

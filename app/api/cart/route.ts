@@ -1,4 +1,3 @@
-import { isIP } from "node:net";
 import { type NextRequest, NextResponse } from "next/server";
 import {
   CartOperationError,
@@ -9,46 +8,19 @@ import {
   getCart,
   toPublicCart,
 } from "@/lib/shopify/cart";
+import {
+  CART_COOKIE,
+  clearCartCookie,
+  getBuyerIp,
+  setCartCookie,
+  validCartId,
+} from "@/lib/shopify/cart-http";
 
-const CART_COOKIE = "apex_cart";
-const CART_COOKIE_MAX_AGE = 60 * 60 * 24 * 30;
-const CART_ID_PREFIX = "gid://shopify/Cart/";
 const VARIANT_ID_PREFIX = "gid://shopify/ProductVariant/";
 const LINE_ID_PREFIX = "gid://shopify/CartLine/";
 
-function buyerIp(request: NextRequest): string | undefined {
-  if (!process.env.VERCEL) return undefined;
-  const raw = request.headers.get("x-vercel-forwarded-for") ?? request.headers.get("x-forwarded-for");
-  const candidate = raw?.split(",")[0].trim();
-  return candidate && isIP(candidate) ? candidate : undefined;
-}
-
-function validCartId(value: string | undefined): value is string {
-  return Boolean(value?.startsWith(CART_ID_PREFIX) && value.includes("?key="));
-}
-
 function positiveQuantity(value: unknown): value is number {
   return Number.isSafeInteger(value) && Number(value) >= 1 && Number(value) <= 999;
-}
-
-function setCartCookie(response: NextResponse, cartId: string) {
-  response.cookies.set(CART_COOKIE, cartId, {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
-    maxAge: CART_COOKIE_MAX_AGE,
-  });
-}
-
-function clearCartCookie(response: NextResponse) {
-  response.cookies.set(CART_COOKIE, "", {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
-    maxAge: 0,
-  });
 }
 
 function cartResponse(cart: Awaited<ReturnType<typeof getCart>>) {
@@ -73,7 +45,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const cart = await getCart(cartId, buyerIp(request));
+    const cart = await getCart(cartId, getBuyerIp(request));
     const response = cartResponse(cart);
     if (!cart) clearCartCookie(response);
     return response;
@@ -94,7 +66,7 @@ export async function POST(request: NextRequest) {
 
   const input = body as Record<string, unknown>;
   const action = input.action;
-  const ip = buyerIp(request);
+  const ip = getBuyerIp(request);
   const savedCartId = request.cookies.get(CART_COOKIE)?.value;
   const cartId = validCartId(savedCartId) ? savedCartId : undefined;
 

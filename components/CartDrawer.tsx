@@ -3,15 +3,27 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef } from "react";
+import { flushSync } from "react-dom";
 import { useCart } from "@/components/CartProvider";
+import { startNavigationProgress } from "@/components/RouteLoadingSignal";
 import { formatMoney } from "@/lib/shopify/pricing";
 
 const focusClass = "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
 
 export default function CartDrawer() {
-  const { cart, drawerOpen, loading, error, closeDrawer, clearError, updateLine, removeLine } = useCart();
+  const { cart, drawerOpen, loading, checkoutLoading, error, closeDrawer, clearError, updateLine, removeLine, prepareCheckout } = useCart();
   const drawerRef = useRef<HTMLElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
+
+  async function handleCheckout() {
+    try {
+      const checkoutUrl = await prepareCheckout();
+      flushSync(() => startNavigationProgress());
+      window.location.assign(checkoutUrl);
+    } catch {
+      // CartProvider owns the buyer-safe error state and keeps the drawer open.
+    }
+  }
 
   useEffect(() => {
     if (!drawerOpen) return;
@@ -151,8 +163,8 @@ export default function CartDrawer() {
                 <span>Subtotal</span>
                 <span className="text-lg">{formatMoney(cart.cost.subtotalAmount)}</span>
               </div>
-              <button type="button" disabled className="min-h-12 w-full cursor-not-allowed rounded-xl bg-surface-muted px-5 py-3 font-semibold text-muted">
-                Checkout — Coming Next
+              <button type="button" disabled={loading || cart.totalQuantity < 1} onClick={() => void handleCheckout()} className={`min-h-12 w-full rounded-xl bg-primary px-5 py-3 font-semibold text-primary-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:bg-surface-muted disabled:text-muted ${focusClass}`}>
+                {checkoutLoading ? "Preparing checkout…" : "Checkout"}
               </button>
             </footer>
           </>

@@ -7,12 +7,14 @@ interface CartContextValue {
   cart: Cart | null;
   totalQuantity: number;
   loading: boolean;
+  checkoutLoading: boolean;
   drawerOpen: boolean;
   error: string | null;
   addItem: (merchandiseId: string, quantity: number) => Promise<void>;
   updateLine: (lineId: string, quantity: number) => Promise<void>;
   removeLine: (lineId: string) => Promise<void>;
   refreshCart: () => Promise<void>;
+  prepareCheckout: () => Promise<string>;
   openDrawer: () => void;
   closeDrawer: () => void;
   clearError: () => void;
@@ -31,13 +33,25 @@ async function fetchCurrentCart(): Promise<Cart | null> {
   return readCartResponse(response);
 }
 
+function validCheckoutUrl(value: unknown): value is string {
+  if (typeof value !== "string") return false;
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" && !url.username && !url.password;
+  } catch {
+    return false;
+  }
+}
+
 export default function CartProvider({ children }: { children: React.ReactNode }) {
   const [cart, setCart] = useState<Cart | null>(null);
   const [initializing, setInitializing] = useState(true);
   const [mutating, setMutating] = useState(false);
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const mutationInFlight = useRef(false);
+  const checkoutInFlight = useRef(false);
 
   const refreshCart = useCallback(async () => {
     try {
@@ -108,6 +122,36 @@ export default function CartProvider({ children }: { children: React.ReactNode }
     await mutate({ action: "remove", lineId });
   }, [mutate]);
 
+  const prepareCheckout = useCallback(async () => {
+    if (checkoutInFlight.current || mutationInFlight.current) {
+      throw new Error("Please wait for the current cart request to finish.");
+    }
+    checkoutInFlight.current = true;
+    setCheckoutLoading(true);
+    setError(null);
+    try {
+      const response = await fetch("/api/cart/checkout", {
+        method: "POST",
+        credentials: "same-origin",
+        cache: "no-store",
+      });
+      const body = await response.json().catch(() => null) as { checkoutUrl?: unknown; error?: string } | null;
+      if (!response.ok) {
+        if (response.status === 409 || response.status === 410) setCart(null);
+        throw new Error(body?.error || "Checkout is temporarily unavailable. Please try again.");
+      }
+      if (!validCheckoutUrl(body?.checkoutUrl)) throw new Error("Checkout is temporarily unavailable. Please try again.");
+      return body.checkoutUrl;
+    } catch (reason) {
+      const message = reason instanceof Error ? reason.message : "Checkout is temporarily unavailable. Please try again.";
+      setError(message);
+      throw new Error(message);
+    } finally {
+      checkoutInFlight.current = false;
+      setCheckoutLoading(false);
+    }
+  }, []);
+
   const openDrawer = useCallback(() => setDrawerOpen(true), []);
   const closeDrawer = useCallback(() => setDrawerOpen(false), []);
   const clearError = useCallback(() => setError(null), []);
@@ -115,13 +159,15 @@ export default function CartProvider({ children }: { children: React.ReactNode }
   const value: CartContextValue = {
     cart,
     totalQuantity: cart?.totalQuantity ?? 0,
-    loading: initializing || mutating,
+    loading: initializing || mutating || checkoutLoading,
+    checkoutLoading,
     drawerOpen,
     error,
     addItem,
     updateLine,
     removeLine,
     refreshCart,
+    prepareCheckout,
     openDrawer,
     closeDrawer,
     clearError,
