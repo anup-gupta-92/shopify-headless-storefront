@@ -73,7 +73,8 @@ function mapVariant(variant: ShopifyVariant): ProductVariant {
     : undefined;
   return {
     id: variant.id, title: variant.title, productCode: variant.sku || undefined,
-    available: variant.availableForSale, selectedOptions: variant.selectedOptions,
+    available: variant.availableForSale, currentlyNotInStock: variant.currentlyNotInStock,
+    quantityRule: variant.quantityRule, selectedOptions: variant.selectedOptions,
     price: formatMoney(variant.price), money: variant.price, currencyCode: variant.price.currencyCode,
     priceExVat: formatUkPriceExcludingVat(variant.price), compareAtPrice: variant.compareAtPrice ?? undefined,
     unitPrice, unitPriceMoney: variant.unitPrice ?? undefined, unitPriceMeasurement: measurement ?? undefined,

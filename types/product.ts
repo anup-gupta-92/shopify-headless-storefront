@@ -7,6 +7,11 @@ export interface UnitPriceMeasurement {
   measuredType: string | null; quantityUnit: string | null; quantityValue: number;
   referenceUnit: string | null; referenceValue: number;
 }
+export interface QuantityRule {
+  minimum: number;
+  maximum: number | null;
+  increment: number;
+}
 export interface ProductSummary {
   id: string; handle: string; title: string; category: string; image: string;
   reviewRating?: ReviewRating;
@@ -33,6 +38,10 @@ export interface ProductVariant {
   productCode?: string;
   unitPrice?: string;
   available?: boolean;
+  currentlyNotInStock?: boolean;
+  /** Available only when the Storefront token has product-inventory access. */
+  quantityAvailable?: number | null;
+  quantityRule?: QuantityRule;
 }
 
 export interface Product {

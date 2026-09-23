@@ -2,7 +2,8 @@ export const SHOP_QUERY = `query ShopConnection { shop { name } }`;
 
 const imageFields = `url altText width height`;
 const variantFields = `
-  id title sku availableForSale selectedOptions { name value }
+  id title sku availableForSale currentlyNotInStock selectedOptions { name value }
+  quantityRule { minimum maximum increment }
   price { amount currencyCode } compareAtPrice { amount currencyCode }
   unitPrice { amount currencyCode }
   unitPriceMeasurement { measuredType quantityUnit quantityValue referenceUnit referenceValue }

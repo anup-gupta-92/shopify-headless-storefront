@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
-import type { Cart } from "@/types/cart";
+import type { Cart, CartAddLine } from "@/types/cart";
 
 interface CartContextValue {
   cart: Cart | null;
@@ -11,6 +11,7 @@ interface CartContextValue {
   drawerOpen: boolean;
   error: string | null;
   addItem: (merchandiseId: string, quantity: number) => Promise<void>;
+  addLines: (lines: CartAddLine[], options?: { openDrawer?: boolean }) => Promise<void>;
   updateLine: (lineId: string, quantity: number) => Promise<void>;
   removeLine: (lineId: string) => Promise<void>;
   refreshCart: () => Promise<void>;
@@ -114,6 +115,14 @@ export default function CartProvider({ children }: { children: React.ReactNode }
     setDrawerOpen(true);
   }, [mutate]);
 
+  const addLines = useCallback(async (
+    lines: CartAddLine[],
+    options: { openDrawer?: boolean } = {},
+  ) => {
+    await mutate({ action: "addLines", lines });
+    if (options.openDrawer !== false) setDrawerOpen(true);
+  }, [mutate]);
+
   const updateLine = useCallback(async (lineId: string, quantity: number) => {
     await mutate({ action: "update", lineId, quantity });
   }, [mutate]);
@@ -164,6 +173,7 @@ export default function CartProvider({ children }: { children: React.ReactNode }
     drawerOpen,
     error,
     addItem,
+    addLines,
     updateLine,
     removeLine,
     refreshCart,

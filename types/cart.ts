@@ -28,3 +28,8 @@ export interface Cart {
     totalAmount: Money;
   };
 }
+
+export interface CartAddLine {
+  merchandiseId: string;
+  quantity: number;
+}

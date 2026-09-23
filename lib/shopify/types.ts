@@ -1,8 +1,10 @@
-import type { Money, ProductImage, ProductOption, SelectedOption, UnitPriceMeasurement } from "@/types/product";
+import type { Money, ProductImage, ProductOption, QuantityRule, SelectedOption, UnitPriceMeasurement } from "@/types/product";
 import type { RatingMetafields } from "@/lib/judgeme/product";
 
 export interface ShopifyVariant {
   id: string; title: string; sku: string | null; availableForSale: boolean;
+  currentlyNotInStock: boolean;
+  quantityRule: QuantityRule;
   selectedOptions: SelectedOption[];
   price: Money; compareAtPrice: Money | null;
   unitPrice: Money | null; unitPriceMeasurement: UnitPriceMeasurement | null;

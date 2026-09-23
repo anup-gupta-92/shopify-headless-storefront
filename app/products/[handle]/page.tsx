@@ -8,6 +8,8 @@ import ProductCard from '@/components/ProductCard';
 import Link from 'next/link';
 import ProductInformation from '@/components/ProductInformation';
 import ProductReviews, { ReviewsSkeleton } from '@/components/ProductReviews';
+import BulkVariantOrderTable from '@/components/BulkVariantOrderTable';
+import { createBulkOrderModel } from '@/lib/shopify/bulk-order';
 
 interface ProductPageProps {
   params: Promise<{
@@ -35,6 +37,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
   const product = await getProductByHandle(handle);
   if (!product) notFound();
   const recommendations = product.id ? await getProductRecommendations(product.id) : [];
+  const bulkOrderModel = createBulkOrderModel(product);
   const images = [...new Map([
     ...(product.image ? [{ url: product.image, altText: product.imageAlt || product.title, width: null, height: null }] : []),
     ...(product.images ?? []),
@@ -62,6 +65,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
           </Suspense>
         </div>
 
+        <BulkVariantOrderTable model={bulkOrderModel} />
         <ProductDescription html={product.descriptionHtml} text={product.description} />
         {product.id && <Suspense fallback={<ReviewsSkeleton />}><ProductReviews productId={product.id} productTitle={product.title} rating={product.reviewRating} /></Suspense>}
         {recommendations.length > 0 && <section className="mt-12" aria-labelledby="recommendations">
