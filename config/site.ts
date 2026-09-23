@@ -22,6 +22,9 @@ export const siteConfig = {
   contact: {
     email: "info@apexbusinesssupplies.co.uk",
   },
+  customerAccount: {
+    hostedUrl: "https://account.apexbusinesssupplies.co.uk",
+  },
 } as const;
 
 export type MainNavItem = (typeof siteConfig.mainNav)[number];
