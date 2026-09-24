@@ -17,10 +17,12 @@ export const siteConfig = {
   ],
   footer: {
     businessName: "Apex Business Supplies",
-    tagline: "Packaging and workplace essentials",
+    tagline: "Trusted UK-based provider for high-quality business supplies. Whether you're packaging products, protecting staff, or managing day-to-day office operations. Apex Business Supplies has you covered.",
   },
   contact: {
     email: "info@apexbusinesssupplies.co.uk",
+    whatsApp: "https://wa.me/447950676723",
+    tel: "+447950676723"
   },
   customerAccount: {
     hostedUrl: "https://account.apexbusinesssupplies.co.uk",
