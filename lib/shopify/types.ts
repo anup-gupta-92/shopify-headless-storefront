@@ -34,3 +34,10 @@ export interface ShopifyCollection {
   descriptionHtml: string;
   image: ProductImage | null;
 }
+
+export interface ShopifyPolicy {
+  handle: string;
+  title: string;
+  body: string;
+  url: string;
+}

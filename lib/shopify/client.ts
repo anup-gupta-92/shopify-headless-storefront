@@ -10,6 +10,8 @@ export const CATALOG_REVALIDATE_SECONDS = 300;
 interface StorefrontRequestOptions {
   buyerIp?: string;
   cache?: "no-store";
+  revalidate?: number;
+  tags?: string[];
 }
 
 export async function storefrontRequest<T>(
@@ -34,7 +36,12 @@ export async function storefrontRequest<T>(
       body: JSON.stringify({ query, variables }),
       ...(options.cache === "no-store"
         ? { cache: "no-store" as const }
-        : { next: { revalidate: CATALOG_REVALIDATE_SECONDS, tags: ["shopify-catalog"] } }),
+        : {
+            next: {
+              revalidate: options.revalidate ?? CATALOG_REVALIDATE_SECONDS,
+              tags: options.tags ?? ["shopify-catalog"],
+            },
+          }),
       signal: AbortSignal.timeout(15000),
     });
   } catch {

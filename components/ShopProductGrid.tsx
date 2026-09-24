@@ -11,6 +11,9 @@ interface ShopProductGridProps {
   queryString: string;
   loadMorePath?: string;
   clearHref?: string;
+  emptyTitle?: string;
+  emptyDescription?: string;
+  emptyActionLabel?: string;
 }
 
 export default function ShopProductGrid({
@@ -18,6 +21,9 @@ export default function ShopProductGrid({
   queryString,
   loadMorePath = "/api/shop",
   clearHref = "/shop",
+  emptyTitle = "No products match these filters.",
+  emptyDescription = "Try widening the price range or clearing a brand or category.",
+  emptyActionLabel = "Clear filters",
 }: ShopProductGridProps) {
   const [products, setProducts] = useState(initialPage.products);
   const [pageInfo, setPageInfo] = useState(initialPage.pageInfo);
@@ -51,10 +57,10 @@ export default function ShopProductGrid({
   if (!products.length) {
     return (
       <div className="rounded-xl border border-border bg-surface px-6 py-16 text-center">
-        <h2 className="text-xl font-semibold">No products match these filters.</h2>
-        <p className="mt-2 text-muted">Try widening the price range or clearing a brand or category.</p>
+        <h2 className="text-xl font-semibold">{emptyTitle}</h2>
+        <p className="mt-2 text-muted">{emptyDescription}</p>
         <Link href={clearHref} className="mt-5 inline-flex min-h-11 items-center rounded-lg bg-primary px-5 font-semibold text-primary-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
-          Clear filters
+          {emptyActionLabel}
         </Link>
       </div>
     );

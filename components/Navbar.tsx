@@ -10,6 +10,7 @@ import { useCart } from "@/components/CartProvider";
 import { siteConfig } from "@/config/site";
 import NavigationProgress from "@/components/NavigationProgress";
 import { startNavigationProgress } from "@/components/RouteLoadingSignal";
+import HeaderSearch from "@/components/HeaderSearch";
 
 function MenuIcon({ open }: { open: boolean }) {
   return open ? (
@@ -123,7 +124,11 @@ export default function Navbar() {
           />
         </Link>
 
-        <nav aria-label="Primary navigation" className="ml-auto hidden items-center gap-2 md:flex">
+        <div className="hidden min-w-0 flex-1 justify-center lg:flex lg:px-3 xl:px-6 2xl:px-8">
+          <HeaderSearch />
+        </div>
+
+        <nav aria-label="Primary navigation" className="ml-auto hidden shrink-0 items-center gap-1 xl:gap-2 md:flex">
           {siteConfig.mainNav.map((item) => (
             <Link
               key={item.href}
@@ -137,6 +142,7 @@ export default function Navbar() {
         </nav>
 
         <div className="ml-auto flex items-center gap-1.5 sm:gap-2 md:ml-2">
+          <HeaderSearch key={menuOpen ? "menu-open" : "menu-closed"} mobile onMobileOpen={() => setMenuOpen(false)} />
           <button
             type="button"
             onClick={openDrawer}

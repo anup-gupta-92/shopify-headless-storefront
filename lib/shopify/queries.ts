@@ -1,5 +1,16 @@
 export const SHOP_QUERY = `query ShopConnection { shop { name } }`;
 
+export const SHOP_POLICIES_QUERY = `
+  query ShopPolicies {
+    shop {
+      termsOfService { handle title body url }
+      refundPolicy { handle title body url }
+      privacyPolicy { handle title body url }
+      shippingPolicy { handle title body url }
+    }
+  }
+`;
+
 const imageFields = `url altText width height`;
 const variantFields = `
   id title sku availableForSale currentlyNotInStock selectedOptions { name value }
@@ -148,6 +159,60 @@ export const COLLECTION_FACETS_QUERY = `
         nodes { id vendor availableForSale }
         pageInfo { hasNextPage endCursor }
       }
+    }
+  }
+`;
+
+export const PREDICTIVE_SEARCH_QUERY = `
+  query PredictiveSearch($query: String!, $limit: Int!) {
+    predictiveSearch(
+      query: $query
+      limit: $limit
+      limitScope: EACH
+      types: [PRODUCT, COLLECTION]
+      unavailableProducts: HIDE
+      searchableFields: [TITLE, PRODUCT_TYPE, TAG, VARIANTS_SKU, VARIANTS_TITLE, VENDOR]
+    ) {
+      products {
+        id handle title productType vendor availableForSale
+        featuredImage { ${imageFields} }
+        priceRange { minVariantPrice { amount currencyCode } maxVariantPrice { amount currencyCode } }
+        ${cardVariantFields}
+        ${reviewFields}
+      }
+      collections {
+        id handle title
+        image { ${imageFields} }
+        availableProducts: products(first: 1, filters: [{ available: true }]) {
+          nodes { id }
+        }
+      }
+    }
+  }
+`;
+
+export const PRODUCT_SEARCH_QUERY = `
+  query ProductSearch($query: String!, $first: Int!, $after: String) {
+    search(
+      query: $query
+      first: $first
+      after: $after
+      sortKey: RELEVANCE
+      types: [PRODUCT]
+      unavailableProducts: HIDE
+      prefix: LAST
+    ) {
+      nodes {
+        ... on Product {
+          id handle title productType vendor availableForSale
+          featuredImage { ${imageFields} }
+          priceRange { minVariantPrice { amount currencyCode } maxVariantPrice { amount currencyCode } }
+          ${cardVariantFields}
+          ${reviewFields}
+        }
+      }
+      totalCount
+      pageInfo { hasNextPage endCursor }
     }
   }
 `;
