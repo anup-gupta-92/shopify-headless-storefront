@@ -127,6 +127,7 @@ export default function ProductCarousel({ products }: ProductCarouselProps) {
               <ProductCard
                 title={product.title}
                 price={product.price}
+                compareAtPrice={product.compareAtPrice}
                 vendor={product.vendor}
                 category={product.category}
                 available={product.available}

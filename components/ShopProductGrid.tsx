@@ -73,6 +73,7 @@ export default function ShopProductGrid({
           key={product.id}
           title={product.title}
           price={product.price}
+          compareAtPrice={product.compareAtPrice}
           vendor={product.vendor}
           category={product.category}
           available={product.available}

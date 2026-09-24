@@ -6,10 +6,12 @@ import { useState } from "react";
 import { useCart } from "@/components/CartProvider";
 import type { ProductSummary } from "@/types/product";
 import ReviewStars from "@/components/ReviewStars";
+import { formatMoney } from "@/lib/shopify/pricing";
 
 interface ProductCardProps {
   title: string;
   price: string;
+  compareAtPrice?: ProductSummary["compareAtPrice"];
   sku?: string;
   vendor?: string;
   category?: string;
@@ -21,7 +23,7 @@ interface ProductCardProps {
   reviewRating?: ProductSummary["reviewRating"];
 }
 
-export default function ProductCard({ title, price, sku, vendor, category, available = true, handle, imageUrl, imageAlt, cardAction, reviewRating }: ProductCardProps) {
+export default function ProductCard({ title, price, compareAtPrice, sku, vendor, category, available = true, handle, imageUrl, imageAlt, cardAction, reviewRating }: ProductCardProps) {
   const { addItem, loading: cartLoading } = useCart();
   const [adding, setAdding] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -49,12 +51,29 @@ export default function ProductCard({ title, price, sku, vendor, category, avail
 
       <div className="pointer-events-none relative mb-4 aspect-square w-full overflow-hidden rounded-lg bg-surface-muted">
         {imageUrl ? <Image src={imageUrl} alt={imageAlt || title} fill sizes="(max-width: 768px) 100vw, 25vw" className="object-cover transition duration-300 group-hover/card:scale-105" /> : <div className="flex h-full items-center justify-center text-muted">Image unavailable</div>}
+        {compareAtPrice && <span className="absolute left-3 top-3 z-[1] rounded-full bg-primary px-2.5 py-1 text-[11px] font-bold tracking-wide text-primary-foreground shadow-sm">SALE</span>}
       </div>
       {sku && <span className="pointer-events-none mb-1 block font-mono text-xs text-muted">Product Code: {sku}</span>}
       {meta && <span className="pointer-events-none mb-1 block text-xs font-medium uppercase tracking-wide text-muted">{meta}</span>}
       <h3 className="pointer-events-none mb-1 text-sm sm:text-base lg:text-lg font-bold text-foreground transition group-hover/card:text-primary">{title}</h3>
       <div className="pointer-events-none min-h-5">{reviewRating && <ReviewStars {...reviewRating} compact />}</div>
-      <p className="pointer-events-none mt-auto pt-2 font-medium text-accent">{price}</p>
+      <div className="pointer-events-none mt-auto pt-2">
+        <div className="flex items-baseline gap-2">
+          {compareAtPrice && (
+            <span className="text-xs text-muted">
+              <span className="sr-only">Original price: </span>
+              <del>{formatMoney(compareAtPrice)}</del>
+            </span>
+          )}
+
+          <span className="font-semibold text-accent">
+            <span className="sr-only">
+              {compareAtPrice ? "Sale price: " : "Price: "}
+            </span>
+            {price}
+          </span>
+        </div>
+      </div>
       {!available && <p className="pointer-events-none mt-2 text-sm font-medium text-muted">Currently unavailable</p>}
 
       {cardAction.kind === "add" ? (

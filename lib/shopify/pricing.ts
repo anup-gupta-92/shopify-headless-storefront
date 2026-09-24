@@ -4,6 +4,15 @@ export function formatMoney(money: Money): string {
   return new Intl.NumberFormat("en-GB", { style: "currency", currency: money.currencyCode }).format(Number(money.amount));
 }
 
+export function validCompareAtPrice(current: Money | null | undefined, compareAt: Money | null | undefined): Money | undefined {
+  if (!current || !compareAt || current.currencyCode !== compareAt.currencyCode) return undefined;
+  const currentAmount = Number(current.amount);
+  const compareAtAmount = Number(compareAt.amount);
+  return Number.isFinite(currentAmount) && Number.isFinite(compareAtAmount) && compareAtAmount > currentAmount
+    ? compareAt
+    : undefined;
+}
+
 export function formatUkPriceExcludingVat(price: Money): string | undefined {
   // Storefront-display logic only: assumes UK GBP prices include 20% VAT.
   // Validate against the actual Shopify tax configuration and product tax rates

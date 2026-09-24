@@ -19,7 +19,13 @@ const variantFields = `
   unitPrice { amount currencyCode }
   unitPriceMeasurement { measuredType quantityUnit quantityValue referenceUnit referenceValue }
 `;
-const cardVariantFields = `variants(first: 2) { nodes { id availableForSale } }`;
+const cardVariantFields = `variants(first: 2) {
+  nodes {
+    id availableForSale
+    price { amount currencyCode }
+    compareAtPrice { amount currencyCode }
+  }
+}`;
 const reviewFields = `reviewRating: metafield(namespace: "reviews", key: "rating") { value }
   reviewCount: metafield(namespace: "reviews", key: "rating_count") { value }`;
 

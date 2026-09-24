@@ -16,6 +16,7 @@ export interface ProductSummary {
   id: string; handle: string; title: string; category: string; image: string;
   reviewRating?: ReviewRating;
   imageAlt?: string; price: string; currencyCode: string; available: boolean;
+  compareAtPrice?: Money;
   vendor: string;
   priceRange: { minVariantPrice: Money; maxVariantPrice: Money };
   cardAction:

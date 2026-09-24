@@ -3,7 +3,7 @@ import { cache } from "react";
 import type { Product, ProductSummary, ProductVariant } from "@/types/product";
 import { storefrontRequest } from "./client";
 import { HOMEPAGE_PRODUCTS_QUERY, PRODUCT_QUERY, PRODUCT_VARIANTS_QUERY, SHOP_QUERY, PRODUCT_RECOMMENDATIONS_QUERY, PRODUCTS_BY_IDS_QUERY } from "./queries";
-import { formatMoney, formatUkPriceExcludingVat } from "./pricing";
+import { formatMoney, formatUkPriceExcludingVat, validCompareAtPrice } from "./pricing";
 import type { ShopifyProduct, ShopifyProductSummary, ShopifyVariant, VariantConnection } from "./types";
 import { ratingFromMetafields } from "@/lib/judgeme/product";
 
@@ -51,12 +51,17 @@ export function mapProductSummary(product: ShopifyProductSummary): ProductSummar
   const max = product.priceRange.maxVariantPrice;
   const cardVariants = product.variants.nodes;
   const soleVariant = cardVariants.length === 1 ? cardVariants[0] : undefined;
+  // A single variant is the only unambiguous match for the card's displayed
+  // price in the lightweight listing query. Multi-variant sale pricing remains
+  // on the product page where the exact selected variant is known.
+  const compareAtPrice = soleVariant ? validCompareAtPrice(soleVariant.price, soleVariant.compareAtPrice) : undefined;
   return {
     id: product.id, handle: product.handle, title: product.title,
     reviewRating: ratingFromMetafields(product),
     category: product.productType, vendor: product.vendor, available: product.availableForSale,
     image: product.featuredImage?.url ?? "", imageAlt: product.featuredImage?.altText ?? product.title,
     price: `${min.amount !== max.amount ? "From " : ""}${formatMoney(min)}`,
+    compareAtPrice,
     currencyCode: min.currencyCode, priceRange: product.priceRange,
     cardAction: !product.availableForSale
       ? { kind: "unavailable" }

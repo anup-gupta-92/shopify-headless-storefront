@@ -5,7 +5,7 @@ import Link from "next/link";
 import { getDefaultVariant, type Product } from "@/types/product";
 import { useSearchParams } from "next/navigation";
 import { resolveVariant, variantUrlId } from "@/lib/product-options";
-import { formatMoney } from "@/lib/shopify/pricing";
+import { formatMoney, validCompareAtPrice } from "@/lib/shopify/pricing";
 import { useCart } from "@/components/CartProvider";
 import ReviewStars from "@/components/ReviewStars";
 
@@ -37,6 +37,7 @@ export default function ProductInformation({ product }: { product: Product }) {
   const selectId = useId();
   // Never inherit optional product-level values for a variant that omits them.
   const configuration = selectedVariant ?? product;
+  const compareAtPrice = selectedVariant ? validCompareAtPrice(selectedVariant.money, selectedVariant.compareAtPrice) : undefined;
   const productCode = selectedVariant ? selectedVariant.productCode : product.productCode ?? product.sku;
   const hasOptions = (product.variants?.length ?? 0) > 1;
   const controlClass = "inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-border bg-surface text-foreground hover:bg-surface-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-40";
@@ -77,12 +78,14 @@ export default function ProductInformation({ product }: { product: Product }) {
       {product.reviewRating && <a href="#customer-reviews" className="mt-3 inline-flex min-h-10 items-center rounded text-sm hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary" aria-label={`Read ${product.reviewRating.count} customer reviews`}><ReviewStars {...product.reviewRating} /></a>}
       <div aria-live="polite" aria-atomic="true" className="mt-3 space-y-2">
         {productCode && <p className="break-words font-mono text-sm text-muted">Product Code: {productCode}</p>}
-        <p className="mt-4 flex flex-wrap items-baseline gap-2">
-          <span className="text-3xl font-bold text-accent">{configuration.price}</span>
-          <span className="text-sm text-muted">(Inc. VAT)</span>
-        </p>
-        {selectedVariant?.compareAtPrice && selectedVariant.money && Number(selectedVariant.compareAtPrice.amount) > Number(selectedVariant.money.amount) && <p className="text-muted"><span className="sr-only">Previous price: </span><del>{formatMoney(selectedVariant.compareAtPrice)}</del></p>}
-        {configuration.unitPrice && <p className="text-muted">{configuration.unitPrice}</p>}
+        <div className="mt-4 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
+          <p className="flex flex-wrap items-baseline gap-2">
+            {compareAtPrice && <span className="text-base text-muted"><span className="sr-only">Previous price: </span><del>{formatMoney(compareAtPrice)}</del></span>}
+            <span className="text-3xl font-bold text-accent"><span className="sr-only">{compareAtPrice ? "Sale price: " : "Price: "}</span>{configuration.price}</span>
+            <span className="text-sm text-muted">(Inc. VAT)</span>
+          </p>
+          {configuration.unitPrice && <p className="text-sm text-muted sm:ml-auto">{configuration.unitPrice}</p>}
+        </div>
         {configuration.priceExVat && <p className="text-sm text-muted">Excl. VAT: {configuration.priceExVat}</p>}
         {configuration.available === false && <p className="font-medium text-muted">Currently unavailable</p>}
       </div>

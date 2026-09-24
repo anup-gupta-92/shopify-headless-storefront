@@ -71,7 +71,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
         {recommendations.length > 0 && <section className="mt-12" aria-labelledby="recommendations">
           <h2 id="recommendations" className="mb-6 text-2xl font-bold">You May Also Like</h2>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {recommendations.map((related) => <ProductCard key={related.id} title={related.title} price={related.price} vendor={related.vendor} category={related.category} available={related.available} imageUrl={related.image} imageAlt={related.imageAlt} handle={related.handle} cardAction={related.cardAction} reviewRating={related.reviewRating} />)}
+            {recommendations.map((related) => <ProductCard key={related.id} title={related.title} price={related.price} compareAtPrice={related.compareAtPrice} vendor={related.vendor} category={related.category} available={related.available} imageUrl={related.image} imageAlt={related.imageAlt} handle={related.handle} cardAction={related.cardAction} reviewRating={related.reviewRating} />)}
           </div>
         </section>}
       </div>
