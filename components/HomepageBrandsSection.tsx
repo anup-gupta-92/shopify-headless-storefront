@@ -67,7 +67,7 @@ export default function HomepageBrandsSection() {
                 />
               </span>
             </span>
-            <span className="block px-3 py-3 text-center text-sm font-semibold text-foreground sm:px-4 sm:text-base">
+            <span className="block border-t border-border px-3 py-3 text-center text-sm font-semibold text-foreground sm:px-4 sm:text-base">
               {brand.name}
             </span>
           </Link>
