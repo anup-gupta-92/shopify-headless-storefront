@@ -96,3 +96,123 @@ body.bulk-order-summary-visible {
 .dark .theme-logo-dark {
   display: block;
 }
+
+.home-category-showcase {
+  --home-category-active-background: color-mix(in srgb, var(--primary) 6%, var(--background));
+}
+
+.home-category-tabs {
+  display: flex;
+  align-items: stretch;
+  gap: 0.75rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  border-bottom: 2px solid var(--primary);
+}
+
+.home-category-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.home-category-tab {
+  display: flex;
+  width: 7rem;
+  flex: 0 0 auto;
+  flex-direction: column;
+  overflow: hidden;
+  scroll-snap-align: start;
+  border: 2px solid var(--border);
+  border-bottom: none;
+  border-radius: 0.75rem 0.75rem 0 0;
+  background: var(--surface);
+  text-align: left;
+  transition: border-color 180ms ease, background-color 180ms ease;
+}
+
+.home-category-tab:hover {
+  border-color: color-mix(in srgb, var(--primary) 45%, var(--border));
+  background: var(--surface-muted);
+}
+
+.home-category-tab[data-active="true"] {
+  position: relative;
+  z-index: 2;
+  border-color: var(--primary);
+  margin-bottom: -2px;
+  background: var(--home-category-active-background);
+}
+
+.home-category-tab:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.home-category-panel {
+  padding: 0.75rem 0.625rem;
+  border: 0 solid var(--primary);
+  border-right-width: 2px;
+  border-bottom-width: 2px;
+  border-left-width: 2px;
+  border-radius: 0 0 1rem 1rem;
+  background: var(--home-category-active-background);
+}
+
+@media (min-width: 40rem) {
+  .home-category-tab {
+    width: 8rem;
+  }
+
+  .home-category-panel {
+    padding: 1rem;
+  }
+}
+
+@media (min-width: 48rem) {
+  .home-category-tab {
+    width: 20rem;
+    flex-direction: row;
+  }
+  .home-category-tabs {
+    gap: 0.75rem;
+    padding-top: 2px;
+  }
+
+  .home-category-tab {
+    flex: 0 0 7rem;
+    border-radius: 0.75rem 0.75rem 0 0;
+  }
+
+  .home-category-panel {
+    margin-top: 0;
+    border-top: 0;
+    border-right: 2px solid var(--primary);
+    border-bottom: 2px solid var(--primary);
+    border-left: 2px solid var(--primary);
+    padding: 0.75rem 0.625rem;
+  }
+}
+
+@media (min-width: 64rem) {
+  .home-category-tabs {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1rem;
+    overflow: visible;
+  }
+
+  .home-category-tab {
+    width: auto;
+  }
+
+  .home-category-panel {
+    padding: 1rem 1.25rem 1.25rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-category-tab {
+    transition: none;
+  }
+}

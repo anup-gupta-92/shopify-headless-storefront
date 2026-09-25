@@ -5,8 +5,8 @@ export const siteConfig = {
     "Business, packaging, and workplace supplies from Apex Business Supplies.",
   url: process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
   logo: {
-    lightTheme: "/images/logo-for-light.webp",
-    darkTheme: "/images/logo-for-dark.webp",
+    lightTheme: "/images/logo-for-light.png",
+    darkTheme: "/images/logo-for-dark.png",
     alt: "Apex Business Supplies",
   },
   mainNav: [

@@ -21,10 +21,10 @@ export default function ProductCarousel({
   const currentIndexRef = useRef(0);
   // Track the first visible product in the carousel.
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [itemsPerPage, setItemsPerPage] = useState(4);
+  const [itemsPerPage, setItemsPerPage] = useState(2);
 
   // Match the responsive card widths below:
-  // mobile = 1, sm = 2, md = 3, lg = 4 and wide desktop = 5 products.
+  // mobile = 2, md = 3, lg = 4 and wide desktop = 5 products.
   useEffect(() => {
     const updateItemsPerPage = () => {
       const width = window.innerWidth;
@@ -35,10 +35,8 @@ export default function ProductCarousel({
         setItemsPerPage(4);
       } else if (width >= 768) {
         setItemsPerPage(3);
-      } else if (width >= 640) {
-        setItemsPerPage(2);
       } else {
-        setItemsPerPage(1);
+        setItemsPerPage(2);
       }
     };
 
@@ -71,7 +69,6 @@ export default function ProductCarousel({
     setCurrentIndex(nextIndex);
     carousel?.scrollTo({
       left: nextIndex * (carousel.clientWidth / itemsPerPage),
-      behavior: 'smooth',
     });
   };
 
@@ -99,25 +96,25 @@ export default function ProductCarousel({
     <div className="relative group">
       {/* Slider Controls Container */}
       <div className="mb-5 flex items-end justify-between gap-4 sm:mb-6">
-        <div>
+        <div className="min-w-0 flex-1">
           {eyebrow && <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">{eyebrow}</p>}
           <h2 className={`${eyebrow ? "mt-2" : ""} text-2xl font-extrabold tracking-tight text-foreground sm:text-3xl`}>{heading}</h2>
           {description && <p className="mt-2 text-muted">{description}</p>}
         </div>
-        <div className="hidden space-x-2 lg:flex">
+        <div className="flex shrink-0 space-x-2">
           <button 
             onClick={handlePrev}
             disabled={visibleIndex === 0}
-            aria-label="Show previous products"
-            className="rounded-lg border border-border bg-surface p-2 transition hover:bg-surface-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-40"
+            aria-label="Previous products"
+            className="flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-border bg-surface p-2 text-lg transition hover:border-primary/50 hover:bg-surface-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-40"
           >
             ←
           </button>
           <button 
             onClick={handleNext}
             disabled={visibleIndex === maxIndex}
-            aria-label="Show next products"
-            className="rounded-lg border border-border bg-surface p-2 transition hover:bg-surface-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-40"
+            aria-label="Next products"
+            className="flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-border bg-surface p-2 text-lg transition hover:border-primary/50 hover:bg-surface-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-40"
           >
             →
           </button>
@@ -128,13 +125,13 @@ export default function ProductCarousel({
       <div
         ref={carouselRef}
         onScroll={handleScroll}
-        className="touch-auto snap-x snap-mandatory overflow-x-auto overscroll-x-contain rounded-xl scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="touch-auto snap-x snap-mandatory overflow-x-auto overscroll-x-contain rounded-xl scroll-smooth motion-reduce:scroll-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         <div className="flex">
           {products.map((product) => (
             <div 
               key={product.id}
-              className="w-full flex-shrink-0 snap-start p-2 [scroll-snap-stop:always] sm:w-1/2 md:w-1/3 lg:w-1/4 2xl:w-1/5"
+              className="w-1/2 flex-shrink-0 snap-start p-1.5 [scroll-snap-stop:always] sm:p-2 md:w-1/3 lg:w-1/4 2xl:w-1/5"
             >
               <ProductCard
                 title={product.title}
@@ -148,12 +145,13 @@ export default function ProductCarousel({
                 handle={product.handle}
                 cardAction={product.cardAction}
                 reviewRating={product.reviewRating}
+                compact
               />
             </div>
           ))}
         </div>
       </div>
-      {maxIndex > 0 && <div className="mt-3 flex justify-center lg:hidden">
+      {maxIndex > 0 && <div className="mt-3 flex justify-center">
         <div className="flex max-w-full items-center rounded-full border border-border bg-surface px-1.5 py-1" aria-label="Choose carousel position">
           {Array.from({ length: maxIndex + 1 }, (_, index) => (
             <button
