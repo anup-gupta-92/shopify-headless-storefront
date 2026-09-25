@@ -43,6 +43,24 @@ export const HOMEPAGE_PRODUCTS_QUERY = `
   }
 `;
 
+export const HOMEPAGE_HOTSPOT_PRODUCTS_QUERY = `
+  query HomepageHotspotProducts(
+    $maskHandle: String!
+    $glovesHandle: String!
+    $sandingDiscHandle: String!
+  ) {
+    mask: product(handle: $maskHandle) {
+      id handle title featuredImage { ${imageFields} }
+    }
+    gloves: product(handle: $glovesHandle) {
+      id handle title featuredImage { ${imageFields} }
+    }
+    sandingDisc: product(handle: $sandingDiscHandle) {
+      id handle title featuredImage { ${imageFields} }
+    }
+  }
+`;
+
 export const PRODUCT_QUERY = `
   query ProductByHandle($handle: String!) {
     product(handle: $handle) {
@@ -153,6 +171,26 @@ export const COLLECTION_PRODUCTS_QUERY = `
           ${reviewFields}
         }
         pageInfo { hasNextPage endCursor }
+      }
+    }
+  }
+`;
+
+export const HOMEPAGE_COLLECTION_PRODUCTS_QUERY = `
+  query HomepageCollectionProducts($handle: String!, $first: Int!) {
+    collection(handle: $handle) {
+      products(
+        first: $first
+        sortKey: BEST_SELLING
+        filters: [{ available: true }]
+      ) {
+        nodes {
+          id handle title productType vendor availableForSale
+          featuredImage { ${imageFields} }
+          priceRange { minVariantPrice { amount currencyCode } maxVariantPrice { amount currencyCode } }
+          ${cardVariantFields}
+          ${reviewFields}
+        }
       }
     }
   }

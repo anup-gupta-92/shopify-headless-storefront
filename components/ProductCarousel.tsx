@@ -6,9 +6,17 @@ import type { ProductSummary } from '@/types/product';
 
 interface ProductCarouselProps {
   products: ProductSummary[];
+  eyebrow?: string;
+  heading?: string;
+  description?: string;
 }
 
-export default function ProductCarousel({ products }: ProductCarouselProps) {
+export default function ProductCarousel({
+  products,
+  eyebrow,
+  heading = "Top Selling Products",
+  description,
+}: ProductCarouselProps) {
   const carouselRef = useRef<HTMLDivElement>(null);
   const currentIndexRef = useRef(0);
   // Track the first visible product in the carousel.
@@ -90,8 +98,12 @@ export default function ProductCarousel({ products }: ProductCarouselProps) {
   return (
     <div className="relative group">
       {/* Slider Controls Container */}
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-bold text-foreground">Top Selling Products</h2>
+      <div className="mb-5 flex items-end justify-between gap-4 sm:mb-6">
+        <div>
+          {eyebrow && <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">{eyebrow}</p>}
+          <h2 className={`${eyebrow ? "mt-2" : ""} text-2xl font-extrabold tracking-tight text-foreground sm:text-3xl`}>{heading}</h2>
+          {description && <p className="mt-2 text-muted">{description}</p>}
+        </div>
         <div className="hidden space-x-2 lg:flex">
           <button 
             onClick={handlePrev}

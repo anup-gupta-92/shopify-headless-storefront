@@ -2,14 +2,33 @@ import "server-only";
 import { cache } from "react";
 import type { Product, ProductSummary, ProductVariant } from "@/types/product";
 import { storefrontRequest } from "./client";
-import { HOMEPAGE_PRODUCTS_QUERY, PRODUCT_QUERY, PRODUCT_VARIANTS_QUERY, SHOP_QUERY, PRODUCT_RECOMMENDATIONS_QUERY, PRODUCTS_BY_IDS_QUERY } from "./queries";
+import { HOMEPAGE_HOTSPOT_PRODUCTS_QUERY, HOMEPAGE_PRODUCTS_QUERY, PRODUCT_QUERY, PRODUCT_VARIANTS_QUERY, SHOP_QUERY, PRODUCT_RECOMMENDATIONS_QUERY, PRODUCTS_BY_IDS_QUERY } from "./queries";
 import { formatMoney, formatUkPriceExcludingVat, validCompareAtPrice } from "./pricing";
 import type { ShopifyProduct, ShopifyProductSummary, ShopifyVariant, VariantConnection } from "./types";
 import { ratingFromMetafields } from "@/lib/judgeme/product";
 
-export const HOMEPAGE_PRODUCT_LIMIT = 12;
-export const HOMEPAGE_CANDIDATE_LIMIT = 36;
+export const HOMEPAGE_PRODUCT_LIMIT = 10;
+export const HOMEPAGE_CANDIDATE_LIMIT = 10;
 export const RECOMMENDATION_LIMIT = 4;
+
+export const HOMEPAGE_HOTSPOT_HANDLES = {
+  mask: "ffp3-masks-pack-of-10-with-99-filtration-efficiency-eu-certified-soft-and-secure-fit",
+  gloves: "aurelia-bold-powder-free-black-nitrile-gloves",
+  sandingDisc: "sia-one-sanding-dices",
+} as const;
+
+export interface HomepageHotspotProduct {
+  id: string;
+  handle: string;
+  title: string;
+  featuredImage: ShopifyProductSummary["featuredImage"];
+}
+
+export interface HomepageHotspotProductsResult {
+  mask: HomepageHotspotProduct | null;
+  gloves: HomepageHotspotProduct | null;
+  sandingDisc: HomepageHotspotProduct | null;
+}
 
 export interface ProductReference {
   id: string;
@@ -45,6 +64,19 @@ export const getProductRecommendations = cache(async (productId: string): Promis
 });
 
 export const getShop = cache(async () => (await storefrontRequest<{ shop: { name: string } }>(SHOP_QUERY)).shop);
+
+export const getHomepageHotspotProducts = cache(async () => {
+  const data = await storefrontRequest<HomepageHotspotProductsResult>(
+    HOMEPAGE_HOTSPOT_PRODUCTS_QUERY,
+    {
+      maskHandle: HOMEPAGE_HOTSPOT_HANDLES.mask,
+      glovesHandle: HOMEPAGE_HOTSPOT_HANDLES.gloves,
+      sandingDiscHandle: HOMEPAGE_HOTSPOT_HANDLES.sandingDisc,
+    },
+  );
+
+  return data;
+});
 
 export function mapProductSummary(product: ShopifyProductSummary): ProductSummary {
   const min = product.priceRange.minVariantPrice;

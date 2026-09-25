@@ -5,10 +5,11 @@ import type { CatalogFacets, CatalogFilterState, CatalogPage, CatalogSort } from
 import { countFacet, SHOP_PAGE_SIZE } from "./catalog";
 import { storefrontRequest } from "./client";
 import { mapProductSummary } from "./products";
-import { COLLECTION_FACETS_QUERY, COLLECTION_PRODUCTS_QUERY, COLLECTION_QUERY } from "./queries";
+import { COLLECTION_FACETS_QUERY, COLLECTION_PRODUCTS_QUERY, COLLECTION_QUERY, HOMEPAGE_COLLECTION_PRODUCTS_QUERY } from "./queries";
 import type { ShopifyCollection, ShopifyProductSummary } from "./types";
 
 const COLLECTION_FACET_PAGE_SIZE = 250;
+export const HOMEPAGE_COLLECTION_PRODUCT_LIMIT = 4;
 
 const COLLECTION_SORT_OPTIONS: Record<CatalogSort, { sortKey: string; reverse: boolean }> = {
   "best-selling": { sortKey: "BEST_SELLING", reverse: false },
@@ -47,6 +48,12 @@ interface CollectionFacetsResult {
   } | null;
 }
 
+interface HomepageCollectionProductsResult {
+  collection: {
+    products: { nodes: ShopifyProductSummary[] };
+  } | null;
+}
+
 function collectionProductFilters(filters: CatalogFilterState): CollectionProductFilter[] {
   const productFilters: CollectionProductFilter[] = [{ available: true }];
   for (const vendor of filters.vendors) productFilters.push({ productVendor: vendor });
@@ -67,6 +74,29 @@ export const getCollectionByHandle = cache(async (handle: string): Promise<Shopi
   const data = await storefrontRequest<{ collection: ShopifyCollection | null }>(COLLECTION_QUERY, { handle });
   return data.collection;
 });
+
+export const getHomepageCollectionProducts = cache(async (handle: string) => {
+  const data = await storefrontRequest<HomepageCollectionProductsResult>(
+    HOMEPAGE_COLLECTION_PRODUCTS_QUERY,
+    { handle, first: HOMEPAGE_COLLECTION_PRODUCT_LIMIT },
+  );
+
+  return data.collection
+    ? eligibleHomepageCollectionProducts(data.collection.products.nodes)
+    : [];
+});
+
+function eligibleHomepageCollectionProducts(products: ShopifyProductSummary[]) {
+  const seen = new Set<string>();
+  return products
+    .filter((product) => {
+      if (!product.availableForSale || seen.has(product.id)) return false;
+      seen.add(product.id);
+      return true;
+    })
+    .slice(0, HOMEPAGE_COLLECTION_PRODUCT_LIMIT)
+    .map(mapProductSummary);
+}
 
 export async function getCollectionPage(
   handle: string,
