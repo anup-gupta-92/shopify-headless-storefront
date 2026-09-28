@@ -78,7 +78,7 @@ export default function HomepageAboutSection() {
             alt="Apex business supplies in use across packaging and workplace operations"
             width={1150}
             height={1150}
-            sizes="(max-width: 767px) calc(100vw - 2rem), (max-width: 1439px) calc(50vw - 2.75rem), 720px"
+            sizes="(max-width: 767px) calc(100vw - 2rem), (max-width: 1599px) calc(50vw - 2.75rem), (max-width: 1919px) calc(50vw - 4rem), 840px"
             className="h-auto w-full"
           />
         </div>

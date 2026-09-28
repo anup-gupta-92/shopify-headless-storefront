@@ -365,7 +365,7 @@ export default function HeaderSearch({
   );
 
   if (!mobile) {
-    return <div ref={rootRef} className="w-full min-w-0 max-w-xl">{searchForm}</div>;
+    return <div ref={rootRef} className="w-full min-w-0 max-w-xl 2xl:max-w-2xl min-[120rem]:max-w-3xl">{searchForm}</div>;
   }
 
   return (

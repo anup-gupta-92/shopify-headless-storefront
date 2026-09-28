@@ -51,7 +51,7 @@ export default function ProductCard({ title, price, compareAtPrice, sku, vendor,
       </Link>
 
       <div className="pointer-events-none relative mb-2.5 aspect-square w-full overflow-hidden rounded-lg bg-surface-muted sm:mb-4">
-        {imageUrl ? <Image src={imageUrl} alt={imageAlt || title} fill sizes="(max-width: 768px) 100vw, 25vw" className="object-cover transition duration-300 group-hover/card:scale-105" /> : <div className="flex h-full items-center justify-center text-muted">Image unavailable</div>}
+        {imageUrl ? <Image src={imageUrl} alt={imageAlt || title} fill sizes="(max-width: 767px) 50vw, (max-width: 1023px) 33vw, (max-width: 1599px) 25vw, 420px" className="object-cover transition duration-300 group-hover/card:scale-105" /> : <div className="flex h-full items-center justify-center text-muted">Image unavailable</div>}
         {compareAtPrice && <span className="absolute left-3 top-3 z-[1] rounded-full bg-primary px-2.5 py-1 text-[11px] font-bold tracking-wide text-primary-foreground shadow-sm">SALE</span>}
       </div>
       {sku && <span className="pointer-events-none mb-0.5 block font-mono text-xs text-muted sm:mb-1">Product Code: {sku}</span>}

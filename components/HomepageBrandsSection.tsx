@@ -62,7 +62,7 @@ export default function HomepageBrandsSection() {
                   alt={`${brand.name} logo`}
                   width={brand.imageWidth}
                   height={brand.imageHeight}
-                  sizes="(max-width: 1023px) calc((100vw - 3rem) / 2), (max-width: 1439px) calc((100vw - 6rem) / 4), 360px"
+                  sizes="(max-width: 1023px) calc((100vw - 3rem) / 2), (max-width: 1599px) calc((100vw - 6rem) / 4), 420px"
                   className="h-full w-full object-contain transition-transform duration-200 group-hover:scale-[1.02] group-focus-visible:scale-[1.02] motion-reduce:transform-none motion-reduce:transition-none"
                 />
               </span>

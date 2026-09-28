@@ -62,7 +62,7 @@ export default async function HomePage() {
               alt="Everything Your Business Needs from Apex Business Supplies, including PPE, packaging, abrasives and cleaning essentials"
               width={1672}
               height={825}
-              sizes="(max-width: 639px) calc(100vw - 2rem), (max-width: 1439px) calc(100vw - 3rem), 1440px"
+              sizes="(max-width: 639px) calc(100vw - 2rem), (max-width: 1439px) calc(100vw - 3rem), (max-width: 1599px) calc(100vw - 4rem), (max-width: 1919px) calc(100vw - 5rem), 1696px"
               preload
               className="h-auto w-full"
             />

@@ -83,7 +83,7 @@ export default function InteractiveShopTheWork({ hotspots }: InteractiveShopTheW
         src="/images/home/shop-the-work.jpg"
         alt="A tradesperson wearing a protective mask and gloves while using a powered sanding tool"
         fill
-        sizes="(max-width: 1023px) calc(100vw - 2rem), (max-width: 1439px) 55vw, 850px"
+        sizes="(max-width: 1023px) calc(100vw - 2rem), (max-width: 1599px) 55vw, 980px"
         className="rounded-2xl object-cover shadow-sm"
       />
 

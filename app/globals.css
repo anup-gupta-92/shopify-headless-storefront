@@ -79,9 +79,17 @@ body.bulk-order-summary-visible {
   }
 }
 
-@media (min-width: 112rem) {
+@media (min-width: 100rem) {
   .site-container {
     max-width: 100rem;
+    padding-inline: 2.5rem;
+  }
+}
+
+@media (min-width: 120rem) {
+  .site-container {
+    max-width: 112rem;
+    padding-inline: 3rem;
   }
 }
 
