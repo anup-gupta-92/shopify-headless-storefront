@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
+import SupplyDepartments from "@/components/SupplyDepartments";
 import { siteConfig } from "@/config/site";
 
 const description =
@@ -11,13 +12,6 @@ export const metadata: Metadata = {
   description,
   alternates: { canonical: "/about" },
 };
-
-const departments = [
-  { title: "PPE Gear", copy: "Masks, gloves and workplace protection essentials.", image: "/images/home/ppe-gear.jpg", href: "/collections/safety-gear" },
-  { title: "Packaging Supplies", copy: "Mailing bags, boxes, tapes and shipping essentials.", image: "/images/home/packaging-supplies.jpg", href: "/collections/packaging-supplies" },
-  { title: "Abrasives", copy: "Professional sanding, preparation and finishing products.", image: "/images/home/abrasives.jpg", href: "/collections/abrasives" },
-  { title: "Surface Protection & Cleaning", copy: "Cloths, waxes, cleaning and surface-protection essentials.", image: "/images/home/surface-protection-cleaning.jpg", href: "/collections/protection-cleaning" },
-] as const;
 
 const trustPoints = [
   { icon: "dispatch", title: "Same-Day Dispatch", copy: "Orders placed before 3 PM" },
@@ -150,25 +144,11 @@ export default function AboutPage() {
           </div>
         </section>
 
-        <section aria-labelledby="departments-heading" className="mt-14 border-t border-border pt-12 sm:mt-16 sm:pt-14">
-          <div className="max-w-3xl">
-            <h2 id="departments-heading" className="text-3xl font-extrabold tracking-tight sm:text-4xl">What We Supply</h2>
-            <p className="mt-3 leading-7 text-muted">Explore our core ranges for protection, preparation, dispatch and everyday workplace use.</p>
-          </div>
-          <div className="mt-7 grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
-            {departments.map((department) => (
-              <Link key={department.href} href={department.href} className="group overflow-hidden rounded-xl border border-border bg-surface transition-[transform,border-color,box-shadow] duration-200 hover:-translate-y-0.5 hover:border-primary hover:shadow-md focus-visible:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary motion-reduce:transform-none motion-reduce:transition-none">
-                <span className="relative block aspect-square overflow-hidden bg-surface-muted">
-                  <Image src={department.image} alt={`${department.title} supplies`} fill sizes="(max-width: 1023px) calc((100vw - 3rem) / 2), (max-width: 1599px) calc((100vw - 6rem) / 4), 420px" className="object-cover transition-transform duration-300 group-hover:scale-[1.025] motion-reduce:transition-none" />
-                </span>
-                <span className="block p-3 sm:p-4">
-                  <span className="block font-bold text-foreground sm:text-lg">{department.title}</span>
-                  <span className="mt-1.5 block text-xs leading-5 text-muted sm:text-sm">{department.copy}</span>
-                </span>
-              </Link>
-            ))}
-          </div>
-        </section>
+        <SupplyDepartments
+          heading="What We Supply"
+          description="Explore our core ranges for protection, preparation, dispatch and everyday workplace use."
+          headingId="departments-heading"
+        />
 
         <section aria-labelledby="why-apex-heading" className="mt-14 border-t border-border pt-12 sm:mt-16 sm:pt-14">
           <h2 id="why-apex-heading" className="text-3xl font-extrabold tracking-tight sm:text-4xl">Why Businesses Choose Apex</h2>

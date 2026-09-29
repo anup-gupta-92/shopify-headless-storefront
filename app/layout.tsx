@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import Footer from "@/components/Footer";
 import Navbar from "@/components/Navbar";
@@ -38,6 +39,7 @@ export default function RootLayout({
             </CartProvider>
           </CookieConsentProvider>
         </ThemeProvider>
+        <Analytics />
       </body>
     </html>
   );
