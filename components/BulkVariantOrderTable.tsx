@@ -16,6 +16,7 @@ import {
   type BulkOrderModel,
 } from "@/lib/shopify/bulk-order";
 import { formatMoney, formatUkPriceExcludingVat } from "@/lib/shopify/pricing";
+import { formatUnitPrice, getBulkUnitPriceDisplay } from "@/lib/shopify/unit-price";
 import type { ProductVariant } from "@/types/product";
 
 const focusClass = "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
@@ -68,11 +69,12 @@ function QuantityControl({
 }
 
 function MatrixPrice({ variant, packLabel }: { variant: ProductVariant; packLabel: string }) {
-  const packSize = parsePackSize(packLabel);
-  const unitMinor = Math.round(moneyToMinor(variant.money!) / packSize);
+  const unitPrice = getBulkUnitPriceDisplay(variant.money!, packLabel, variant.unitPriceMoney);
   return <>
     <span className="block font-semibold text-foreground">{formatMoney(variant.money!)}</span>
-    <span className="mt-1 block text-xs text-muted">{formatMoney(minorToMoney(unitMinor, variant.money!.currencyCode))} each</span>
+    {unitPrice
+      ? <span className="mt-1 block text-xs text-muted">{unitPrice} each</span>
+      : variant.unitPrice && <span className="mt-1 block text-xs text-muted">{variant.unitPrice}</span>}
   </>;
 }
 
@@ -153,7 +155,7 @@ function VariantMatrixTable({
         const disabled = !variantIsSelectable(variant) || (limit !== null && selected >= limit);
         return <td key={cell.columnValue} className="border border-border p-2 align-middle">
           {variant?.money ? <button type="button" disabled={disabled} onClick={() => onQuantityChange(variant.id, selected + 1)} aria-label={`Add one ${row.label}, ${cell.columnValue}`} className={cellButtonClass}>
-            <span className="block font-semibold">{formatMoney(minorToMoney(discountedUnitMinor(moneyToMinor(variant.money), discountRate), variant.money.currencyCode))}</span>
+            <span className="block font-semibold">{formatUnitPrice(minorToMoney(discountedUnitMinor(moneyToMinor(variant.money), discountRate), variant.money.currencyCode))}</span>
             <span className="mt-1 block text-xs text-muted">each</span>
             {selected > 0 && <span className="mt-2 block text-xs font-semibold text-primary">{selected} selected</span>}
             {errors.get(variant.id) && <span className="mt-2 block text-xs text-red-600 dark:text-red-400">{errors.get(variant.id)}</span>}
@@ -194,7 +196,7 @@ function SimpleTable({
           const disabled = !selectable || (limit !== null && value + step > limit);
           return <td key={step} className="border border-border p-2">
             <button type="button" disabled={disabled} onClick={() => onQuantityChange(variant.id, value + step)} aria-label={`Add ${step} ${row.label}`} className={cellButtonClass}>
-              {variant.money && <span className="font-semibold">{formatMoney(minorToMoney(discountedUnitMinor(moneyToMinor(variant.money), rate), variant.money.currencyCode))}</span>}
+              {variant.money && <span className="font-semibold">{formatUnitPrice(minorToMoney(discountedUnitMinor(moneyToMinor(variant.money), rate), variant.money.currencyCode))}</span>}
               <span className="mt-1 block text-xs text-muted">each</span>
             </button>
           </td>;

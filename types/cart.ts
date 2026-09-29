@@ -16,6 +16,8 @@ export interface CartLine {
     product: {
       title: string;
       handle: string;
+      vendor: string;
+      category: string;
     };
   };
 }

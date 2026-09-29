@@ -2,6 +2,11 @@
 
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import type { Cart, CartAddLine } from "@/types/cart";
+import {
+  trackAddToCart,
+  trackRemoveFromCart,
+  trackViewCart,
+} from "@/lib/analytics/events";
 
 interface CartContextValue {
   cart: Cart | null;
@@ -53,6 +58,7 @@ export default function CartProvider({ children }: { children: React.ReactNode }
   const [error, setError] = useState<string | null>(null);
   const mutationInFlight = useRef(false);
   const checkoutInFlight = useRef(false);
+  const drawerWasOpen = useRef(false);
 
   const refreshCart = useCallback(async () => {
     try {
@@ -100,6 +106,7 @@ export default function CartProvider({ children }: { children: React.ReactNode }
       });
       const nextCart = await readCartResponse(response);
       setCart(nextCart);
+      return nextCart;
     } catch (reason) {
       const message = reason instanceof Error ? reason.message : "Your cart could not be updated. Please try again.";
       setError(message);
@@ -111,7 +118,8 @@ export default function CartProvider({ children }: { children: React.ReactNode }
   }, []);
 
   const addItem = useCallback(async (merchandiseId: string, quantity: number) => {
-    await mutate({ action: "add", merchandiseId, quantity });
+    const nextCart = await mutate({ action: "add", merchandiseId, quantity });
+    if (nextCart) trackAddToCart(nextCart, [{ merchandiseId, quantity }]);
     setDrawerOpen(true);
   }, [mutate]);
 
@@ -119,7 +127,8 @@ export default function CartProvider({ children }: { children: React.ReactNode }
     lines: CartAddLine[],
     options: { openDrawer?: boolean } = {},
   ) => {
-    await mutate({ action: "addLines", lines });
+    const nextCart = await mutate({ action: "addLines", lines });
+    if (nextCart) trackAddToCart(nextCart, lines);
     if (options.openDrawer !== false) setDrawerOpen(true);
   }, [mutate]);
 
@@ -128,8 +137,15 @@ export default function CartProvider({ children }: { children: React.ReactNode }
   }, [mutate]);
 
   const removeLine = useCallback(async (lineId: string) => {
+    const removedLine = cart?.lines.find((line) => line.id === lineId);
     await mutate({ action: "remove", lineId });
-  }, [mutate]);
+    if (removedLine) trackRemoveFromCart(removedLine);
+  }, [cart, mutate]);
+
+  useEffect(() => {
+    if (drawerOpen && !drawerWasOpen.current && cart?.lines.length) trackViewCart(cart);
+    drawerWasOpen.current = drawerOpen;
+  }, [cart, drawerOpen]);
 
   const prepareCheckout = useCallback(async () => {
     if (checkoutInFlight.current || mutationInFlight.current) {

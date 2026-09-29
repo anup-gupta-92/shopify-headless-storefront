@@ -5,6 +5,8 @@ import Navbar from "@/components/Navbar";
 import CartDrawer from "@/components/CartDrawer";
 import CartProvider from "@/components/CartProvider";
 import ThemeProvider from "@/components/ThemeProvider";
+import CookieConsentProvider from "@/components/CookieConsentProvider";
+import GoogleAnalytics from "@/components/GoogleAnalytics";
 import { siteConfig } from "@/config/site";
 
 export const metadata: Metadata = {
@@ -26,12 +28,15 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className="flex min-h-screen flex-col antialiased">
         <ThemeProvider>
-          <CartProvider>
-            <Navbar />
-            <div className="flex-grow">{children}</div>
-            <Footer />
-            <CartDrawer />
-          </CartProvider>
+          <CookieConsentProvider>
+            <GoogleAnalytics />
+            <CartProvider>
+              <Navbar />
+              <div className="flex-grow">{children}</div>
+              <Footer />
+              <CartDrawer />
+            </CartProvider>
+          </CookieConsentProvider>
         </ThemeProvider>
       </body>
     </html>

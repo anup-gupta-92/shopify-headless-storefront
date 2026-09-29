@@ -1,13 +1,17 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
 import { getDefaultVariant, type Product } from "@/types/product";
 import { useSearchParams } from "next/navigation";
 import { resolveVariant, variantUrlId } from "@/lib/product-options";
 import { formatMoney, validCompareAtPrice } from "@/lib/shopify/pricing";
+import { isQuantityOptionName } from "@/lib/shopify/bulk-order";
+import { formatUnitPrice, getBulkUnitPriceDisplay } from "@/lib/shopify/unit-price";
 import { useCart } from "@/components/CartProvider";
 import ReviewStars from "@/components/ReviewStars";
+import { useCookieConsent } from "@/components/CookieConsentProvider";
+import { trackViewItem } from "@/lib/analytics/events";
 
 export default function ProductInformation({ product }: { product: Product }) {
   const searchParams = useSearchParams();
@@ -34,13 +38,38 @@ export default function ProductInformation({ product }: { product: Product }) {
   const [adding, setAdding] = useState(false);
   const [cartError, setCartError] = useState<string | null>(null);
   const { addItem, loading: cartLoading } = useCart();
+  const { hasConsent } = useCookieConsent();
+  const analyticsEnabled = hasConsent("analytics");
+  const trackedProductRef = useRef<string | null>(null);
   const selectId = useId();
   // Never inherit optional product-level values for a variant that omits them.
   const configuration = selectedVariant ?? product;
+  const packOptionValue = selectedVariant?.selectedOptions?.find(({ name }) =>
+    isQuantityOptionName(name),
+  )?.value;
+  const calculatedUnitPrice = selectedVariant?.money
+    ? getBulkUnitPriceDisplay(
+        selectedVariant.money,
+        packOptionValue,
+        selectedVariant.unitPriceMoney,
+      )
+    : selectedVariant?.unitPriceMoney
+      ? formatUnitPrice(selectedVariant.unitPriceMoney)
+    : null;
+  const unitPrice = calculatedUnitPrice
+    ? `${calculatedUnitPrice} / item`
+    : configuration.unitPrice;
   const compareAtPrice = selectedVariant ? validCompareAtPrice(selectedVariant.money, selectedVariant.compareAtPrice) : undefined;
   const productCode = selectedVariant ? selectedVariant.productCode : product.productCode ?? product.sku;
   const hasOptions = (product.variants?.length ?? 0) > 1;
   const controlClass = "inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-border bg-surface text-foreground hover:bg-surface-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-40";
+
+  useEffect(() => {
+    const productKey = product.id ?? product.handle ?? product.title;
+    if (!analyticsEnabled || trackedProductRef.current === productKey) return;
+    trackedProductRef.current = productKey;
+    trackViewItem(product, selectedVariant);
+  }, [analyticsEnabled, product, selectedVariant]);
 
   async function handleAddToCart() {
     if (!selectedVariant || selectedVariant.available === false || adding || cartLoading) return;
@@ -84,7 +113,7 @@ export default function ProductInformation({ product }: { product: Product }) {
             <span className="text-3xl font-bold text-accent"><span className="sr-only">{compareAtPrice ? "Sale price: " : "Price: "}</span>{configuration.price}</span>
             <span className="text-sm text-muted">(Inc. VAT)</span>
           </p>
-          {configuration.unitPrice && <p className="text-sm text-muted sm:ml-auto">{configuration.unitPrice}</p>}
+          {unitPrice && <p className="text-sm text-muted sm:ml-auto">{unitPrice}</p>}
         </div>
         {configuration.priceExVat && <p className="text-sm text-muted">Excl. VAT: {configuration.priceExVat}</p>}
         {configuration.available === false && <p className="font-medium text-muted">Currently unavailable</p>}

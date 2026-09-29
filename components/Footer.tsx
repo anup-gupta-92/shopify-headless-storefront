@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { siteConfig } from "@/config/site";
+import CookieSettingsButton from "@/components/CookieSettingsButton";
 
 const shopLinks = [
   { label: "PPE Gear", href: "/collections/safety-gear" },
@@ -57,6 +58,7 @@ export default function Footer() {
                 <Link href={item.href} className={footerLinkClasses}>{item.label}</Link>
               </li>
             ))}
+            <li><CookieSettingsButton /></li>
           </ul>
         </nav>
 

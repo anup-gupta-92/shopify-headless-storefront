@@ -1,4 +1,7 @@
 import type { Money, Product, ProductOption, ProductVariant, QuantityRule } from "@/types/product";
+import { parsePackSize } from "@/lib/shopify/unit-price";
+
+export { parsePackSize } from "@/lib/shopify/unit-price";
 
 export const BULK_DISCOUNT_TIERS = [
   { minimumQuantity: 20, rate: 0.03 },
@@ -92,13 +95,6 @@ export function determineBulkOrderMode(product: Pick<Product, "options" | "varia
   }
 
   return options.length === 2 ? "variant_matrix" : "simple";
-}
-
-export function parsePackSize(label: string): number {
-  const match = label.replaceAll(",", "").match(/\d+/);
-  if (!match) return 1;
-  const value = Number.parseInt(match[0], 10);
-  return Number.isSafeInteger(value) && value > 0 ? value : 1;
 }
 
 function selectedOptionValue(variant: ProductVariant, optionName: string): string | undefined {

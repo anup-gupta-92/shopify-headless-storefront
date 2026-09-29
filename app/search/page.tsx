@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import ShopProductGrid from "@/components/ShopProductGrid";
+import SearchAnalytics from "@/components/SearchAnalytics";
 import { getProductSearchPage, normalizeSearchQuery } from "@/lib/shopify/search";
 
 interface SearchPageProps {
@@ -41,6 +42,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   return (
     <main className="min-h-screen bg-background py-8 text-foreground sm:py-10">
       <div className="site-container">
+        {query.length >= 2 && <SearchAnalytics query={query} />}
         <nav aria-label="Breadcrumb" className="mb-5 text-sm text-muted">
           <ol className="flex items-center gap-2">
             <li><Link href="/" className="rounded hover:text-foreground focus-visible:outline-2 focus-visible:outline-primary">Home</Link></li>
