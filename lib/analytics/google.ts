@@ -36,8 +36,10 @@ export function initializeGoogleAnalytics(): boolean {
 
   setCollectionDisabled(false);
   window.dataLayer = window.dataLayer ?? [];
-  window.gtag = window.gtag ?? function gtag(...args: unknown[]) {
-    window.dataLayer?.push(args);
+  window.gtag = window.gtag ?? function gtag() {
+    // Google gtag.js expects each queued command to be the function's Arguments object.
+    // eslint-disable-next-line prefer-rest-params
+    window.dataLayer?.push(arguments);
   };
 
   if (!configured) {
