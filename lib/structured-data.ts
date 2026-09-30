@@ -10,6 +10,24 @@ export interface JsonLdObject { [key: string]: JsonLdValue | undefined }
 const SCHEMA_ORIGIN = "https://schema.org";
 export const ORGANIZATION_ID = `${siteConfig.url}/#organization`;
 export const WEBSITE_ID = `${siteConfig.url}/#website`;
+export const MERCHANT_RETURN_POLICY_ID = `${siteConfig.url}/#merchant-return-policy`;
+export const SHIPPING_SERVICE_ID = `${siteConfig.url}/#uk-standard-shipping`;
+
+const businessDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
+  .map((day) => `${SCHEMA_ORIGIN}/${day}`);
+
+function shippingTransitTime(): JsonLdObject {
+  return {
+    "@type": "ServicePeriod",
+    duration: {
+      "@type": "QuantitativeValue",
+      minValue: 2,
+      maxValue: 3,
+      unitCode: "DAY",
+    },
+    businessDays,
+  };
+}
 
 export function serializeJsonLd(data: JsonLdObject): string {
   return JSON.stringify(data)
@@ -19,21 +37,26 @@ export function serializeJsonLd(data: JsonLdObject): string {
 }
 
 export function buildGlobalStructuredData(): JsonLdObject {
+  const logoUrl = `${siteConfig.url}${siteConfig.logo.lightTheme}`;
   return {
     "@context": SCHEMA_ORIGIN,
     "@graph": [
       {
-        "@type": "Organization",
+        "@type": "OnlineStore",
         "@id": ORGANIZATION_ID,
         name: siteConfig.name,
         legalName: siteConfig.organization.legalName,
         url: siteConfig.url,
         logo: {
           "@type": "ImageObject",
-          url: `${siteConfig.url}${siteConfig.logo.lightTheme}`,
+          "@id": `${siteConfig.url}/#logo`,
+          url: logoUrl,
+          contentUrl: logoUrl,
           width: 500,
           height: 500,
+          caption: `${siteConfig.name} logo`,
         },
+        image: { "@id": `${siteConfig.url}/#logo` },
         email: siteConfig.contact.email,
         telephone: siteConfig.organization.telephone,
         address: {
@@ -41,6 +64,49 @@ export function buildGlobalStructuredData(): JsonLdObject {
           ...siteConfig.organization.address,
         },
         sameAs: [...siteConfig.organization.sameAs],
+        hasMerchantReturnPolicy: {
+          "@type": "MerchantReturnPolicy",
+          "@id": MERCHANT_RETURN_POLICY_ID,
+          applicableCountry: "GB",
+          returnPolicyCountry: "GB",
+          returnPolicyCategory: `${SCHEMA_ORIGIN}/MerchantReturnFiniteReturnWindow`,
+          merchantReturnDays: 30,
+          returnMethod: `${SCHEMA_ORIGIN}/ReturnByMail`,
+          merchantReturnLink: `${siteConfig.url}/policies/refund-policy`,
+        },
+        hasShippingService: {
+          "@type": "ShippingService",
+          "@id": SHIPPING_SERVICE_ID,
+          name: "UK standard delivery",
+          description: "Same-day dispatch before 3 PM on working days, with UK delivery normally taking 2–3 business days. Delivery is free for orders over £79 excluding VAT.",
+          fulfillmentType: `${SCHEMA_ORIGIN}/FulfillmentTypeDelivery`,
+          handlingTime: {
+            "@type": "ServicePeriod",
+            duration: {
+              "@type": "QuantitativeValue",
+              minValue: 0,
+              maxValue: 1,
+              unitCode: "DAY",
+            },
+            businessDays,
+          },
+          shippingConditions: [
+            {
+              "@type": "ShippingConditions",
+              shippingDestination: { "@type": "DefinedRegion", addressCountry: "GB" },
+              orderValue: { "@type": "MonetaryAmount", maxValue: 79, currency: "GBP" },
+              shippingRate: { "@type": "MonetaryAmount", value: 4.49, currency: "GBP" },
+              transitTime: shippingTransitTime(),
+            },
+            {
+              "@type": "ShippingConditions",
+              shippingDestination: { "@type": "DefinedRegion", addressCountry: "GB" },
+              orderValue: { "@type": "MonetaryAmount", minValue: 79.01, currency: "GBP" },
+              shippingRate: { "@type": "MonetaryAmount", value: 0, currency: "GBP" },
+              transitTime: shippingTransitTime(),
+            },
+          ],
+        },
       },
       {
         "@type": "WebSite",

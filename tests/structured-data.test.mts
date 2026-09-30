@@ -35,12 +35,38 @@ function graphNode(data: ReturnType<typeof buildProductStructuredData>, type: st
   return graph.find((node) => node["@type"] === type);
 }
 
-test("global schema contains one Organization and one WebSite with real search action", () => {
+test("global schema contains one OnlineStore and one WebSite with real search action", () => {
   const data = buildGlobalStructuredData();
   const graph = data["@graph"] as Array<Record<string, unknown>>;
-  assert.equal(graph.filter((node) => node["@type"] === "Organization").length, 1);
+  assert.equal(graph.filter((node) => node["@type"] === "OnlineStore").length, 1);
   assert.equal(graph.filter((node) => node["@type"] === "WebSite").length, 1);
   assert.match(JSON.stringify(data), /https:\/\/www\.apexbusinesssupplies\.co\.uk\/search\?q=/);
+});
+
+test("OnlineStore has a production logo and conservative merchant policies", () => {
+  const data = buildGlobalStructuredData();
+  const graph = data["@graph"] as Array<Record<string, unknown>>;
+  const store = graph.find((node) => node["@type"] === "OnlineStore")!;
+  assert.deepEqual(store.image, { "@id": "https://www.apexbusinesssupplies.co.uk/#logo" });
+  assert.deepEqual(store.logo, {
+    "@type": "ImageObject",
+    "@id": "https://www.apexbusinesssupplies.co.uk/#logo",
+    url: "https://www.apexbusinesssupplies.co.uk/images/logo-for-light.png",
+    contentUrl: "https://www.apexbusinesssupplies.co.uk/images/logo-for-light.png",
+    width: 500,
+    height: 500,
+    caption: "Apex Business Supplies logo",
+  });
+
+  const returns = store.hasMerchantReturnPolicy as Record<string, unknown>;
+  assert.equal(returns.merchantReturnLink, "https://www.apexbusinesssupplies.co.uk/policies/refund-policy");
+  assert.equal(returns.merchantReturnDays, 30);
+  assert.equal("returnFees" in returns, false);
+
+  const shipping = store.hasShippingService as Record<string, unknown>;
+  const conditions = shipping.shippingConditions as Array<Record<string, unknown>>;
+  assert.equal(conditions.length, 2);
+  assert.deepEqual(conditions.map((condition) => (condition.shippingRate as Record<string, unknown>).value), [4.49, 0]);
 });
 
 test("multi-variant product uses an in-stock AggregateOffer and genuine rating", () => {
