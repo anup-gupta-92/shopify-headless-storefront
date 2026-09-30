@@ -12,6 +12,8 @@ import { siteConfig } from "@/config/site";
 import JsonLd from "@/components/JsonLd";
 import { buildGlobalStructuredData } from "@/lib/structured-data";
 
+const vercelAnalyticsEnabled = process.env.VERCEL === "1";
+
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
   title: {
@@ -42,7 +44,7 @@ export default function RootLayout({
             </CartProvider>
           </CookieConsentProvider>
         </ThemeProvider>
-        <Analytics />
+        {vercelAnalyticsEnabled ? <Analytics /> : null}
       </body>
     </html>
   );

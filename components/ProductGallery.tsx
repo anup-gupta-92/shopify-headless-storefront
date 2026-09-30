@@ -36,11 +36,13 @@ export default function ProductGallery({ images, title }: { images: ProductImage
 
   return (
     <section aria-label="Product images" className="min-w-0">
-      <div className="flex min-w-0 gap-3">
-        {multiple && <div className="hidden max-h-[32rem] w-16 shrink-0 flex-col gap-3 overflow-y-auto md:flex">
-          {images.map((image, index) => <button key={image.url} type="button" aria-label={`View image ${index + 1}`} aria-pressed={active === index} onClick={() => select(index)} className={`relative aspect-square w-full shrink-0 overflow-hidden rounded-lg border-2 bg-surface focus-visible:outline-2 focus-visible:outline-primary ${active === index ? "border-primary" : "border-border"}`}>
-            <Image src={image.url} alt={image.altText || `${title}, image ${index + 1}`} fill sizes="64px" className="object-contain" />
-          </button>)}
+      <div className={multiple ? "min-w-0 md:grid md:grid-cols-[4rem_minmax(0,1fr)] md:gap-3" : "min-w-0"}>
+        {multiple && <div className="relative hidden min-h-0 md:block">
+          <div className="absolute inset-0 flex flex-col gap-3 overflow-y-auto">
+            {images.map((image, index) => <button key={image.url} type="button" aria-label={`View image ${index + 1}`} aria-pressed={active === index} onClick={() => select(index)} className={`relative aspect-square w-full shrink-0 overflow-hidden rounded-lg border-2 bg-surface focus-visible:outline-2 focus-visible:outline-primary ${active === index ? "border-primary" : "border-border"}`}>
+              <Image src={image.url} alt={image.altText || `${title}, image ${index + 1}`} fill sizes="64px" className="object-contain" />
+            </button>)}
+          </div>
         </div>}
         <div ref={strip} onScroll={(event) => { const el = event.currentTarget; setActive(Math.min(images.length - 1, Math.max(0, Math.round(el.scrollLeft / el.clientWidth)))); }} className="flex min-w-0 flex-1 snap-x snap-mandatory overflow-x-auto rounded-xl border border-border bg-surface [scrollbar-width:none]">
           {images.map((image, index) => <button key={image.url} type="button" aria-label={`Expand image ${index + 1} of ${images.length}`} onClick={() => { setActive(index); setExpanded(true); }} className="relative aspect-square w-full shrink-0 snap-center focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary">

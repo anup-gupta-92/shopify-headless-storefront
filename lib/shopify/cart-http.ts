@@ -8,8 +8,12 @@ const CART_COOKIE_MAX_AGE = 60 * 60 * 24 * 30;
 const CART_ID_PREFIX = "gid://shopify/Cart/";
 
 export function getBuyerIp(request: NextRequest): string | undefined {
-  if (!process.env.VERCEL) return undefined;
-  const raw = request.headers.get("x-vercel-forwarded-for") ?? request.headers.get("x-forwarded-for");
+  const isCloudflareRequest = Reflect.get(request, "cf") !== undefined;
+  if (!process.env.VERCEL && !isCloudflareRequest) return undefined;
+
+  const raw = process.env.VERCEL
+    ? request.headers.get("x-vercel-forwarded-for") ?? request.headers.get("x-forwarded-for")
+    : request.headers.get("cf-connecting-ip");
   const candidate = raw?.split(",")[0].trim();
   return candidate && isIP(candidate) ? candidate : undefined;
 }
