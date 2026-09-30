@@ -7,6 +7,8 @@ import ShopifyRichText from "@/components/ShopifyRichText";
 import ShopProductGrid from "@/components/ShopProductGrid";
 import { catalogSearchParams, parseCatalogParams } from "@/lib/shopify/catalog";
 import { getCollectionByHandle, getCollectionFacets, getCollectionPage } from "@/lib/shopify/collections";
+import { siteConfig } from "@/config/site";
+import { cleanMetadataText, conciseMetadataDescription } from "@/lib/seo";
 
 interface CollectionPageProps {
   params: Promise<{ handle: string }>;
@@ -16,12 +18,38 @@ interface CollectionPageProps {
 export async function generateMetadata({ params }: CollectionPageProps): Promise<Metadata> {
   const { handle } = await params;
   const collection = await getCollectionByHandle(handle);
-  if (!collection) return { title: "Collection not found" };
+  if (!collection) return { title: "Collection not found", robots: { index: false, follow: false } };
+  const title = cleanMetadataText(collection.seo.title) || cleanMetadataText(collection.title) || siteConfig.name;
+  const description = cleanMetadataText(collection.seo.description)
+    || conciseMetadataDescription(
+      collection.description,
+      `Browse ${collection.title} from Apex Business Supplies.`,
+    );
+  const canonical = `${siteConfig.url}/collections/${encodeURIComponent(collection.handle)}`;
+  const primaryImage = collection.image ? {
+    url: collection.image.url,
+    alt: collection.image.altText || collection.title,
+    ...(collection.image.width ? { width: collection.image.width } : {}),
+    ...(collection.image.height ? { height: collection.image.height } : {}),
+  } : undefined;
+
   return {
-    title: collection.title,
-    description: collection.description || `Browse ${collection.title} from Apex Business Supplies.`,
-    alternates: {
-      canonical: `/collections/${encodeURIComponent(collection.handle)}`,
+    title: { absolute: title },
+    description,
+    alternates: { canonical },
+    openGraph: {
+      type: "website",
+      url: canonical,
+      title,
+      description,
+      siteName: siteConfig.name,
+      ...(primaryImage ? { images: [primaryImage] } : {}),
+    },
+    twitter: {
+      card: primaryImage ? "summary_large_image" : "summary",
+      title,
+      description,
+      ...(primaryImage ? { images: [primaryImage.url] } : {}),
     },
   };
 }

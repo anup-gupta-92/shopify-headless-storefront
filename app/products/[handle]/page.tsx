@@ -10,6 +10,8 @@ import ProductInformation from '@/components/ProductInformation';
 import ProductReviews, { ReviewsSkeleton } from '@/components/ProductReviews';
 import BulkVariantOrderTable from '@/components/BulkVariantOrderTable';
 import { createBulkOrderModel } from '@/lib/shopify/bulk-order';
+import { siteConfig } from '@/config/site';
+import { cleanMetadataText, conciseMetadataDescription } from '@/lib/seo';
 
 interface ProductPageProps {
   params: Promise<{
@@ -20,13 +22,37 @@ interface ProductPageProps {
 export async function generateMetadata({ params }: ProductPageProps): Promise<Metadata> {
   const { handle } = await params;
   const product = await getProductByHandle(handle);
-  if (!product) return { title: 'Product not found' };
+  if (!product) return { title: 'Product not found', robots: { index: false, follow: false } };
+
+  const title = cleanMetadataText(product.seo?.title) || cleanMetadataText(product.title) || siteConfig.name;
+  const description = cleanMetadataText(product.seo?.description)
+    || conciseMetadataDescription(product.description, siteConfig.description);
+  const canonical = `${siteConfig.url}/products/${encodeURIComponent(product.handle || handle)}`;
+  const detailedImage = product.images?.find((image) => image.url === product.image);
+  const primaryImage = product.image ? {
+    url: product.image,
+    alt: product.imageAlt || product.title,
+    ...(detailedImage?.width ? { width: detailedImage.width } : {}),
+    ...(detailedImage?.height ? { height: detailedImage.height } : {}),
+  } : undefined;
 
   return {
-    title: product.title,
-    description: product.description || undefined,
-    alternates: {
-      canonical: `/products/${encodeURIComponent(product.handle || handle)}`,
+    title: { absolute: title },
+    description,
+    alternates: { canonical },
+    openGraph: {
+      type: 'website',
+      url: canonical,
+      title,
+      description,
+      siteName: siteConfig.name,
+      ...(primaryImage ? { images: [primaryImage] } : {}),
+    },
+    twitter: {
+      card: primaryImage ? 'summary_large_image' : 'summary',
+      title,
+      description,
+      ...(primaryImage ? { images: [primaryImage.url] } : {}),
     },
   };
 }

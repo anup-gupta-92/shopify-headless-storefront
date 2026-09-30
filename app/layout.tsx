@@ -13,7 +13,7 @@ import { siteConfig } from "@/config/site";
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
   title: {
-    default: siteConfig.name,
+    default: "Apex Business Supplies | Packaging, PPE, Abrasives & Business Supplies",
     template: `%s | ${siteConfig.name}`,
   },
   description: siteConfig.description,

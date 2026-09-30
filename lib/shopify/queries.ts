@@ -65,6 +65,7 @@ export const PRODUCT_QUERY = `
   query ProductByHandle($handle: String!) {
     product(handle: $handle) {
       id handle title description descriptionHtml productType vendor availableForSale
+      seo { title description }
       featuredImage { ${imageFields} }
       images(first: 15) { nodes { ${imageFields} } }
       collections(first: 20) { nodes { handle title } }
@@ -147,7 +148,26 @@ export const COLLECTION_QUERY = `
   query CollectionByHandle($handle: String!) {
     collection(handle: $handle) {
       id handle title description descriptionHtml
+      seo { title description }
       image { ${imageFields} }
+    }
+  }
+`;
+
+export const SITEMAP_PRODUCTS_QUERY = `
+  query SitemapProducts($first: Int!, $after: String) {
+    products(first: $first, after: $after) {
+      nodes { handle updatedAt }
+      pageInfo { hasNextPage endCursor }
+    }
+  }
+`;
+
+export const SITEMAP_COLLECTIONS_QUERY = `
+  query SitemapCollections($first: Int!, $after: String) {
+    collections(first: $first, after: $after) {
+      nodes { handle updatedAt }
+      pageInfo { hasNextPage endCursor }
     }
   }
 `;

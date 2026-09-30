@@ -2,11 +2,19 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import ShopControls from "@/components/ShopControls";
 import ShopProductGrid from "@/components/ShopProductGrid";
+import { siteConfig } from "@/config/site";
 import { catalogSearchParams, getCatalogFacets, getCatalogPage, parseCatalogParams } from "@/lib/shopify/catalog";
 
+const shopTitle = "Business Supplies | Apex Business Supplies";
+const shopDescription = "Shop packaging supplies, PPE, abrasives, cleaning products and workplace essentials from Apex Business Supplies.";
+const shopUrl = `${siteConfig.url}/shop`;
+
 export const metadata: Metadata = {
-  title: "Shop",
-  description: "Browse products available from Apex Business Supplies.",
+  title: { absolute: shopTitle },
+  description: shopDescription,
+  alternates: { canonical: shopUrl },
+  openGraph: { type: "website", url: shopUrl, title: shopTitle, description: shopDescription, siteName: siteConfig.name },
+  twitter: { card: "summary", title: shopTitle, description: shopDescription },
 };
 
 interface ShopPageProps {

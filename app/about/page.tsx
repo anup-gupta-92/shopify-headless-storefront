@@ -6,11 +6,15 @@ import { siteConfig } from "@/config/site";
 
 const description =
   "Learn about Apex Business Supplies, a UK-based supplier of packaging, PPE, abrasives, cleaning and workplace essentials for businesses across the UK.";
+const aboutTitle = "About Apex Business Supplies | UK Business Supplier";
+const aboutUrl = `${siteConfig.url}/about`;
 
 export const metadata: Metadata = {
-  title: { absolute: "About Apex Business Supplies | UK Business Supplier" },
+  title: { absolute: aboutTitle },
   description,
-  alternates: { canonical: "/about" },
+  alternates: { canonical: aboutUrl },
+  openGraph: { type: "website", url: aboutUrl, title: aboutTitle, description, siteName: siteConfig.name },
+  twitter: { card: "summary", title: aboutTitle, description },
 };
 
 const trustPoints = [

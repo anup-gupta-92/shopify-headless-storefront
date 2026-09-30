@@ -5,9 +5,16 @@ import ContactForm from "@/components/ContactForm";
 import { siteConfig } from "@/config/site";
 import { createContactToken } from "@/lib/contact/security";
 
+const contactTitle = "Contact Us | Apex Business Supplies";
+const contactDescription = "Contact Apex Business Supplies for help with products, orders and business supply enquiries.";
+const contactUrl = `${siteConfig.url}/contact`;
+
 export const metadata: Metadata = {
-  title: "Contact Us",
-  description: "Send an enquiry to Apex Business Supplies.",
+  title: { absolute: contactTitle },
+  description: contactDescription,
+  alternates: { canonical: contactUrl },
+  openGraph: { type: "website", url: contactUrl, title: contactTitle, description: contactDescription, siteName: siteConfig.name },
+  twitter: { card: "summary", title: contactTitle, description: contactDescription },
 };
 
 export default async function ContactPage() {

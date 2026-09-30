@@ -1,6 +1,11 @@
 import type { Money, ProductImage, ProductOption, QuantityRule, SelectedOption, UnitPriceMeasurement } from "@/types/product";
 import type { RatingMetafields } from "@/lib/judgeme/product";
 
+export interface ShopifySeo {
+  title: string | null;
+  description: string | null;
+}
+
 export interface ShopifyVariant {
   id: string; title: string; sku: string | null; availableForSale: boolean;
   currentlyNotInStock: boolean;
@@ -21,6 +26,7 @@ export interface ShopifyProductSummary extends RatingMetafields {
 }
 export interface ShopifyProduct extends ShopifyProductSummary {
   description: string; descriptionHtml: string; vendor: string;
+  seo: ShopifySeo;
   images: { nodes: ProductImage[] }; options: ProductOption[];
   collections: { nodes: Array<{ handle: string; title: string }> };
   variants: VariantConnection;
@@ -32,7 +38,13 @@ export interface ShopifyCollection {
   title: string;
   description: string;
   descriptionHtml: string;
+  seo: ShopifySeo;
   image: ProductImage | null;
+}
+
+export interface ShopifySitemapResource {
+  handle: string;
+  updatedAt: string;
 }
 
 export interface ShopifyPolicy {

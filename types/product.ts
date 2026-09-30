@@ -52,6 +52,7 @@ export interface Product {
   currencyCode?: string;
   imageAlt?: string;
   descriptionHtml?: string;
+  seo?: { title: string | null; description: string | null };
   vendor?: string;
   images?: ProductImage[];
   options?: ProductOption[];

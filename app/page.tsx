@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import HomepageAboutSection from "@/components/HomepageAboutSection";
@@ -7,6 +8,27 @@ import HomepageShopTheWorkSection from "@/components/HomepageShopTheWorkSection"
 import ProductCarousel from "@/components/ProductCarousel";
 import { getHomepageCollectionProducts } from "@/lib/shopify/collections";
 import { getHomepageHotspotProducts, getHomepageProducts } from "@/lib/shopify/products";
+import { siteConfig } from "@/config/site";
+
+const homepageTitle = "Apex Business Supplies | Packaging, PPE, Abrasives & Business Supplies";
+
+export const metadata: Metadata = {
+  title: { absolute: homepageTitle },
+  description: siteConfig.description,
+  alternates: { canonical: siteConfig.url },
+  openGraph: {
+    type: "website",
+    url: siteConfig.url,
+    title: homepageTitle,
+    description: siteConfig.description,
+    siteName: siteConfig.name,
+  },
+  twitter: {
+    card: "summary",
+    title: homepageTitle,
+    description: siteConfig.description,
+  },
+};
 
 const homepageCategories = [
   {

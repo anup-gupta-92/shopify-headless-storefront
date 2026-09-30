@@ -2,8 +2,8 @@ export const siteConfig = {
   name: "Apex Business Supplies",
   shortName: "Apex",
   description:
-    "Business, packaging, and workplace supplies from Apex Business Supplies.",
-  url: process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
+    "Shop packaging supplies, PPE, abrasives, cleaning and workplace essentials from Apex Business Supplies. Reliable UK supply, same-day dispatch and free delivery over £79.",
+  url: "https://www.apexbusinesssupplies.co.uk",
   logo: {
     lightTheme: "/images/logo-for-light.png",
     darkTheme: "/images/logo-for-dark.png",

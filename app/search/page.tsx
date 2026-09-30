@@ -3,6 +3,7 @@ import Link from "next/link";
 import ShopProductGrid from "@/components/ShopProductGrid";
 import SearchAnalytics from "@/components/SearchAnalytics";
 import { getProductSearchPage, normalizeSearchQuery } from "@/lib/shopify/search";
+import { siteConfig } from "@/config/site";
 
 interface SearchPageProps {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -20,7 +21,7 @@ export async function generateMetadata({ searchParams }: SearchPageProps): Promi
       ? `Search results for ${query} from Apex Business Supplies.`
       : "Search products from Apex Business Supplies.",
     robots: { index: false, follow: true },
-    alternates: { canonical: "/search" },
+    alternates: { canonical: `${siteConfig.url}/search` },
   };
 }
 

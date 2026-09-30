@@ -144,6 +144,7 @@ export const getProductByHandle = cache(async (handle: string): Promise<Product 
   }
   return {
     ...mapProductSummary(product), description: product.description, descriptionHtml: product.descriptionHtml,
+    seo: product.seo,
     vendor: product.vendor, images: product.images.nodes, options: product.options,
     collections,
     sku: "", variants: variants.map(mapVariant),
