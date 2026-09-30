@@ -14,7 +14,7 @@ export default function NotFound() {
   return (
     <main className="bg-background py-10 text-foreground sm:py-14 lg:py-16">
       <div className="site-container">
-        <div className="grid min-h-[55vh] items-center gap-9 lg:grid-cols-2 lg:gap-12 xl:gap-16">
+        <div className="grid items-center gap-9 lg:min-h-[42vh] lg:grid-cols-2 lg:gap-12 xl:gap-16">
           <div className="overflow-hidden rounded-2xl border border-border bg-surface-muted p-3 sm:p-5">
             <Image
               src="/images/404.png"
@@ -59,6 +59,7 @@ export default function NotFound() {
           heading="Browse our departments"
           description="Not sure where to go next? Explore our core product ranges."
           headingId="not-found-departments-heading"
+          spacing="compact"
         />
       </div>
     </main>

@@ -12,11 +12,22 @@ interface SupplyDepartmentsProps {
   heading: string;
   description: string;
   headingId: string;
+  spacing?: "default" | "compact";
 }
 
-export default function SupplyDepartments({ heading, description, headingId }: SupplyDepartmentsProps) {
+export default function SupplyDepartments({
+  heading,
+  description,
+  headingId,
+  spacing = "default",
+}: SupplyDepartmentsProps) {
   return (
-    <section aria-labelledby={headingId} className="mt-14 border-t border-border pt-12 sm:mt-16 sm:pt-14">
+    <section
+      aria-labelledby={headingId}
+      className={spacing === "compact"
+        ? "mt-8 border-t border-border pt-8 sm:mt-10 sm:pt-10"
+        : "mt-14 border-t border-border pt-12 sm:mt-16 sm:pt-14"}
+    >
       <div className="max-w-3xl">
         <h2 id={headingId} className="text-3xl font-extrabold tracking-tight sm:text-4xl">{heading}</h2>
         <p className="mt-3 leading-7 text-muted">{description}</p>
