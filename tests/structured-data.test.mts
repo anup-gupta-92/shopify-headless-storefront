@@ -4,7 +4,9 @@ import {
   buildBreadcrumbList,
   buildGlobalStructuredData,
   buildProductStructuredData,
+  MERCHANT_RETURN_POLICY_ID,
   serializeJsonLd,
+  SHIPPING_SERVICE_ID,
 } from "../lib/structured-data.ts";
 
 const variant = (id: string, amount: string, available = true, sku?: string) => ({
@@ -33,6 +35,19 @@ const product = (overrides = {}) => ({
 function graphNode(data: ReturnType<typeof buildProductStructuredData>, type: string) {
   const graph = data["@graph"] as Array<Record<string, unknown>>;
   return graph.find((node) => node["@type"] === type);
+}
+
+function offerFrom(data: ReturnType<typeof buildProductStructuredData>) {
+  const schema = graphNode(data, "Product")!;
+  return schema.offers as Record<string, unknown>;
+}
+
+function assertOfferPolicyReferences(offer: Record<string, unknown>) {
+  assert.deepEqual(offer.hasMerchantReturnPolicy, { "@id": MERCHANT_RETURN_POLICY_ID });
+  assert.deepEqual(offer.shippingDetails, {
+    "@type": "OfferShippingDetails",
+    hasShippingService: { "@id": SHIPPING_SERVICE_ID },
+  });
 }
 
 test("global schema contains one OnlineStore and one WebSite with real search action", () => {
@@ -64,9 +79,40 @@ test("OnlineStore has a production logo and conservative merchant policies", () 
   assert.equal("returnFees" in returns, false);
 
   const shipping = store.hasShippingService as Record<string, unknown>;
+  assert.equal(shipping["@id"], SHIPPING_SERVICE_ID);
   const conditions = shipping.shippingConditions as Array<Record<string, unknown>>;
   assert.equal(conditions.length, 2);
   assert.deepEqual(conditions.map((condition) => (condition.shippingRate as Record<string, unknown>).value), [4.49, 0]);
+  assert.deepEqual(conditions.map((condition) => (condition.shippingRate as Record<string, unknown>).currency), ["GBP", "GBP"]);
+  assert.deepEqual(conditions.map((condition) => (condition.shippingDestination as Record<string, unknown>).addressCountry), ["GB", "GB"]);
+  assert.deepEqual(conditions.map((condition) => condition.orderValue), [
+    { "@type": "MonetaryAmount", maxValue: 79, currency: "GBP" },
+    { "@type": "MonetaryAmount", minValue: 79.01, currency: "GBP" },
+  ]);
+
+  const handling = shipping.handlingTime as Record<string, unknown>;
+  const handlingDuration = handling.duration as Record<string, unknown>;
+  assert.deepEqual(handlingDuration, {
+    "@type": "QuantitativeValue",
+    minValue: 0,
+    maxValue: 1,
+    unitCode: "DAY",
+  });
+  for (const condition of conditions) {
+    const transit = condition.transitTime as Record<string, unknown>;
+    const transitDuration = transit.duration as Record<string, unknown>;
+    assert.deepEqual(transitDuration, {
+      "@type": "QuantitativeValue",
+      minValue: 1,
+      maxValue: 2,
+      unitCode: "DAY",
+    });
+    assert.equal(
+      Number(handlingDuration.maxValue) + Number(transitDuration.maxValue),
+      3,
+    );
+  }
+  assert.doesNotMatch(JSON.stringify(shipping), /addressCountry":"(?!GB)/);
 });
 
 test("multi-variant product uses an in-stock AggregateOffer and genuine rating", () => {
@@ -80,12 +126,26 @@ test("multi-variant product uses an in-stock AggregateOffer and genuine rating",
     highPrice: "7.99",
     offerCount: 2,
     availability: "https://schema.org/InStock",
+    hasMerchantReturnPolicy: { "@id": MERCHANT_RETURN_POLICY_ID },
+    shippingDetails: {
+      "@type": "OfferShippingDetails",
+      hasShippingService: { "@id": SHIPPING_SERVICE_ID },
+    },
   });
   assert.deepEqual(schema.aggregateRating, {
     "@type": "AggregateRating",
     ratingValue: 4.8,
     reviewCount: 27,
   });
+});
+
+test("single-variant in-stock Offer references the shared UK fulfillment policies", () => {
+  const offer = offerFrom(buildProductStructuredData(product({ variants: [variant("one", "4.99")] })));
+  assert.equal(offer["@type"], "Offer");
+  assert.equal(offer.priceCurrency, "GBP");
+  assert.equal(offer.price, "4.99");
+  assert.equal(offer.availability, "https://schema.org/InStock");
+  assertOfferPolicyReferences(offer);
 });
 
 test("invalid or absent review data is omitted", () => {
@@ -95,8 +155,18 @@ test("invalid or absent review data is omitted", () => {
 
 test("unavailable product emits OutOfStock rather than InStock", () => {
   const data = buildProductStructuredData(product({ variants: [variant("sold-out", "4.99", false)] }));
-  const schema = graphNode(data, "Product")!;
-  assert.equal((schema.offers as Record<string, unknown>).availability, "https://schema.org/OutOfStock");
+  const offer = offerFrom(data);
+  assert.equal(offer.availability, "https://schema.org/OutOfStock");
+  assertOfferPolicyReferences(offer);
+});
+
+test("product offers reference policies without duplicating MerchantReturnPolicy or international data", () => {
+  const data = buildProductStructuredData(product());
+  const serialized = JSON.stringify(data);
+  assert.equal((serialized.match(/MerchantReturnPolicy/g) ?? []).length, 1);
+  assert.equal(serialized.includes('"@type":"MerchantReturnPolicy"'), false);
+  assert.equal(serialized.includes("addressCountry"), false);
+  assertOfferPolicyReferences(offerFrom(data));
 });
 
 test("breadcrumbs use production URLs and correct positions", () => {

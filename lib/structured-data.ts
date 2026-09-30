@@ -21,8 +21,8 @@ function shippingTransitTime(): JsonLdObject {
     "@type": "ServicePeriod",
     duration: {
       "@type": "QuantitativeValue",
-      minValue: 2,
-      maxValue: 3,
+      minValue: 1,
+      maxValue: 2,
       unitCode: "DAY",
     },
     businessDays,
@@ -167,6 +167,16 @@ function commonSku(variants: ProductVariant[]): string | undefined {
   return skus.size === 1 ? [...skus][0] : undefined;
 }
 
+function offerFulfillmentPolicyReferences(): JsonLdObject {
+  return {
+    hasMerchantReturnPolicy: { "@id": MERCHANT_RETURN_POLICY_ID },
+    shippingDetails: {
+      "@type": "OfferShippingDetails",
+      hasShippingService: { "@id": SHIPPING_SERVICE_ID },
+    },
+  };
+}
+
 function buildOffers(product: Product, url: string): JsonLdObject | undefined {
   const variants = product.variants ?? [];
   const available = pricedVariants(variants.filter((variant) => variant.available === true));
@@ -178,6 +188,7 @@ function buildOffers(product: Product, url: string): JsonLdObject | undefined {
       priceCurrency: available[0].currencyCode,
       price: available[0].amountText,
       availability: `${SCHEMA_ORIGIN}/InStock`,
+      ...offerFulfillmentPolicyReferences(),
     };
   }
 
@@ -193,6 +204,7 @@ function buildOffers(product: Product, url: string): JsonLdObject | undefined {
       highPrice: Math.max(...amounts).toString(),
       offerCount: sameCurrency.length,
       availability: `${SCHEMA_ORIGIN}/InStock`,
+      ...offerFulfillmentPolicyReferences(),
     };
   }
 
@@ -204,6 +216,7 @@ function buildOffers(product: Product, url: string): JsonLdObject | undefined {
     priceCurrency: unavailable.currencyCode,
     price: unavailable.amountText,
     availability: `${SCHEMA_ORIGIN}/OutOfStock`,
+    ...offerFulfillmentPolicyReferences(),
   };
 }
 
