@@ -12,6 +12,8 @@ import BulkVariantOrderTable from '@/components/BulkVariantOrderTable';
 import { createBulkOrderModel } from '@/lib/shopify/bulk-order';
 import { siteConfig } from '@/config/site';
 import { cleanMetadataText, conciseMetadataDescription } from '@/lib/seo';
+import JsonLd from '@/components/JsonLd';
+import { buildProductStructuredData } from '@/lib/structured-data';
 
 interface ProductPageProps {
   params: Promise<{
@@ -64,6 +66,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
   if (!product) notFound();
   const recommendations = product.id ? await getProductRecommendations(product.id) : [];
   const bulkOrderModel = createBulkOrderModel(product);
+  const structuredData = buildProductStructuredData(product);
   const images = [...new Map([
     ...(product.image ? [{ url: product.image, altText: product.imageAlt || product.title, width: null, height: null }] : []),
     ...(product.images ?? []),
@@ -71,6 +74,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
   return (
     <main className="min-h-screen bg-background py-8 text-foreground md:py-12">
+      <JsonLd id="product-structured-data" data={structuredData} />
       <div className="site-container">
         
         <nav aria-label="Breadcrumb" className="mb-6 text-sm text-muted">

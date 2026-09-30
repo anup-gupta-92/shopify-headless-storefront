@@ -9,6 +9,8 @@ import { catalogSearchParams, parseCatalogParams } from "@/lib/shopify/catalog";
 import { getCollectionByHandle, getCollectionFacets, getCollectionPage } from "@/lib/shopify/collections";
 import { siteConfig } from "@/config/site";
 import { cleanMetadataText, conciseMetadataDescription } from "@/lib/seo";
+import JsonLd from "@/components/JsonLd";
+import { buildCollectionStructuredData } from "@/lib/structured-data";
 
 interface CollectionPageProps {
   params: Promise<{ handle: string }>;
@@ -68,9 +70,11 @@ export default async function CollectionPage({ params, searchParams }: Collectio
 
   const queryString = catalogSearchParams(filters).toString();
   const basePath = `/collections/${encodeURIComponent(collection.handle)}`;
+  const structuredData = buildCollectionStructuredData(collection);
 
   return (
     <main className="min-h-screen bg-background py-8 text-foreground sm:py-10">
+      <JsonLd id="collection-structured-data" data={structuredData} />
       <div className="site-container">
         <nav aria-label="Breadcrumb" className="mb-5 text-sm text-muted">
           <ol className="flex flex-wrap items-center gap-2">

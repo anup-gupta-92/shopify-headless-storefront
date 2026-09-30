@@ -24,6 +24,20 @@ export const siteConfig = {
     whatsApp: "https://wa.me/447950676723",
     tel: "+447950676723"
   },
+  organization: {
+    legalName: "Apex Business Supplies Ltd",
+    telephone: "+44 7950 676723",
+    address: {
+      streetAddress: "159 Hospital Street",
+      addressLocality: "Birmingham",
+      postalCode: "B19 3XA",
+      addressCountry: "GB",
+    },
+    sameAs: [
+      "https://www.instagram.com/apexbusinesssupplies/",
+      "https://www.linkedin.com/company/apex-business-supplies/",
+    ],
+  },
   customerAccount: {
     hostedUrl: "https://account.apexbusinesssupplies.co.uk",
   },

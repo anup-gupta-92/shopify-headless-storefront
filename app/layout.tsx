@@ -9,6 +9,8 @@ import ThemeProvider from "@/components/ThemeProvider";
 import CookieConsentProvider from "@/components/CookieConsentProvider";
 import GoogleAnalytics from "@/components/GoogleAnalytics";
 import { siteConfig } from "@/config/site";
+import JsonLd from "@/components/JsonLd";
+import { buildGlobalStructuredData } from "@/lib/structured-data";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
@@ -28,6 +30,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className="flex min-h-screen flex-col antialiased">
+        <JsonLd id="site-structured-data" data={buildGlobalStructuredData()} />
         <ThemeProvider>
           <CookieConsentProvider>
             <GoogleAnalytics />

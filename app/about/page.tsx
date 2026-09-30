@@ -3,6 +3,8 @@ import Image from "next/image";
 import Link from "next/link";
 import SupplyDepartments from "@/components/SupplyDepartments";
 import { siteConfig } from "@/config/site";
+import JsonLd from "@/components/JsonLd";
+import { ORGANIZATION_ID, WEBSITE_ID, type JsonLdObject } from "@/lib/structured-data";
 
 const description =
   "Learn about Apex Business Supplies, a UK-based supplier of packaging, PPE, abrasives, cleaning and workplace essentials for businesses across the UK.";
@@ -84,18 +86,20 @@ function SocialIcon({ network }: { network: "instagram" | "linkedin" }) {
 }
 
 export default function AboutPage() {
-  const aboutPageSchema = {
+  const aboutPageSchema: JsonLdObject = {
     "@context": "https://schema.org",
     "@type": "AboutPage",
+    "@id": `${aboutUrl}#webpage`,
     name: "About Apex Business Supplies",
     description,
-    url: new URL("/about", siteConfig.url).toString(),
-    about: { "@type": "Organization", name: siteConfig.name, url: siteConfig.url },
+    url: aboutUrl,
+    isPartOf: { "@id": WEBSITE_ID },
+    about: { "@id": ORGANIZATION_ID },
   };
 
   return (
     <main className="min-h-screen bg-background py-8 text-foreground sm:py-10">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(aboutPageSchema) }} />
+      <JsonLd id="about-structured-data" data={aboutPageSchema} />
       <div className="site-container">
         <nav aria-label="Breadcrumb" className="mb-8 text-sm text-muted">
           <ol className="flex items-center gap-2">
