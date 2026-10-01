@@ -7,7 +7,8 @@ import { storefrontRequest } from "./client";
 import { SHOP_FACETS_QUERY, SHOP_PRODUCTS_QUERY } from "./queries";
 import { mapProductSummary } from "./products";
 
-export const SHOP_PAGE_SIZE = 24;
+export const CATALOG_LOAD_MORE_PAGE_SIZE = 24;
+export const SHOP_INITIAL_PAGE_SIZE = 48;
 const SHOP_FACET_PAGE_SIZE = 250;
 
 const SORT_OPTIONS: Record<CatalogSort, { sortKey: string; reverse: boolean }> = {
@@ -104,7 +105,7 @@ export async function getCatalogPage(filters: CatalogFilterState, after?: string
       pageInfo: CatalogPage["pageInfo"];
     };
   }>(SHOP_PRODUCTS_QUERY, {
-    first: SHOP_PAGE_SIZE,
+    first: after ? CATALOG_LOAD_MORE_PAGE_SIZE : SHOP_INITIAL_PAGE_SIZE,
     after: after || null,
     sortKey: sort.sortKey,
     reverse: sort.reverse,

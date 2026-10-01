@@ -2,13 +2,14 @@ import "server-only";
 
 import { cache } from "react";
 import type { CatalogFacets, CatalogFilterState, CatalogPage, CatalogSort } from "@/types/catalog";
-import { countFacet, SHOP_PAGE_SIZE } from "./catalog";
+import { CATALOG_LOAD_MORE_PAGE_SIZE, countFacet } from "./catalog";
 import { storefrontRequest } from "./client";
 import { mapProductSummary } from "./products";
 import { COLLECTION_FACETS_QUERY, COLLECTION_PRODUCTS_QUERY, COLLECTION_QUERY, HOMEPAGE_COLLECTION_PRODUCTS_QUERY } from "./queries";
 import type { ShopifyCollection, ShopifyProductSummary } from "./types";
 
 const COLLECTION_FACET_PAGE_SIZE = 250;
+export const COLLECTION_INITIAL_PAGE_SIZE = 48;
 export const HOMEPAGE_COLLECTION_PRODUCT_LIMIT = 4;
 
 const COLLECTION_SORT_OPTIONS: Record<CatalogSort, { sortKey: string; reverse: boolean }> = {
@@ -106,7 +107,7 @@ export async function getCollectionPage(
   const sort = COLLECTION_SORT_OPTIONS[filters.sort];
   const data = await storefrontRequest<CollectionProductsResult>(COLLECTION_PRODUCTS_QUERY, {
     handle,
-    first: SHOP_PAGE_SIZE,
+    first: after ? CATALOG_LOAD_MORE_PAGE_SIZE : COLLECTION_INITIAL_PAGE_SIZE,
     after: after || null,
     sortKey: sort.sortKey,
     reverse: sort.reverse,
