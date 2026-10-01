@@ -45,6 +45,7 @@ function ResultThumbnail({ result }: { result: SearchResult }) {
           fill
           sizes="48px"
           className="object-contain p-1"
+          style={{ objectFit: "contain" }}
         />
       )}
     </span>

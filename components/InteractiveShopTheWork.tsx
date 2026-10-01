@@ -135,6 +135,7 @@ export default function InteractiveShopTheWork({ hotspots }: InteractiveShopTheW
                   fill
                   sizes="56px"
                   className="object-contain"
+                  style={{ objectFit: "contain" }}
                 />
               ) : null}
             </div>

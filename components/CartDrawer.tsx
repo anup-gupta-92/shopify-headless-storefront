@@ -117,6 +117,7 @@ export default function CartDrawer() {
                         fill
                         sizes="88px"
                         className="object-contain"
+                        style={{ objectFit: "contain" }}
                       /> : <span className="flex h-full items-center justify-center px-2 text-center text-xs text-muted">No image</span>}
                     </Link>
                     <div className="min-w-0">

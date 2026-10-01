@@ -37,7 +37,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
     </section> : <div className="mt-8 space-y-4">
       {page.orders.map((order) => <Link key={order.id} href={`/account/orders/${order.key}`} className="group grid gap-4 rounded-xl border border-border bg-surface p-5 transition hover:border-primary hover:bg-surface-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary sm:grid-cols-[5rem_minmax(0,1fr)_auto] sm:items-center">
         <div className="relative aspect-square overflow-hidden rounded-lg border border-border bg-white">
-          {order.image ? <Image src={order.image.url} alt={order.image.altText || ""} fill sizes="80px" className="object-contain p-1" /> : <span className="flex h-full items-center justify-center text-xs text-muted">No image</span>}
+          {order.image ? <Image src={order.image.url} alt={order.image.altText || ""} fill sizes="80px" className="object-contain p-1" style={{ objectFit: "contain" }} /> : <span className="flex h-full items-center justify-center text-xs text-muted">No image</span>}
         </div>
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2"><h2 className="font-bold">Order {order.name}</h2><span className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">{readableStatus(order.fulfillmentStatus)}</span></div>

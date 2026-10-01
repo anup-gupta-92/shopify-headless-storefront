@@ -28,7 +28,7 @@ function Address({ title, address }: { title: string; address: CustomerAddress |
 function OrderLine({ line, product }: { line: CustomerOrderLine; product?: ProductReference }) {
   const productHref = product ? `/products/${encodeURIComponent(product.handle)}` : null;
   const writeReviewUrl = product ? getJudgeMeWriteReviewUrl(product.id) : null;
-  const image = line.image ? <Image src={line.image.url} alt={line.image.altText || line.name} fill sizes="80px" className="object-contain p-1" /> : <span className="flex h-full items-center justify-center text-xs text-muted">No image</span>;
+  const image = line.image ? <Image src={line.image.url} alt={line.image.altText || line.name} fill sizes="80px" className="object-contain p-1" style={{ objectFit: "contain" }} /> : <span className="flex h-full items-center justify-center text-xs text-muted">No image</span>;
 
   return <article className="grid gap-4 p-5 sm:grid-cols-[5rem_minmax(0,1fr)_auto] sm:items-center">
     {productHref && line.image ? <Link href={productHref} aria-label={`View ${line.name}`} className="relative aspect-square overflow-hidden rounded-lg border border-border bg-white transition hover:border-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">{image}</Link> : <div className="relative aspect-square overflow-hidden rounded-lg border border-border bg-white">{image}</div>}

@@ -40,13 +40,13 @@ export default function ProductGallery({ images, title }: { images: ProductImage
         {multiple && <div className="relative hidden min-h-0 md:block">
           <div className="absolute inset-0 flex flex-col gap-3 overflow-y-auto">
             {images.map((image, index) => <button key={image.url} type="button" aria-label={`View image ${index + 1}`} aria-pressed={active === index} onClick={() => select(index)} className={`relative aspect-square w-full shrink-0 overflow-hidden rounded-lg border-2 bg-surface focus-visible:outline-2 focus-visible:outline-primary ${active === index ? "border-primary" : "border-border"}`}>
-              <Image src={image.url} alt={image.altText || `${title}, image ${index + 1}`} fill sizes="64px" className="object-contain" />
+              <Image src={image.url} alt={image.altText || `${title}, image ${index + 1}`} fill sizes="64px" className="object-contain" style={{ objectFit: "contain" }} />
             </button>)}
           </div>
         </div>}
         <div ref={strip} onScroll={(event) => { const el = event.currentTarget; setActive(Math.min(images.length - 1, Math.max(0, Math.round(el.scrollLeft / el.clientWidth)))); }} className="flex min-w-0 flex-1 snap-x snap-mandatory overflow-x-auto rounded-xl border border-border bg-surface [scrollbar-width:none]">
           {images.map((image, index) => <button key={image.url} type="button" aria-label={`Expand image ${index + 1} of ${images.length}`} onClick={() => { setActive(index); setExpanded(true); }} className="relative aspect-square w-full shrink-0 snap-center focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary">
-            <Image src={image.url} alt={image.altText || `${title}, image ${index + 1}`} fill sizes="(max-width: 767px) 100vw, 45vw" loading={index === 0 ? "eager" : "lazy"} className="object-contain" />
+            <Image src={image.url} alt={image.altText || `${title}, image ${index + 1}`} fill sizes="(max-width: 767px) 100vw, 45vw" loading={index === 0 ? "eager" : "lazy"} className="object-contain" style={{ objectFit: "contain" }} />
           </button>)}
         </div>
       </div>
@@ -56,7 +56,7 @@ export default function ProductGallery({ images, title }: { images: ProductImage
       <p className="mt-2 text-center text-xs text-muted">Tap an image to enlarge{multiple ? " · Swipe to browse" : ""}</p>
       <dialog ref={dialog} onCancel={(event) => { event.preventDefault(); setExpanded(false); }} onClose={() => setExpanded(false)} aria-label={`${title} expanded images`} className="fixed inset-0 m-auto h-[100dvh] max-h-none w-screen max-w-none bg-background p-4 text-foreground backdrop:bg-background/90" onKeyDown={(event) => { if (multiple && event.key === "ArrowRight") select(active + 1); if (multiple && event.key === "ArrowLeft") select(active - 1); }}>
         <div className="flex items-center justify-between gap-4"><p>{active + 1} / {images.length}</p><button autoFocus type="button" onClick={() => setExpanded(false)} className={control} aria-label="Close expanded image">Close ×</button></div>
-        {expanded && <div className="relative mx-auto h-[calc(100dvh-10rem)] w-full"><Image src={images[active].url} alt={images[active].altText || title} fill sizes="100vw" className="object-contain" /></div>}
+        {expanded && <div className="relative mx-auto h-[calc(100dvh-10rem)] w-full"><Image src={images[active].url} alt={images[active].altText || title} fill sizes="100vw" className="object-contain" style={{ objectFit: "contain" }} /></div>}
         {multiple && <div className="flex justify-center gap-4"><button type="button" className={control} aria-label="Previous image" onClick={() => select(active - 1)}>←</button><button type="button" className={control} aria-label="Next image" onClick={() => select(active + 1)}>→</button></div>}
       </dialog>
     </section>

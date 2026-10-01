@@ -101,6 +101,7 @@ export default async function CollectionPage({ params, searchParams }: Collectio
               fill
               sizes="(min-width: 768px) 288px, 100vw"
               className="object-contain p-2"
+              style={{ objectFit: "contain" }}
             />
           </div>}
         </header>
