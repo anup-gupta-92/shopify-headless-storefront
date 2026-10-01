@@ -22,6 +22,9 @@ export const metadata: Metadata = {
   },
   description: siteConfig.description,
   applicationName: siteConfig.name,
+  icons: {
+    icon: "/images/favicon.png",
+  },
 };
 
 export default function RootLayout({
