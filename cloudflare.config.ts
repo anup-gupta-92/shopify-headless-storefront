@@ -14,7 +14,9 @@ export default defineConfig({
     },
     env: {
       ASSETS: bindings.assets(),
-      VINEXT_KV_CACHE: bindings.kv(),
+      VINEXT_KV_CACHE: bindings.kv({
+        id: "8cb4da7edf1442518a1642e560681c63",
+      }),
       SHOPIFY_STORE_DOMAIN: bindings.secret(),
       SHOPIFY_STOREFRONT_PRIVATE_TOKEN: bindings.secret(),
       SHOPIFY_STOREFRONT_API_VERSION: bindings.text("2026-07"),
