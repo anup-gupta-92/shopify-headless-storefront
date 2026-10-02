@@ -4,7 +4,7 @@ export default defineConfig({
   worker: defineWorker({
     name: "apex-business-supplies",
     entrypoint: "vinext/server/fetch-handler",
-    compatibilityDate: "2026-09-30",
+    compatibilityDate: "2026-10-01",
     compatibilityFlags: ["nodejs_compat"],
     assets: { notFoundHandling: "none" },
     previewUrls: false,
@@ -14,9 +14,7 @@ export default defineConfig({
     },
     env: {
       ASSETS: bindings.assets(),
-      VINEXT_KV_CACHE: bindings.kv({
-        id: "8cb4da7edf1442518a1642e560681c63",
-      }),
+      VINEXT_KV_CACHE: bindings.kv(),
       SHOPIFY_STORE_DOMAIN: bindings.secret(),
       SHOPIFY_STOREFRONT_PRIVATE_TOKEN: bindings.secret(),
       SHOPIFY_STOREFRONT_API_VERSION: bindings.text("2026-07"),
