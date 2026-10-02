@@ -95,37 +95,47 @@ export default function ShopProductGrid({
 
       {error && <p role="alert" className="mt-6 rounded-lg border border-border bg-surface-muted p-3 text-sm">{error}</p>}
 
-      {pageInfo.hasNextPage && <div className="mt-8 flex justify-center">
-        <button
-          type="button"
-          onClick={() => void loadMore()}
-          disabled={loading}
-          className="min-h-12 rounded-xl border border-border bg-surface px-6 font-semibold transition hover:border-primary hover:bg-surface-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-50"
+      {(pageInfo.hasNextPage || (!hasLoadedMore && (pagination?.previousHref || pagination?.nextHref))) && (
+        <nav
+          aria-label="Catalogue pagination"
+          className="mt-8 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-1 sm:gap-4"
         >
-          {loading ? "Loading more…" : "Load more"}
-        </button>
-      </div>}
+          <div className="min-w-0 justify-self-start">
+            {!hasLoadedMore && pagination?.previousHref && (
+              <Link
+                href={pagination.previousHref}
+                rel="prev"
+                className="inline-flex min-h-11 items-center rounded text-[0.7rem] font-medium leading-tight text-muted transition hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary sm:text-sm"
+              >
+                ← Previous products
+              </Link>
+            )}
+          </div>
 
-      {!hasLoadedMore && (pagination?.previousHref || pagination?.nextHref) && (
-        <nav aria-label="Catalogue pagination" className="mt-5 flex items-center justify-center gap-3 text-sm">
-          {pagination.previousHref && (
-            <Link
-              href={pagination.previousHref}
-              rel="prev"
-              className="inline-flex min-h-11 items-center rounded-lg border border-border bg-surface px-4 font-semibold transition hover:border-primary hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-            >
-              Previous products
-            </Link>
-          )}
-          {pagination.nextHref && (
-            <Link
-              href={pagination.nextHref}
-              rel="next"
-              className="inline-flex min-h-11 items-center rounded-lg border border-border bg-surface px-4 font-semibold transition hover:border-primary hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-            >
-              Next products
-            </Link>
-          )}
+          <div className="justify-self-center">
+            {pageInfo.hasNextPage && (
+              <button
+                type="button"
+                onClick={() => void loadMore()}
+                disabled={loading}
+                className="min-h-12 rounded-xl border border-border bg-surface px-6 font-semibold transition hover:border-primary hover:bg-surface-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {loading ? "Loading more…" : "Load more"}
+              </button>
+            )}
+          </div>
+
+          <div className="min-w-0 justify-self-end text-right">
+            {!hasLoadedMore && pagination?.nextHref && (
+              <Link
+                href={pagination.nextHref}
+                rel="next"
+                className="inline-flex min-h-11 items-center rounded text-[0.7rem] font-medium leading-tight text-muted transition hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary sm:text-sm"
+              >
+                Next products →
+              </Link>
+            )}
+          </div>
         </nav>
       )}
     </section>
