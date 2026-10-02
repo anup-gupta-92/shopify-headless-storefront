@@ -7,6 +7,7 @@ import { storefrontRequest } from "./client";
 import { mapProductSummary } from "./products";
 import { COLLECTION_FACETS_QUERY, COLLECTION_PRODUCTS_QUERY, COLLECTION_QUERY, HOMEPAGE_COLLECTION_PRODUCTS_QUERY } from "./queries";
 import type { ShopifyCollection, ShopifyProductSummary } from "./types";
+import { resolveCatalogPage } from "./catalog-pagination";
 
 const COLLECTION_FACET_PAGE_SIZE = 250;
 export const COLLECTION_INITIAL_PAGE_SIZE = 48;
@@ -127,6 +128,14 @@ export async function getCollectionPage(
     .map(mapProductSummary);
 
   return { products, pageInfo: data.collection.products.pageInfo };
+}
+
+export function getCollectionPageByNumber(
+  handle: string,
+  filters: CatalogFilterState,
+  pageNumber: number,
+): Promise<CatalogPage | null> {
+  return resolveCatalogPage(pageNumber, (after) => getCollectionPage(handle, filters, after));
 }
 
 export const getCollectionFacets = cache(async (handle: string): Promise<CatalogFacets | null> => {

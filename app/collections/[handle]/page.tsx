@@ -6,7 +6,8 @@ import ShopControls from "@/components/ShopControls";
 import ShopifyRichText from "@/components/ShopifyRichText";
 import ShopProductGrid from "@/components/ShopProductGrid";
 import { catalogSearchParams, parseCatalogParams } from "@/lib/shopify/catalog";
-import { getCollectionByHandle, getCollectionFacets, getCollectionPage } from "@/lib/shopify/collections";
+import { getCollectionByHandle, getCollectionFacets, getCollectionPageByNumber } from "@/lib/shopify/collections";
+import { catalogPaginationHref, hasCatalogSeoFilters, parseCatalogPageNumber } from "@/lib/shopify/catalog-pagination";
 import { siteConfig } from "@/config/site";
 import { cleanMetadataText, conciseMetadataDescription } from "@/lib/seo";
 import JsonLd from "@/components/JsonLd";
@@ -17,8 +18,8 @@ interface CollectionPageProps {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }
 
-export async function generateMetadata({ params }: CollectionPageProps): Promise<Metadata> {
-  const { handle } = await params;
+export async function generateMetadata({ params, searchParams }: CollectionPageProps): Promise<Metadata> {
+  const [{ handle }, requestedParams] = await Promise.all([params, searchParams]);
   const collection = await getCollectionByHandle(handle);
   if (!collection) return { title: "Collection not found", robots: { index: false, follow: false } };
   const title = cleanMetadataText(collection.seo.title) || cleanMetadataText(collection.title) || siteConfig.name;
@@ -27,7 +28,14 @@ export async function generateMetadata({ params }: CollectionPageProps): Promise
       collection.description,
       `Browse ${collection.title} from Apex Business Supplies.`,
     );
-  const canonical = `${siteConfig.url}/collections/${encodeURIComponent(collection.handle)}`;
+  const baseCanonical = `${siteConfig.url}/collections/${encodeURIComponent(collection.handle)}`;
+  const pageNumber = parseCatalogPageNumber(requestedParams.page);
+  const parsed = parseCatalogParams(requestedParams);
+  const filters = { ...parsed, productTypes: [] };
+  const queryString = catalogSearchParams(filters).toString();
+  const canonical = pageNumber && pageNumber > 1 && !hasCatalogSeoFilters(queryString)
+    ? catalogPaginationHref(baseCanonical, queryString, pageNumber)
+    : baseCanonical;
   const primaryImage = collection.image ? {
     url: collection.image.url,
     alt: collection.image.altText || collection.title,
@@ -39,6 +47,7 @@ export async function generateMetadata({ params }: CollectionPageProps): Promise
     title: { absolute: title },
     description,
     alternates: { canonical },
+    ...(pageNumber === null ? { robots: { index: false, follow: false } } : {}),
     openGraph: {
       type: "website",
       url: canonical,
@@ -58,11 +67,14 @@ export async function generateMetadata({ params }: CollectionPageProps): Promise
 
 export default async function CollectionPage({ params, searchParams }: CollectionPageProps) {
   const [{ handle }, requestedParams] = await Promise.all([params, searchParams]);
+  const pageNumber = parseCatalogPageNumber(requestedParams.page);
+  if (pageNumber === null) notFound();
+
   const parsed = parseCatalogParams(requestedParams);
   const filters = { ...parsed, productTypes: [] };
   const [collection, initialPage, facets] = await Promise.all([
     getCollectionByHandle(handle),
-    getCollectionPage(handle, filters),
+    getCollectionPageByNumber(handle, filters, pageNumber),
     getCollectionFacets(handle),
   ]);
 
@@ -70,6 +82,10 @@ export default async function CollectionPage({ params, searchParams }: Collectio
 
   const queryString = catalogSearchParams(filters).toString();
   const basePath = `/collections/${encodeURIComponent(collection.handle)}`;
+  const previousHref = pageNumber > 1 ? catalogPaginationHref(basePath, queryString, pageNumber - 1) : undefined;
+  const nextHref = initialPage.pageInfo.hasNextPage
+    ? catalogPaginationHref(basePath, queryString, pageNumber + 1)
+    : undefined;
   const structuredData = buildCollectionStructuredData(collection);
 
   return (
@@ -115,11 +131,12 @@ export default async function CollectionPage({ params, searchParams }: Collectio
           facetDescription=""
         >
           <ShopProductGrid
-            key={queryString || "default"}
+            key={`${queryString || "default"}:page-${pageNumber}`}
             initialPage={initialPage}
             queryString={queryString}
             loadMorePath={`/api/collections/${encodeURIComponent(collection.handle)}`}
             clearHref={basePath}
+            pagination={{ previousHref, nextHref }}
           />
         </ShopControls>
       </div>

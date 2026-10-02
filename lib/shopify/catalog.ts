@@ -6,6 +6,7 @@ import type { ShopifyProductSummary } from "./types";
 import { storefrontRequest } from "./client";
 import { SHOP_FACETS_QUERY, SHOP_PRODUCTS_QUERY } from "./queries";
 import { mapProductSummary } from "./products";
+import { resolveCatalogPage } from "./catalog-pagination";
 
 export const CATALOG_LOAD_MORE_PAGE_SIZE = 24;
 export const SHOP_INITIAL_PAGE_SIZE = 48;
@@ -124,6 +125,10 @@ export async function getCatalogPage(filters: CatalogFilterState, after?: string
   }).map(mapProductSummary);
 
   return { products, pageInfo: data.products.pageInfo };
+}
+
+export function getCatalogPageByNumber(filters: CatalogFilterState, pageNumber: number): Promise<CatalogPage | null> {
+  return resolveCatalogPage(pageNumber, (after) => getCatalogPage(filters, after));
 }
 
 interface FacetProduct {

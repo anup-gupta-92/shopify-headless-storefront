@@ -14,6 +14,10 @@ interface ShopProductGridProps {
   emptyTitle?: string;
   emptyDescription?: string;
   emptyActionLabel?: string;
+  pagination?: {
+    previousHref?: string;
+    nextHref?: string;
+  };
 }
 
 export default function ShopProductGrid({
@@ -24,11 +28,13 @@ export default function ShopProductGrid({
   emptyTitle = "No products match these filters.",
   emptyDescription = "Try widening the price range or clearing a brand or category.",
   emptyActionLabel = "Clear filters",
+  pagination,
 }: ShopProductGridProps) {
   const [products, setProducts] = useState(initialPage.products);
   const [pageInfo, setPageInfo] = useState(initialPage.pageInfo);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [hasLoadedMore, setHasLoadedMore] = useState(false);
 
   async function loadMore() {
     if (loading || !pageInfo.hasNextPage || !pageInfo.endCursor) return;
@@ -47,6 +53,7 @@ export default function ShopProductGrid({
         return [...current, ...body.page!.products.filter((product) => !existingIds.has(product.id))];
       });
       setPageInfo(body.page.pageInfo);
+      setHasLoadedMore(true);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "More products could not be loaded.");
     } finally {
@@ -98,6 +105,29 @@ export default function ShopProductGrid({
           {loading ? "Loading more…" : "Load more"}
         </button>
       </div>}
+
+      {!hasLoadedMore && (pagination?.previousHref || pagination?.nextHref) && (
+        <nav aria-label="Catalogue pagination" className="mt-5 flex items-center justify-center gap-3 text-sm">
+          {pagination.previousHref && (
+            <Link
+              href={pagination.previousHref}
+              rel="prev"
+              className="inline-flex min-h-11 items-center rounded-lg border border-border bg-surface px-4 font-semibold transition hover:border-primary hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            >
+              Previous products
+            </Link>
+          )}
+          {pagination.nextHref && (
+            <Link
+              href={pagination.nextHref}
+              rel="next"
+              className="inline-flex min-h-11 items-center rounded-lg border border-border bg-surface px-4 font-semibold transition hover:border-primary hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            >
+              Next products
+            </Link>
+          )}
+        </nav>
+      )}
     </section>
   );
 }
