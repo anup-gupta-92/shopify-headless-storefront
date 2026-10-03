@@ -29,7 +29,3 @@ export function getShopifyStorefrontApiVersion(): string {
   }
   return version;
 }
-
-export function getCustomerAccountClientId(): string {
-  return requiredEnv("SHOPIFY_CUSTOMER_ACCOUNT_CLIENT_ID");
-}
