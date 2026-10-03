@@ -61,6 +61,7 @@ export default function CartProvider({ children }: { children: React.ReactNode }
   const drawerWasOpen = useRef(false);
 
   const refreshCart = useCallback(async () => {
+    setInitializing(true);
     try {
       setCart(await fetchCurrentCart());
       setError(null);

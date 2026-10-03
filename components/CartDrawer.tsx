@@ -1,9 +1,9 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef } from "react";
 import { flushSync } from "react-dom";
+import CartLineItem from "@/components/CartLineItem";
 import { useCart } from "@/components/CartProvider";
 import { startNavigationProgress } from "@/components/RouteLoadingSignal";
 import { formatMoney } from "@/lib/shopify/pricing";
@@ -105,57 +105,17 @@ export default function CartDrawer() {
           <>
             <div className="min-h-0 flex-1 overflow-y-auto px-4 py-2 sm:px-6">
               <ul className="divide-y divide-border">
-                {cart.lines.map((line) => {
-                  const displayOptions = line.merchandise.selectedOptions.filter(
-                    (option) => !(option.name === "Title" && option.value === "Default Title"),
-                  );
-                  return <li key={line.id} className="grid grid-cols-[5.5rem_minmax(0,1fr)] gap-3 py-5">
-                    <Link href={`/products/${line.merchandise.product.handle}`} onClick={closeDrawer} className={`relative aspect-square overflow-hidden rounded-lg border border-border bg-surface ${focusClass}`}>
-                      {line.merchandise.image ? <Image
-                        src={line.merchandise.image.url}
-                        alt={line.merchandise.image.altText || line.merchandise.product.title}
-                        fill
-                        sizes="88px"
-                        className="object-contain"
-                        style={{ objectFit: "contain" }}
-                      /> : <span className="flex h-full items-center justify-center px-2 text-center text-xs text-muted">No image</span>}
-                    </Link>
-                    <div className="min-w-0">
-                      <Link href={`/products/${line.merchandise.product.handle}`} onClick={closeDrawer} className={`block break-words font-semibold hover:text-primary ${focusClass}`}>
-                        {line.merchandise.product.title}
-                      </Link>
-                      {displayOptions.length > 0 && <p className="mt-1 break-words text-sm text-muted">
-                        {displayOptions.map((option) => `${option.name}: ${option.value}`).join(" · ")}
-                      </p>}
-                      {line.merchandise.productCode && <p className="mt-1 break-all font-mono text-xs text-muted">Product Code: {line.merchandise.productCode}</p>}
-                      <p className="mt-2 font-semibold text-accent">{formatMoney(line.cost.totalAmount)}</p>
-                      {!line.merchandise.availableForSale && <p className="mt-1 text-sm font-medium text-muted">Currently unavailable</p>}
-                      <div className="mt-3 flex flex-wrap items-center gap-2">
-                        <button
-                          type="button"
-                          aria-label={`Decrease quantity of ${line.merchandise.product.title}`}
-                          disabled={loading || line.quantity <= 1}
-                          onClick={() => void updateLine(line.id, line.quantity - 1).catch(() => undefined)}
-                          className={`inline-flex size-10 items-center justify-center rounded-lg border border-border bg-surface disabled:cursor-not-allowed disabled:opacity-40 ${focusClass}`}
-                        >−</button>
-                        <output aria-label={`Quantity of ${line.merchandise.product.title}`} className="min-w-8 text-center font-semibold tabular-nums">{line.quantity}</output>
-                        <button
-                          type="button"
-                          aria-label={`Increase quantity of ${line.merchandise.product.title}`}
-                          disabled={loading || !line.merchandise.availableForSale}
-                          onClick={() => void updateLine(line.id, line.quantity + 1).catch(() => undefined)}
-                          className={`inline-flex size-10 items-center justify-center rounded-lg border border-border bg-surface disabled:cursor-not-allowed disabled:opacity-40 ${focusClass}`}
-                        >+</button>
-                        <button
-                          type="button"
-                          disabled={loading}
-                          onClick={() => void removeLine(line.id).catch(() => undefined)}
-                          className={`ml-auto min-h-10 rounded-lg px-2 text-sm font-medium text-muted underline decoration-border underline-offset-4 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40 ${focusClass}`}
-                        >Remove <span className="sr-only">{line.merchandise.product.title}</span></button>
-                      </div>
-                    </div>
-                  </li>;
-                })}
+                {cart.lines.map((line) => (
+                  <CartLineItem
+                    key={line.id}
+                    line={line}
+                    loading={loading}
+                    layout="drawer"
+                    onNavigate={closeDrawer}
+                    updateLine={updateLine}
+                    removeLine={removeLine}
+                  />
+                ))}
               </ul>
             </div>
 
@@ -164,9 +124,23 @@ export default function CartDrawer() {
                 <span>Subtotal</span>
                 <span className="text-lg">{formatMoney(cart.cost.subtotalAmount)}</span>
               </div>
-              <button type="button" disabled={loading || cart.totalQuantity < 1} onClick={() => void handleCheckout()} className={`min-h-12 w-full rounded-xl bg-primary px-5 py-3 font-semibold text-primary-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:bg-surface-muted disabled:text-muted ${focusClass}`}>
-                {checkoutLoading ? "Preparing checkout…" : "Checkout"}
-              </button>
+              <div className="grid grid-cols-2 gap-3">
+                <Link
+                  href="/cart"
+                  onClick={closeDrawer}
+                  className={`inline-flex min-h-12 items-center justify-center rounded-xl border border-primary px-3 py-3 text-center text-sm font-semibold text-primary transition hover:bg-primary/10 sm:px-5 sm:text-base ${focusClass}`}
+                >
+                  View Cart
+                </Link>
+                <button
+                  type="button"
+                  disabled={loading || cart.totalQuantity < 1}
+                  onClick={() => void handleCheckout()}
+                  className={`min-h-12 rounded-xl bg-primary px-3 py-3 text-sm font-semibold text-primary-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:bg-surface-muted disabled:text-muted sm:px-5 sm:text-base ${focusClass}`}
+                >
+                  {checkoutLoading ? "Preparing…" : "Checkout"}
+                </button>
+              </div>
             </footer>
           </>
         )}
