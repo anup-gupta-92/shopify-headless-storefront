@@ -12,6 +12,7 @@ import { useCart } from "@/components/CartProvider";
 import ReviewStars from "@/components/ReviewStars";
 import { useCookieConsent } from "@/components/CookieConsentProvider";
 import { trackViewItem } from "@/lib/analytics/events";
+import ProductDispatchMessage from "@/components/ProductDispatchMessage";
 
 export default function ProductInformation({ product }: { product: Product }) {
   const searchParams = useSearchParams();
@@ -118,6 +119,12 @@ export default function ProductInformation({ product }: { product: Product }) {
         {configuration.priceExVat && <p className="text-sm text-muted">Excl. VAT: {configuration.priceExVat}</p>}
         {configuration.available === false && <p className="font-medium text-muted">Currently unavailable</p>}
       </div>
+
+      <ProductDispatchMessage
+        vendor={product.vendor}
+        tags={product.tags}
+        collectionHandles={product.collectionHandles}
+      />
 
       {options.map((option, index) => <div key={option.name} className="mt-5">
         <label htmlFor={`${selectId}-${index}`} className="mb-2 block text-sm font-semibold">{option.name}</label>

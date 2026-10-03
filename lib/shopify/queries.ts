@@ -64,11 +64,11 @@ export const HOMEPAGE_HOTSPOT_PRODUCTS_QUERY = `
 export const PRODUCT_QUERY = `
   query ProductByHandle($handle: String!) {
     product(handle: $handle) {
-      id handle title description descriptionHtml productType vendor availableForSale
+      id handle title description descriptionHtml productType vendor tags availableForSale
       seo { title description }
       featuredImage { ${imageFields} }
       images(first: 15) { nodes { ${imageFields} } }
-      collections(first: 20) { nodes { handle title } }
+      collections(first: 250) { nodes { handle title } }
       options { name values }
       priceRange { minVariantPrice { amount currencyCode } maxVariantPrice { amount currencyCode } }
       variants(first: 100) {

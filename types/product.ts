@@ -54,9 +54,11 @@ export interface Product {
   descriptionHtml?: string;
   seo?: { title: string | null; description: string | null };
   vendor?: string;
+  tags?: string[];
   images?: ProductImage[];
   options?: ProductOption[];
   collections?: Array<{ handle: string; title: string }>;
+  collectionHandles?: string[];
   title: string;
   description: string;
   image: string;

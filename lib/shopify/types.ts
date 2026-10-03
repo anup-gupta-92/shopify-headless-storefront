@@ -25,7 +25,7 @@ export interface ShopifyProductSummary extends RatingMetafields {
   variants: { nodes: Array<Pick<ShopifyVariant, "id" | "availableForSale" | "price" | "compareAtPrice">> };
 }
 export interface ShopifyProduct extends ShopifyProductSummary {
-  description: string; descriptionHtml: string; vendor: string;
+  description: string; descriptionHtml: string; vendor: string; tags: string[];
   seo: ShopifySeo;
   images: { nodes: ProductImage[] }; options: ProductOption[];
   collections: { nodes: Array<{ handle: string; title: string }> };
