@@ -123,12 +123,15 @@ export const SHOP_PRODUCTS_QUERY = `
     $query: String
   ) {
     products(first: $first, after: $after, sortKey: $sortKey, reverse: $reverse, query: $query) {
-      nodes {
-        id handle title productType vendor availableForSale
-        featuredImage { ${imageFields} }
-        priceRange { minVariantPrice { amount currencyCode } maxVariantPrice { amount currencyCode } }
-        ${cardVariantFields}
-        ${reviewFields}
+      edges {
+        cursor
+        node {
+          id handle title productType vendor availableForSale
+          featuredImage { ${imageFields} }
+          priceRange { minVariantPrice { amount currencyCode } maxVariantPrice { amount currencyCode } }
+          ${cardVariantFields}
+          ${reviewFields}
+        }
       }
       pageInfo { hasNextPage endCursor }
     }
@@ -138,7 +141,16 @@ export const SHOP_PRODUCTS_QUERY = `
 export const SHOP_FACETS_QUERY = `
   query ShopFacets($first: Int!, $after: String) {
     products(first: $first, after: $after, sortKey: ID) {
-      nodes { id vendor productType availableForSale }
+      nodes {
+        id vendor productType availableForSale
+        variants(first: 250) {
+          nodes {
+            availableForSale
+            price { amount currencyCode }
+            compareAtPrice { amount currencyCode }
+          }
+        }
+      }
       pageInfo { hasNextPage endCursor }
     }
   }

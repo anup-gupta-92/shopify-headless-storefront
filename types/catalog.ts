@@ -4,6 +4,7 @@ export type CatalogSort = "best-selling" | "price-asc" | "price-desc" | "title-a
 
 export interface CatalogFilterState {
   inStock: boolean;
+  onSale: boolean;
   minPrice?: number;
   maxPrice?: number;
   vendors: string[];
@@ -14,6 +15,9 @@ export interface CatalogFilterState {
 export interface CatalogFacets {
   availability: {
     inStock: number;
+  };
+  offers: {
+    onSale: number;
   };
   vendors: CatalogFacetValue[];
   productTypes: CatalogFacetValue[];

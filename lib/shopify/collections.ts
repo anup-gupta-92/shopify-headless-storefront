@@ -163,6 +163,7 @@ export const getCollectionFacets = cache(async (handle: string): Promise<Catalog
   const availableProducts = products.filter((product) => product.availableForSale);
   return {
     availability: { inStock: availableProducts.length },
+    offers: { onSale: 0 },
     vendors: countFacet(availableProducts.map((product) => product.vendor)),
     productTypes: [],
   };

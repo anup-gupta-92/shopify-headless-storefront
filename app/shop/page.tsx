@@ -69,7 +69,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
           <p className="mt-3 max-w-2xl text-muted">Explore products currently published to the Apex storefront.</p>
         </div>
 
-        <ShopControls filters={filters} facets={facets} queryString={queryString}>
+        <ShopControls filters={filters} facets={facets} queryString={queryString} showSaleFilter>
           <ShopProductGrid
             key={`${queryString || "default"}:page-${pageNumber}`}
             initialPage={initialPage}

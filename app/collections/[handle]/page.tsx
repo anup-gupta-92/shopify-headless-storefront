@@ -31,7 +31,7 @@ export async function generateMetadata({ params, searchParams }: CollectionPageP
   const baseCanonical = `${siteConfig.url}/collections/${encodeURIComponent(collection.handle)}`;
   const pageNumber = parseCatalogPageNumber(requestedParams.page);
   const parsed = parseCatalogParams(requestedParams);
-  const filters = { ...parsed, productTypes: [] };
+  const filters = { ...parsed, onSale: false, productTypes: [] };
   const queryString = catalogSearchParams(filters).toString();
   const canonical = pageNumber && pageNumber > 1 && !hasCatalogSeoFilters(queryString)
     ? catalogPaginationHref(baseCanonical, queryString, pageNumber)
@@ -71,7 +71,7 @@ export default async function CollectionPage({ params, searchParams }: Collectio
   if (pageNumber === null) notFound();
 
   const parsed = parseCatalogParams(requestedParams);
-  const filters = { ...parsed, productTypes: [] };
+  const filters = { ...parsed, onSale: false, productTypes: [] };
   const [collection, initialPage, facets] = await Promise.all([
     getCollectionByHandle(handle),
     getCollectionPageByNumber(handle, filters, pageNumber),
@@ -143,4 +143,3 @@ export default async function CollectionPage({ params, searchParams }: Collectio
     </main>
   );
 }
-

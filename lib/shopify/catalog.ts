@@ -7,6 +7,7 @@ import { storefrontRequest } from "./client";
 import { SHOP_FACETS_QUERY, SHOP_PRODUCTS_QUERY } from "./queries";
 import { mapProductSummary } from "./products";
 import { resolveCatalogPage } from "./catalog-pagination";
+import { hasPurchasableSaleVariant } from "./sale";
 
 export const CATALOG_LOAD_MORE_PAGE_SIZE = 24;
 export const SHOP_INITIAL_PAGE_SIZE = 48;
@@ -64,6 +65,7 @@ export function parseCatalogParams(source: URLSearchParams | ParamRecord): Catal
   return {
     // This storefront intentionally does not expose unavailable catalogue products.
     inStock: true,
+    onSale: readParam(source, "sale") === "1",
     minPrice: priceParam(readPreferredParam(source, "filter.v.price.gte", "minPrice")),
     maxPrice: priceParam(readPreferredParam(source, "filter.v.price.lte", "maxPrice")),
     vendors: selectedValues(source, "filter.p.vendor", "vendor"),
@@ -75,6 +77,7 @@ export function parseCatalogParams(source: URLSearchParams | ParamRecord): Catal
 export function catalogSearchParams(filters: CatalogFilterState): URLSearchParams {
   const params = new URLSearchParams();
   params.set("filter.v.availability", filters.inStock ? "1" : "0");
+  if (filters.onSale) params.set("sale", "1");
   if (filters.minPrice !== undefined) params.set("filter.v.price.gte", String(filters.minPrice));
   if (filters.maxPrice !== undefined) params.set("filter.v.price.lte", String(filters.maxPrice));
   for (const vendor of filters.vendors) params.append("filter.p.vendor", vendor);
@@ -98,28 +101,89 @@ function buildShopifyQuery(filters: CatalogFilterState): string {
   return terms.join(" ");
 }
 
-export async function getCatalogPage(filters: CatalogFilterState, after?: string): Promise<CatalogPage> {
+interface ShopProductEdge {
+  cursor: string;
+  node: ShopifyProductSummary;
+}
+
+interface ShopProductsResult {
+  products: {
+    edges: ShopProductEdge[];
+    pageInfo: CatalogPage["pageInfo"];
+  };
+}
+
+function eligibleProduct(
+  product: ShopifyProductSummary,
+  filters: CatalogFilterState,
+  selectedVendors: Set<string>,
+  selectedProductTypes: Set<string>,
+) {
+  if (filters.inStock && !product.availableForSale) return false;
+  if (selectedVendors.size && !selectedVendors.has(product.vendor.trim().toLocaleLowerCase())) return false;
+  if (selectedProductTypes.size && !selectedProductTypes.has(product.productType.trim().toLocaleLowerCase())) return false;
+  return true;
+}
+
+async function requestCatalogProducts(filters: CatalogFilterState, first: number, after?: string | null) {
   const sort = SORT_OPTIONS[filters.sort];
-  const data = await storefrontRequest<{
-    products: {
-      nodes: ShopifyProductSummary[];
-      pageInfo: CatalogPage["pageInfo"];
-    };
-  }>(SHOP_PRODUCTS_QUERY, {
-    first: after ? CATALOG_LOAD_MORE_PAGE_SIZE : SHOP_INITIAL_PAGE_SIZE,
+  return storefrontRequest<ShopProductsResult>(SHOP_PRODUCTS_QUERY, {
+    first,
     after: after || null,
     sortKey: sort.sortKey,
     reverse: sort.reverse,
     query: buildShopifyQuery(filters) || null,
   });
+}
 
-  const seen = new Set<string>();
+export async function getCatalogPage(filters: CatalogFilterState, after?: string): Promise<CatalogPage> {
+  const pageSize = after ? CATALOG_LOAD_MORE_PAGE_SIZE : SHOP_INITIAL_PAGE_SIZE;
   const selectedVendors = new Set(filters.vendors.map((value) => value.toLocaleLowerCase()));
   const selectedProductTypes = new Set(filters.productTypes.map((value) => value.toLocaleLowerCase()));
-  const products = data.products.nodes.filter((product) => {
-    if ((filters.inStock && !product.availableForSale) || seen.has(product.id)) return false;
-    if (selectedVendors.size && !selectedVendors.has(product.vendor.trim().toLocaleLowerCase())) return false;
-    if (selectedProductTypes.size && !selectedProductTypes.has(product.productType.trim().toLocaleLowerCase())) return false;
+
+  if (filters.onSale) {
+    const saleProductIds = await getSaleProductIds();
+    const products: CatalogPage["products"] = [];
+    let scanCursor = after || null;
+    let finalCursor: string | null = null;
+    let hasNextSourcePage = true;
+
+    // Shopify has no native compare-at-price filter. Scan its sorted cursor
+    // connection until this sale-only page is full, plus one match for lookahead.
+    while (hasNextSourcePage) {
+      const data = await requestCatalogProducts(filters, pageSize, scanCursor);
+      const edges = data.products.edges;
+
+      for (const edge of edges) {
+        scanCursor = edge.cursor;
+        const product = edge.node;
+        if (!saleProductIds.has(product.id)
+          || !eligibleProduct(product, filters, selectedVendors, selectedProductTypes)) continue;
+
+        if (products.length === pageSize) {
+          return { products, pageInfo: { hasNextPage: true, endCursor: finalCursor } };
+        }
+
+        products.push(mapProductSummary(product));
+        finalCursor = edge.cursor;
+      }
+
+      hasNextSourcePage = data.products.pageInfo.hasNextPage;
+      const nextCursor = data.products.pageInfo.endCursor;
+      if (hasNextSourcePage && (!nextCursor || nextCursor === scanCursor && edges.length === 0)) {
+        throw new Error("Shopify sale pagination could not continue");
+      }
+      scanCursor = nextCursor;
+    }
+
+    return { products, pageInfo: { hasNextPage: false, endCursor: finalCursor } };
+  }
+
+  const data = await requestCatalogProducts(filters, pageSize, after);
+
+  const seen = new Set<string>();
+  const products = data.products.edges.map((edge) => edge.node).filter((product) => {
+    if (seen.has(product.id) || !eligibleProduct(product, filters, selectedVendors, selectedProductTypes)) return false;
     seen.add(product.id);
     return true;
   }).map(mapProductSummary);
@@ -136,6 +200,7 @@ interface FacetProduct {
   vendor: string;
   productType: string;
   availableForSale: boolean;
+  variants: ShopifyProductSummary["variants"];
 }
 
 interface FacetProductPage {
@@ -158,7 +223,7 @@ export function countFacet(values: string[]) {
   return [...counts.values()].sort((a, b) => a.value.localeCompare(b.value));
 }
 
-export const getCatalogFacets = cache(async (): Promise<CatalogFacets> => {
+const getCatalogFacetProducts = cache(async (): Promise<FacetProduct[]> => {
   const products: FacetProduct[] = [];
   let after: string | null = null;
   let hasNextPage = true;
@@ -175,11 +240,28 @@ export const getCatalogFacets = cache(async (): Promise<CatalogFacets> => {
     after = nextCursor;
   }
 
+  return products;
+});
+
+const getSaleProductIds = cache(async (): Promise<Set<string>> => {
+  const products = await getCatalogFacetProducts();
+  return new Set(products
+    .filter((product) => product.availableForSale && hasPurchasableSaleVariant(product.variants.nodes))
+    .map((product) => product.id));
+});
+
+export const getCatalogFacets = cache(async (): Promise<CatalogFacets> => {
+  const products = await getCatalogFacetProducts();
+  const availableProducts = products.filter((product) => product.availableForSale);
+
   return {
     availability: {
-      inStock: products.filter((product) => product.availableForSale).length,
+      inStock: availableProducts.length,
     },
-    vendors: countFacet(products.filter((product) => product.availableForSale).map((product) => product.vendor)),
-    productTypes: countFacet(products.filter((product) => product.availableForSale).map((product) => product.productType)),
+    offers: {
+      onSale: availableProducts.filter((product) => hasPurchasableSaleVariant(product.variants.nodes)).length,
+    },
+    vendors: countFacet(availableProducts.map((product) => product.vendor)),
+    productTypes: countFacet(availableProducts.map((product) => product.productType)),
   };
 });

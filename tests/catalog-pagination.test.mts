@@ -47,15 +47,15 @@ test("numbered pagination rejects pages beyond the cursor range", async () => {
 });
 
 test("pagination links preserve filters while keeping page one canonical and clean", () => {
-  const query = "filter.v.availability=1&filter.p.vendor=Sia+Abrasives&sort=price-asc";
+  const query = "filter.v.availability=1&sale=1&filter.p.vendor=Sia+Abrasives&sort=price-asc";
 
   assert.equal(
     catalogPaginationHref("/shop", query, 2),
-    "/shop?filter.p.vendor=Sia+Abrasives&sort=price-asc&page=2",
+    "/shop?sale=1&filter.p.vendor=Sia+Abrasives&sort=price-asc&page=2",
   );
   assert.equal(
     catalogPaginationHref("/shop", query, 1),
-    "/shop?filter.p.vendor=Sia+Abrasives&sort=price-asc",
+    "/shop?sale=1&filter.p.vendor=Sia+Abrasives&sort=price-asc",
   );
   assert.equal(catalogPaginationHref("/shop", "filter.v.availability=1", 2), "/shop?page=2");
   assert.equal(hasCatalogSeoFilters("filter.v.availability=1"), false);

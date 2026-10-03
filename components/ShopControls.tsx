@@ -11,6 +11,7 @@ interface ShopControlsProps {
   queryString: string;
   basePath?: string;
   showCategories?: boolean;
+  showSaleFilter?: boolean;
   facetDescription?: string;
   children: ReactNode;
 }
@@ -20,6 +21,7 @@ type PriceName = "minPrice" | "maxPrice";
 
 const PARAMS = {
   availability: "filter.v.availability",
+  sale: "sale",
   minPrice: "filter.v.price.gte",
   maxPrice: "filter.v.price.lte",
   vendors: "filter.p.vendor",
@@ -62,14 +64,16 @@ function isSelected(selected: string[], value: string) {
   return selected.some((candidate) => candidate.toLocaleLowerCase() === key);
 }
 
-function FilterForm({ filters, facets, idPrefix, showCategories, facetDescription, closeAfterApply, onPriceChange, onToggleSelection, onClear }: {
+function FilterForm({ filters, facets, idPrefix, showCategories, showSaleFilter, facetDescription, closeAfterApply, onPriceChange, onSaleChange, onToggleSelection, onClear }: {
   filters: CatalogFilterState;
   facets: CatalogFacets;
   idPrefix: string;
   showCategories: boolean;
+  showSaleFilter: boolean;
   facetDescription: string;
   closeAfterApply?: () => void;
   onPriceChange: (name: PriceName, value: string) => void;
+  onSaleChange: (checked: boolean) => void;
   onToggleSelection: (name: SelectionName, value: string, checked: boolean) => void;
   onClear: () => void;
 }) {
@@ -97,6 +101,22 @@ function FilterForm({ filters, facets, idPrefix, showCategories, facetDescriptio
         </label>
         <p className="pl-7 text-xs text-muted">Only products currently available to buy are shown.</p>
       </FilterSection>
+
+      {showSaleFilter && <FilterSection title="Offers" defaultOpen>
+        <label className="flex min-h-11 cursor-pointer items-center gap-3 rounded-lg text-foreground">
+          <input
+            id={`${idPrefix}-on-sale`}
+            type="checkbox"
+            checked={filters.onSale}
+            onChange={(event) => {
+              closeAfterApply?.();
+              onSaleChange(event.target.checked);
+            }}
+            className="size-4 accent-primary"
+          />
+          <span>On sale <span className="text-muted">({facets.offers.onSale})</span></span>
+        </label>
+      </FilterSection>}
 
       <FilterSection title="Price" defaultOpen>
         <div className="grid grid-cols-2 gap-2">
@@ -146,14 +166,15 @@ function FilterForm({ filters, facets, idPrefix, showCategories, facetDescriptio
   );
 }
 
-function ActiveFilterPills({ filters, onRemoveSelection, onRemovePrice, onClear }: {
+function ActiveFilterPills({ filters, onRemoveSelection, onRemovePrice, onRemoveSale, onClear }: {
   filters: CatalogFilterState;
   onRemoveSelection: (name: SelectionName, value: string) => void;
   onRemovePrice: () => void;
+  onRemoveSale: () => void;
   onClear: () => void;
 }) {
   const priceActive = filters.minPrice !== undefined || filters.maxPrice !== undefined;
-  const count = filters.vendors.length + filters.productTypes.length + (priceActive ? 1 : 0);
+  const count = filters.vendors.length + filters.productTypes.length + (priceActive ? 1 : 0) + (filters.onSale ? 1 : 0);
   if (!count) return null;
 
   return (
@@ -164,6 +185,9 @@ function ActiveFilterPills({ filters, onRemoveSelection, onRemovePrice, onClear 
         {filters.productTypes.map((productType) => <button key={`type-${productType.toLocaleLowerCase()}`} type="button" onClick={() => onRemoveSelection("productTypes", productType)} aria-label={`Remove category filter ${productType}`} className="max-w-full rounded-full border border-border bg-surface-muted px-3 py-1.5 text-left text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"><span className="break-words">{productType}</span> <span aria-hidden="true">×</span></button>)}
         {priceActive && <button type="button" onClick={onRemovePrice} aria-label="Remove price filter" className="rounded-full border border-border bg-surface-muted px-3 py-1.5 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
           {filters.minPrice !== undefined && filters.maxPrice !== undefined ? `£${filters.minPrice}–£${filters.maxPrice}` : filters.minPrice !== undefined ? `From £${filters.minPrice}` : `Up to £${filters.maxPrice}`} <span aria-hidden="true">×</span>
+        </button>}
+        {filters.onSale && <button type="button" onClick={onRemoveSale} aria-label="Remove sale filter" className="rounded-full border border-border bg-surface-muted px-3 py-1.5 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+          On sale <span aria-hidden="true">×</span>
         </button>}
         <button type="button" onClick={onClear} className="rounded px-2 py-1.5 text-sm font-semibold text-primary underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">Clear all</button>
       </div>
@@ -188,6 +212,7 @@ export default function ShopControls({
   queryString,
   basePath = "/shop",
   showCategories = true,
+  showSaleFilter = false,
   facetDescription = "Brand and category counts include in-stock products only.",
   children,
 }: ShopControlsProps) {
@@ -202,7 +227,7 @@ export default function ShopControls({
   const displayFilters = optimisticCatalog.filters;
   const activeQueryString = optimisticCatalog.queryString;
   const priceActive = displayFilters.minPrice !== undefined || displayFilters.maxPrice !== undefined;
-  const activeFilterCount = displayFilters.vendors.length + displayFilters.productTypes.length + (priceActive ? 1 : 0);
+  const activeFilterCount = displayFilters.vendors.length + displayFilters.productTypes.length + (priceActive ? 1 : 0) + (displayFilters.onSale ? 1 : 0);
 
   function navigate(params: URLSearchParams, nextFilters: CatalogFilterState) {
     const target = params.size ? `${basePath}?${params.toString()}` : basePath;
@@ -219,6 +244,13 @@ export default function ShopControls({
     if (value) params.set(PARAMS[name], value);
     else params.delete(PARAMS[name]);
     navigate(params, { ...displayFilters, [name]: value ? Number(value) : undefined });
+  }
+
+  function changeSaleFilter(onSale: boolean) {
+    const params = new URLSearchParams(activeQueryString);
+    if (onSale) params.set(PARAMS.sale, "1");
+    else params.delete(PARAMS.sale);
+    navigate(params, { ...displayFilters, onSale });
   }
 
   function toggleSelection(name: SelectionName, value: string, checked: boolean) {
@@ -250,7 +282,7 @@ export default function ShopControls({
 
   function clearFilters() {
     startTransition(() => {
-      const nextFilters: CatalogFilterState = { inStock: true, vendors: [], productTypes: [], sort: "best-selling" };
+      const nextFilters: CatalogFilterState = { inStock: true, onSale: false, vendors: [], productTypes: [], sort: "best-selling" };
       setOptimisticCatalog({ filters: nextFilters, queryString: "" });
       router.push(basePath, { scroll: false });
     });
@@ -295,8 +327,10 @@ export default function ShopControls({
     filters: displayFilters,
     facets,
     showCategories,
+    showSaleFilter,
     facetDescription,
     onPriceChange: changePrice,
+    onSaleChange: changeSaleFilter,
     onToggleSelection: toggleSelection,
     onClear: clearFilters,
   };
@@ -305,6 +339,7 @@ export default function ShopControls({
     filters={displayFilters}
     onRemoveSelection={(name, value) => { closeMobile(); toggleSelection(name, value, false); }}
     onRemovePrice={() => { closeMobile(); removePriceFilter(); }}
+    onRemoveSale={() => { closeMobile(); changeSaleFilter(false); }}
     onClear={() => { closeMobile(); clearFilters(); }}
   />;
 
@@ -333,6 +368,7 @@ export default function ShopControls({
                   toggleSelection(name, value, false)
                 }
                 onRemovePrice={removePriceFilter}
+                onRemoveSale={() => changeSaleFilter(false)}
                 onClear={clearFilters}
               />
             </div>

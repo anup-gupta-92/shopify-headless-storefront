@@ -19,7 +19,7 @@ export async function GET(
   try {
     const { handle } = await params;
     const parsed = parseCatalogParams(request.nextUrl.searchParams);
-    const filters = { ...parsed, productTypes: [] };
+    const filters = { ...parsed, onSale: false, productTypes: [] };
     const page = await getCollectionPage(handle, filters, cursor);
     if (!page) return errorResponse("Collection not found.", 404);
     return NextResponse.json({ page }, { headers: { "Cache-Control": "no-store" } });
