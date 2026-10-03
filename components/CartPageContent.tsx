@@ -5,7 +5,11 @@ import { flushSync } from "react-dom";
 import CartLineItem from "@/components/CartLineItem";
 import { useCart } from "@/components/CartProvider";
 import { startNavigationProgress } from "@/components/RouteLoadingSignal";
-import { formatMoney, getUkVatInclusiveBreakdown } from "@/lib/shopify/pricing";
+import {
+  formatMoney,
+  getUkCartVatInclusiveBreakdown,
+  UK_VAT_RATE_PERCENT,
+} from "@/lib/shopify/pricing";
 
 const focusClass = "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
 
@@ -77,7 +81,10 @@ export default function CartPageContent() {
     );
   }
 
-  const vatBreakdown = getUkVatInclusiveBreakdown(cart.cost.subtotalAmount);
+  const vatBreakdown = getUkCartVatInclusiveBreakdown(
+    cart.cost.subtotalAmount,
+    cart.lines.map((line) => line.cost.totalAmount),
+  );
 
   return (
     <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(19rem,24rem)] lg:gap-8 xl:gap-10">
@@ -118,7 +125,7 @@ export default function CartPageContent() {
                 <dd className="font-semibold tabular-nums text-foreground">{formatMoney(vatBreakdown.subtotalExVat)}</dd>
               </div>
               <div className="mt-3 flex items-baseline justify-between gap-4 text-sm">
-                <dt className="text-muted">VAT (20%)</dt>
+                <dt className="text-muted">VAT ({UK_VAT_RATE_PERCENT}%)</dt>
                 <dd className="font-semibold tabular-nums text-foreground">{formatMoney(vatBreakdown.vat)}</dd>
               </div>
             </>
