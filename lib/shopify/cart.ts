@@ -41,6 +41,16 @@ interface CartLineInput {
   quantity: number;
 }
 
+interface CartCreateOptions {
+  countryCode?: "GB";
+  attributes?: Array<{ key: string; value: string }>;
+}
+
+interface ShopifyVariantAvailability {
+  id: string;
+  availableForSale: boolean;
+}
+
 const CART_FIELDS = `
   id
   totalQuantity
@@ -144,6 +154,17 @@ const CART_LINES_REMOVE_MUTATION = `
   }
 `;
 
+const CART_PERMALINK_VARIANTS_QUERY = `
+  query CartPermalinkVariants($ids: [ID!]!) {
+    nodes(ids: $ids) {
+      ... on ProductVariant {
+        id
+        availableForSale
+      }
+    }
+  }
+`;
+
 export class CartOperationError extends Error {
   constructor(public readonly publicMessage = "We could not update your cart. Please try again.") {
     super("Shopify cart operation failed");
@@ -220,10 +241,31 @@ export async function getAuthenticatedCartForCheckout(
   return data.cartBuyerIdentityUpdate.cart;
 }
 
-export async function cartCreate(lines: CartLineInput[], buyerIp?: string): Promise<ShopifyCart> {
+export async function getPurchasableVariantIds(
+  merchandiseIds: string[],
+  buyerIp?: string,
+): Promise<Set<string>> {
+  const data = await storefrontRequest<{ nodes: Array<ShopifyVariantAvailability | null> }>(
+    CART_PERMALINK_VARIANTS_QUERY,
+    { ids: merchandiseIds },
+    requestOptions(buyerIp),
+  );
+  return new Set(data.nodes.filter((node) => node?.availableForSale).map((node) => node!.id));
+}
+
+export async function cartCreate(
+  lines: CartLineInput[],
+  buyerIp?: string,
+  options: CartCreateOptions = {},
+): Promise<ShopifyCart> {
+  const input = {
+    lines,
+    ...(options.countryCode ? { buyerIdentity: { countryCode: options.countryCode } } : {}),
+    ...(options.attributes?.length ? { attributes: options.attributes } : {}),
+  };
   const data = await storefrontRequest<{ cartCreate: CartMutationPayload }>(
     CART_CREATE_MUTATION,
-    { input: { lines } },
+    { input },
     requestOptions(buyerIp),
   );
   return requireCart(data.cartCreate);
