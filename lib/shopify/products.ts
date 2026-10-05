@@ -3,7 +3,8 @@ import { cache } from "react";
 import type { Product, ProductSummary, ProductVariant } from "@/types/product";
 import { storefrontRequest } from "./client";
 import { HOMEPAGE_HOTSPOT_PRODUCTS_QUERY, HOMEPAGE_PRODUCTS_QUERY, PRODUCT_QUERY, PRODUCT_VARIANTS_QUERY, SHOP_QUERY, PRODUCT_RECOMMENDATIONS_QUERY, PRODUCTS_BY_IDS_QUERY } from "./queries";
-import { formatMoney, formatUkPriceExcludingVat, validCompareAtPrice } from "./pricing";
+import { formatMoney, formatUkPriceExcludingVat } from "./pricing";
+import { getProductCardSalePricing } from "./sale";
 import type { ShopifyProduct, ShopifyProductSummary, ShopifyVariant, VariantConnection } from "./types";
 import { ratingFromMetafields } from "@/lib/judgeme/product";
 
@@ -79,22 +80,24 @@ export const getHomepageHotspotProducts = cache(async () => {
 });
 
 export function mapProductSummary(product: ShopifyProductSummary): ProductSummary {
-  const min = product.priceRange.minVariantPrice;
-  const max = product.priceRange.maxVariantPrice;
   const cardVariants = product.variants.nodes;
-  const soleVariant = cardVariants.length === 1 ? cardVariants[0] : undefined;
-  // A single variant is the only unambiguous match for the card's displayed
-  // price in the lightweight listing query. Multi-variant sale pricing remains
-  // on the product page where the exact selected variant is known.
-  const compareAtPrice = soleVariant ? validCompareAtPrice(soleVariant.price, soleVariant.compareAtPrice) : undefined;
+  const variantsComplete = !product.variants.pageInfo.hasNextPage;
+  const soleVariant = variantsComplete && cardVariants.length === 1 ? cardVariants[0] : undefined;
+  const salePricing = getProductCardSalePricing(
+    cardVariants,
+    product.priceRange,
+    variantsComplete,
+  );
   return {
     id: product.id, handle: product.handle, title: product.title,
     reviewRating: ratingFromMetafields(product),
     category: product.productType, vendor: product.vendor, available: product.availableForSale,
     image: product.featuredImage?.url ?? "", imageAlt: product.featuredImage?.altText ?? product.title,
-    price: `${min.amount !== max.amount ? "From " : ""}${formatMoney(min)}`,
-    compareAtPrice,
-    currencyCode: min.currencyCode, priceRange: product.priceRange,
+    price: `${salePricing.hasPriceRange ? "From " : ""}${formatMoney(salePricing.startingPrice)}`,
+    compareAtPrice: salePricing.startingCompareAtPrice,
+    hasSaleVariant: salePricing.hasSaleVariant,
+    startingVariantIsOnSale: salePricing.startingVariantIsOnSale,
+    currencyCode: salePricing.startingPrice.currencyCode, priceRange: product.priceRange,
     cardAction: !product.availableForSale
       ? { kind: "unavailable" }
       : soleVariant?.availableForSale

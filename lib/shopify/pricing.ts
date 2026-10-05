@@ -13,6 +13,43 @@ export function formatMoney(money: Money): string {
   return new Intl.NumberFormat("en-GB", { style: "currency", currency: money.currencyCode }).format(Number(money.amount));
 }
 
+interface DecimalMoneyAmount {
+  whole: string;
+  fraction: string;
+}
+
+function parseDecimalMoneyAmount(amount: string): DecimalMoneyAmount | undefined {
+  const match = /^(\d+)(?:\.(\d+))?$/.exec(amount.trim());
+  if (!match) return undefined;
+  const fraction = match[2] ?? "";
+  // MoneyV2 values are short decimal strings. Keep the comparison bounded if
+  // an upstream response is unexpectedly malformed.
+  if (fraction.length > 18) return undefined;
+  return {
+    whole: match[1].replace(/^0+(?=\d)/, ""),
+    fraction,
+  };
+}
+
+export function compareMoney(left: Money, right: Money): -1 | 0 | 1 | undefined {
+  if (left.currencyCode !== right.currencyCode) return undefined;
+  const leftAmount = parseDecimalMoneyAmount(left.amount);
+  const rightAmount = parseDecimalMoneyAmount(right.amount);
+  if (!leftAmount || !rightAmount) return undefined;
+
+  if (leftAmount.whole.length !== rightAmount.whole.length) {
+    return leftAmount.whole.length < rightAmount.whole.length ? -1 : 1;
+  }
+  if (leftAmount.whole !== rightAmount.whole) {
+    return leftAmount.whole < rightAmount.whole ? -1 : 1;
+  }
+
+  const commonScale = Math.max(leftAmount.fraction.length, rightAmount.fraction.length);
+  const normalizedLeft = leftAmount.fraction.padEnd(commonScale, "0");
+  const normalizedRight = rightAmount.fraction.padEnd(commonScale, "0");
+  return normalizedLeft < normalizedRight ? -1 : normalizedLeft > normalizedRight ? 1 : 0;
+}
+
 function moneyAmountToMinorUnits(amount: string): number | undefined {
   const match = /^(\d+)(?:\.(\d+))?$/.exec(amount.trim());
   if (!match) return undefined;
@@ -86,12 +123,7 @@ export function getUkCartVatInclusiveBreakdown(
 }
 
 export function validCompareAtPrice(current: Money | null | undefined, compareAt: Money | null | undefined): Money | undefined {
-  if (!current || !compareAt || current.currencyCode !== compareAt.currencyCode) return undefined;
-  const currentAmount = Number(current.amount);
-  const compareAtAmount = Number(compareAt.amount);
-  return Number.isFinite(currentAmount) && Number.isFinite(compareAtAmount) && compareAtAmount > currentAmount
-    ? compareAt
-    : undefined;
+  return current && compareAt && compareMoney(compareAt, current) === 1 ? compareAt : undefined;
 }
 
 export function formatUkPriceExcludingVat(price: Money): string | undefined {

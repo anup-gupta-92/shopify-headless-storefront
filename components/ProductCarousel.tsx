@@ -137,6 +137,8 @@ export default function ProductCarousel({
                 title={product.title}
                 price={product.price}
                 compareAtPrice={product.compareAtPrice}
+                hasSaleVariant={product.hasSaleVariant}
+                startingVariantIsOnSale={product.startingVariantIsOnSale}
                 vendor={product.vendor}
                 category={product.category}
                 available={product.available}

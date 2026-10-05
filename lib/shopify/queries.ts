@@ -19,12 +19,21 @@ const variantFields = `
   unitPrice { amount currencyCode }
   unitPriceMeasurement { measuredType quantityUnit quantityValue referenceUnit referenceValue }
 `;
-const cardVariantFields = `variants(first: 2) {
+const cardVariantFields = `variants(first: 250) {
   nodes {
     id availableForSale
     price { amount currencyCode }
     compareAtPrice { amount currencyCode }
   }
+  pageInfo { hasNextPage endCursor }
+}`;
+const predictiveVariantFields = `variants(first: 2) {
+  nodes {
+    id availableForSale
+    price { amount currencyCode }
+    compareAtPrice { amount currencyCode }
+  }
+  pageInfo { hasNextPage endCursor }
 }`;
 const reviewFields = `reviewRating: metafield(namespace: "reviews", key: "rating") { value }
   reviewCount: metafield(namespace: "reviews", key: "rating_count") { value }`;
@@ -149,6 +158,7 @@ export const SHOP_FACETS_QUERY = `
             price { amount currencyCode }
             compareAtPrice { amount currencyCode }
           }
+          pageInfo { hasNextPage endCursor }
         }
       }
       pageInfo { hasNextPage endCursor }
@@ -253,7 +263,7 @@ export const PREDICTIVE_SEARCH_QUERY = `
         id handle title productType vendor availableForSale
         featuredImage { ${imageFields} }
         priceRange { minVariantPrice { amount currencyCode } maxVariantPrice { amount currencyCode } }
-        ${cardVariantFields}
+        ${predictiveVariantFields}
         ${reviewFields}
       }
       collections {

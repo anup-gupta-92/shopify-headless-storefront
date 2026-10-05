@@ -17,6 +17,8 @@ export interface ProductSummary {
   reviewRating?: ReviewRating;
   imageAlt?: string; price: string; currencyCode: string; available: boolean;
   compareAtPrice?: Money;
+  hasSaleVariant: boolean;
+  startingVariantIsOnSale: boolean;
   vendor: string;
   priceRange: { minVariantPrice: Money; maxVariantPrice: Money };
   cardAction:

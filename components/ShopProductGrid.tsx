@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import ProductCard from "@/components/ProductCard";
 import ProductCardSkeleton from "@/components/ProductCardSkeleton";
+import { SHOP_PRODUCT_GRID_CLASSNAME } from "@/components/product-grid-layout";
 import type { CatalogPage } from "@/types/catalog";
 
 interface ShopProductGridProps {
@@ -75,12 +76,14 @@ export default function ShopProductGrid({
 
   return (
     <section aria-label="Products" aria-busy={loading}>
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
+      <div className={SHOP_PRODUCT_GRID_CLASSNAME}>
         {products.map((product) => <ProductCard
           key={product.id}
           title={product.title}
           price={product.price}
           compareAtPrice={product.compareAtPrice}
+          hasSaleVariant={product.hasSaleVariant}
+          startingVariantIsOnSale={product.startingVariantIsOnSale}
           vendor={product.vendor}
           category={product.category}
           available={product.available}

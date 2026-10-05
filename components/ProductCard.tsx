@@ -12,6 +12,8 @@ interface ProductCardProps {
   title: string;
   price: string;
   compareAtPrice?: ProductSummary["compareAtPrice"];
+  hasSaleVariant: boolean;
+  startingVariantIsOnSale: boolean;
   sku?: string;
   vendor?: string;
   category?: string;
@@ -24,7 +26,7 @@ interface ProductCardProps {
   compact?: boolean;
 }
 
-export default function ProductCard({ title, price, compareAtPrice, sku, vendor, category, available = true, handle, imageUrl, imageAlt, cardAction, reviewRating, compact = false }: ProductCardProps) {
+export default function ProductCard({ title, price, compareAtPrice, hasSaleVariant, startingVariantIsOnSale, sku, vendor, category, available = true, handle, imageUrl, imageAlt, cardAction, reviewRating, compact = false }: ProductCardProps) {
   const { addItem, loading: cartLoading } = useCart();
   const [adding, setAdding] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -52,7 +54,7 @@ export default function ProductCard({ title, price, compareAtPrice, sku, vendor,
 
       <div className="pointer-events-none relative mb-2.5 aspect-square w-full overflow-hidden rounded-lg bg-surface-muted sm:mb-4">
         {imageUrl ? <Image src={imageUrl} alt={imageAlt || title} fill sizes="(max-width: 767px) 50vw, (max-width: 1023px) 33vw, (max-width: 1599px) 25vw, 420px" className="object-cover transition duration-300 group-hover/card:scale-105" /> : <div className="flex h-full items-center justify-center text-muted">Image unavailable</div>}
-        {compareAtPrice && <span className="absolute left-3 top-3 z-[1] rounded-full bg-primary px-2.5 py-1 text-[11px] font-bold tracking-wide text-primary-foreground shadow-sm">SALE</span>}
+        {hasSaleVariant && <span className="absolute left-3 top-3 z-[1] rounded-full bg-primary px-2.5 py-1 text-[11px] font-bold tracking-wide text-primary-foreground shadow-sm">SALE</span>}
       </div>
       {sku && <span className="pointer-events-none mb-0.5 block font-mono text-xs text-muted sm:mb-1">Product Code: {sku}</span>}
       {meta && <span className="pointer-events-none mb-0.5 block text-xs font-medium uppercase tracking-wide text-muted sm:mb-1">{meta}</span>}
@@ -60,7 +62,7 @@ export default function ProductCard({ title, price, compareAtPrice, sku, vendor,
       <div className="pointer-events-none min-h-5">{reviewRating && <ReviewStars {...reviewRating} compact />}</div>
       <div className="pointer-events-none mt-auto pt-1.5 sm:pt-2">
         <div className="flex items-baseline gap-2">
-          {compareAtPrice && (
+          {startingVariantIsOnSale && compareAtPrice && (
             <span className="text-xs text-muted">
               <span className="sr-only">Original price: </span>
               <del>{formatMoney(compareAtPrice)}</del>
@@ -69,7 +71,7 @@ export default function ProductCard({ title, price, compareAtPrice, sku, vendor,
 
           <span className="font-semibold text-accent">
             <span className="sr-only">
-              {compareAtPrice ? "Sale price: " : "Price: "}
+              {startingVariantIsOnSale && compareAtPrice ? "Sale price: " : "Price: "}
             </span>
             {price}
           </span>

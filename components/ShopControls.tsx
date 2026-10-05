@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { type ReactNode, useEffect, useId, useOptimistic, useRef, useState, useTransition } from "react";
 import ProductCardSkeleton from "@/components/ProductCardSkeleton";
+import { SHOP_PRODUCT_GRID_CLASSNAME } from "@/components/product-grid-layout";
 import type { CatalogFacets, CatalogFilterState, CatalogSort } from "@/types/catalog";
 
 interface ShopControlsProps {
@@ -199,8 +200,8 @@ function GridSkeleton() {
   return (
     <section aria-label="Loading products" aria-busy="true">
       <p className="sr-only" role="status">Updating products…</p>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-        {Array.from({ length: 9 }, (_, index) => <ProductCardSkeleton key={index} />)}
+      <div className={SHOP_PRODUCT_GRID_CLASSNAME}>
+        {Array.from({ length: 12 }, (_, index) => <ProductCardSkeleton key={index} />)}
       </div>
     </section>
   );

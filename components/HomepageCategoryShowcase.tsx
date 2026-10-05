@@ -112,6 +112,8 @@ export default function HomepageCategoryShowcase({ categories }: HomepageCategor
                 title={product.title}
                 price={product.price}
                 compareAtPrice={product.compareAtPrice}
+                hasSaleVariant={product.hasSaleVariant}
+                startingVariantIsOnSale={product.startingVariantIsOnSale}
                 vendor={product.vendor}
                 category={product.category}
                 available={product.available}

@@ -22,7 +22,10 @@ export interface ShopifyProductSummary extends RatingMetafields {
   id: string; handle: string; title: string; productType: string; vendor: string; availableForSale: boolean;
   featuredImage: ProductImage | null;
   priceRange: { minVariantPrice: Money; maxVariantPrice: Money };
-  variants: { nodes: Array<Pick<ShopifyVariant, "id" | "availableForSale" | "price" | "compareAtPrice">> };
+  variants: {
+    nodes: Array<Pick<ShopifyVariant, "id" | "availableForSale" | "price" | "compareAtPrice">>;
+    pageInfo: { hasNextPage: boolean; endCursor: string | null };
+  };
 }
 export interface ShopifyProduct extends ShopifyProductSummary {
   description: string; descriptionHtml: string; vendor: string; tags: string[];
