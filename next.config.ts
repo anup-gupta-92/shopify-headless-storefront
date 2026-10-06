@@ -9,6 +9,8 @@ const nextConfig: NextConfig = {
       { source: "/collections/:collection/products/:product", destination: "/products/:product", permanent: true },
       { source: "/collections", destination: "/shop", permanent: true },
       { source: "/products", destination: "/shop", permanent: true },
+      { source: "/products/aurelia®-vibrant", destination: "/products/aurelia-vibrant", permanent: true },
+      { source: "/products/aurelia%C2%AE-vibrant", destination: "/products/aurelia-vibrant", permanent: true },
       { source: "/collections/all", destination: "/shop", permanent: true },
       { source: "/pages/about-us", destination: "/about", permanent: true },
       { source: "/pages/contact", destination: "/contact", permanent: true },
