@@ -50,6 +50,47 @@ export interface ShopifySitemapResource {
   updatedAt: string;
 }
 
+export interface ShopifyArticleAuthor {
+  name: string;
+}
+
+export interface ShopifyArticleImage {
+  url: string;
+  altText: string | null;
+  width: number | null;
+  height: number | null;
+}
+
+export interface ShopifyArticleSummary {
+  id: string;
+  title: string;
+  handle: string;
+  excerpt: string | null;
+  excerptHtml: string | null;
+  image: ShopifyArticleImage | null;
+  authorV2: ShopifyArticleAuthor | null;
+  publishedAt: string;
+  tags: string[];
+  seo: ShopifySeo;
+}
+
+export interface ShopifyArticle extends ShopifyArticleSummary {
+  content: string;
+  contentHtml: string;
+}
+
+export interface ShopifyBlog {
+  id: string;
+  title: string;
+  handle: string;
+  seo: ShopifySeo;
+}
+
+export interface ShopifySitemapArticle {
+  handle: string;
+  publishedAt: string;
+}
+
 export interface ShopifyPolicy {
   handle: string;
   title: string;

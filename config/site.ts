@@ -12,9 +12,15 @@ export const siteConfig = {
   mainNav: [
     { label: "Home", href: "/" },
     { label: "Shop", href: "/shop" },
+    { label: "Blogs", href: "/blogs" },
     { label: "About", href: "/about" },
     { label: "Contact", href: "/contact" },
   ],
+  blog: {
+    shopifyHandle: "news",
+    title: "Guides & Advice",
+    description: "Practical guides, product comparisons and advice from Apex Business Supplies.",
+  },
   footer: {
     businessName: "Apex Business Supplies",
     tagline: "Trusted UK-based provider for high-quality business supplies. Whether you're packaging products, protecting staff, or managing day-to-day office operations. Apex Business Supplies has you covered.",

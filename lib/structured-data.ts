@@ -1,6 +1,7 @@
 import { siteConfig } from "../config/site.ts";
 import { cleanMetadataText, conciseMetadataDescription } from "./seo.ts";
-import type { ShopifyCollection } from "./shopify/types.ts";
+import { articleSeoDescription, blogArticlePath } from "./blog.ts";
+import type { ShopifyArticle, ShopifyCollection } from "./shopify/types.ts";
 import type { Product, ProductVariant } from "../types/product.ts";
 
 export type JsonLdPrimitive = string | number | boolean | null;
@@ -295,6 +296,48 @@ export function buildCollectionStructuredData(collection: ShopifyCollection): Js
         isPartOf: { "@id": WEBSITE_ID },
         breadcrumb: { "@id": `${url}#breadcrumb` },
         ...(collection.image ? { primaryImageOfPage: { "@type": "ImageObject", url: collection.image.url } } : {}),
+      },
+      breadcrumb,
+    ],
+  };
+}
+
+export function buildArticleStructuredData(article: ShopifyArticle): JsonLdObject {
+  const path = blogArticlePath(article.handle);
+  const url = `${siteConfig.url}${path}`;
+  const description = articleSeoDescription(article);
+  const breadcrumb = buildBreadcrumbList([
+    { name: "Home", path: "/" },
+    { name: siteConfig.blog.title, path: "/blogs" },
+    { name: article.title, path },
+  ], url);
+
+  return {
+    "@context": SCHEMA_ORIGIN,
+    "@graph": [
+      {
+        "@type": "BlogPosting",
+        "@id": `${url}#article`,
+        headline: article.title,
+        description,
+        url,
+        mainEntityOfPage: { "@type": "WebPage", "@id": url },
+        isPartOf: { "@id": WEBSITE_ID },
+        datePublished: article.publishedAt,
+        ...(article.image ? {
+          image: {
+            "@type": "ImageObject",
+            url: article.image.url,
+            contentUrl: article.image.url,
+            ...(article.image.width ? { width: article.image.width } : {}),
+            ...(article.image.height ? { height: article.image.height } : {}),
+            ...(article.image.altText ? { caption: article.image.altText } : {}),
+          },
+        } : {}),
+        author: article.authorV2?.name.trim()
+          ? { "@type": "Person", name: article.authorV2.name.trim() }
+          : { "@id": ORGANIZATION_ID },
+        publisher: { "@id": ORGANIZATION_ID },
       },
       breadcrumb,
     ],

@@ -302,3 +302,46 @@ export const PRODUCT_SEARCH_QUERY = `
     }
   }
 `;
+
+const articleSummaryFields = `
+  id title handle excerpt excerptHtml publishedAt tags
+  seo { title description }
+  image { ${imageFields} }
+  authorV2 { name }
+`;
+
+export const BLOG_ARCHIVE_QUERY = `
+  query BlogArchive($blogHandle: String!, $first: Int!, $after: String) {
+    blog(handle: $blogHandle) {
+      id title handle seo { title description }
+      articles(first: $first, after: $after, sortKey: PUBLISHED_AT, reverse: true) {
+        nodes { ${articleSummaryFields} }
+        pageInfo { hasNextPage endCursor }
+      }
+    }
+  }
+`;
+
+export const BLOG_ARTICLE_QUERY = `
+  query BlogArticle($blogHandle: String!, $articleHandle: String!) {
+    blog(handle: $blogHandle) {
+      id title handle seo { title description }
+      articleByHandle(handle: $articleHandle) {
+        ${articleSummaryFields}
+        content
+        contentHtml
+      }
+    }
+  }
+`;
+
+export const SITEMAP_BLOG_ARTICLES_QUERY = `
+  query SitemapBlogArticles($blogHandle: String!, $first: Int!, $after: String) {
+    blog(handle: $blogHandle) {
+      articles(first: $first, after: $after, sortKey: PUBLISHED_AT, reverse: true) {
+        nodes { handle publishedAt }
+        pageInfo { hasNextPage endCursor }
+      }
+    }
+  }
+`;
