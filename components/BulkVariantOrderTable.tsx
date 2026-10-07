@@ -14,6 +14,7 @@ import {
   moneyToMinor,
   parsePackSize,
   type BulkOrderModel,
+  type PackValueSaving,
 } from "@/lib/shopify/bulk-order";
 import { formatMoney, formatUkPriceExcludingVat } from "@/lib/shopify/pricing";
 import { formatUnitPrice, getBulkUnitPriceDisplay } from "@/lib/shopify/unit-price";
@@ -69,13 +70,38 @@ function QuantityControl({
   </div>;
 }
 
-function MatrixPrice({ variant, packLabel }: { variant: ProductVariant; packLabel: string }) {
+function percentageLabel(percentageTenths: number): string {
+  return `${(percentageTenths / 10).toFixed(1)}%`;
+}
+
+function MatrixPrice({
+  variant,
+  packLabel,
+  mode,
+  saving,
+}: {
+  variant: ProductVariant;
+  packLabel: string;
+  mode: "matrix" | "quantity_only";
+  saving?: PackValueSaving;
+}) {
   const unitPrice = getBulkUnitPriceDisplay(variant.money!, packLabel, variant.unitPriceMoney);
   return <>
     <span className="block font-semibold text-foreground">{formatMoney(variant.money!)}</span>
     {unitPrice
       ? <span className="mt-1 block text-xs text-muted">{unitPrice} each</span>
       : variant.unitPrice && <span className="mt-1 block text-xs text-muted">{variant.unitPrice}</span>}
+    {saving && mode === "quantity_only" && (
+      <span className="mt-1.5 block text-xs font-semibold text-primary">
+        Save {formatMoney(minorToMoney(saving.savingMinor, saving.currencyCode))}
+        {saving.percentageTenths > 0 && <> · {percentageLabel(saving.percentageTenths)}</>}
+      </span>
+    )}
+    {saving && mode === "matrix" && saving.percentageTenths > 0 && (
+      <span className="mt-1.5 block text-xs font-semibold text-primary">
+        {percentageLabel(saving.percentageTenths)} less/item
+      </span>
+    )}
   </>;
 }
 
@@ -83,11 +109,13 @@ function MatrixTable({
   model,
   quantities,
   errors,
+  packValueSavings,
   onQuantityChange,
 }: {
   model: BulkOrderModel;
   quantities: Record<string, number>;
   errors: Map<string, string>;
+  packValueSavings: Record<string, PackValueSaving>;
   onQuantityChange: (key: string, value: number) => void;
 }) {
   return <table className="w-full min-w-[44rem] border-collapse text-sm">
@@ -115,7 +143,12 @@ function MatrixTable({
                 aria-label={`Add ${cell.columnValue} to ${row.label} desired quantity`}
                 className={cellButtonClass}
               >
-                {cell.variant.money ? <MatrixPrice variant={cell.variant} packLabel={cell.columnValue} /> : <span className="text-muted">Unavailable</span>}
+                {cell.variant.money ? <MatrixPrice
+                  variant={cell.variant}
+                  packLabel={cell.columnValue}
+                  mode={model.mode === "quantity_only" ? "quantity_only" : "matrix"}
+                  saving={packValueSavings[cell.variant.id]}
+                /> : <span className="text-muted">Unavailable</span>}
                 {!selectable && <span className="mt-1 block text-xs text-muted">Unavailable</span>}
               </button> : <span aria-label={`${row.label}, ${cell.columnValue} unavailable`} className="block px-3 text-center text-muted">—</span>}
             </td>;
@@ -255,6 +288,9 @@ export default function BulkVariantOrderTable({ model }: { model: BulkOrderModel
   const estimatedSaving = result.estimatedSavingsMinor > 0
     ? minorToMoney(result.estimatedSavingsMinor, result.currencyCode)
     : null;
+  const packSaving = result.packSavingsMinor !== null && result.packSavingsMinor > 0
+    ? minorToMoney(result.packSavingsMinor, result.currencyCode)
+    : null;
   const busy = submitting !== null || cartLoading;
 
   function changeQuantity(key: string, value: number) {
@@ -316,7 +352,7 @@ export default function BulkVariantOrderTable({ model }: { model: BulkOrderModel
         <p className="mt-2 text-sm text-muted">Select the quantities you need and add every chosen variant to your cart in one go.</p>
       </header>
       <div className="max-w-full overflow-x-auto overscroll-x-contain rounded-xl border border-border">
-        {(model.mode === "matrix" || model.mode === "quantity_only") && <MatrixTable model={model} quantities={quantities} errors={errors} onQuantityChange={changeQuantity} />}
+        {(model.mode === "matrix" || model.mode === "quantity_only") && <MatrixTable model={model} quantities={quantities} errors={errors} packValueSavings={result.packValueSavings} onQuantityChange={changeQuantity} />}
         {model.mode === "variant_matrix" && <VariantMatrixTable model={model} quantities={quantities} errors={errors} discountRate={result.discountRate} onQuantityChange={changeQuantity} />}
         {model.mode === "simple" && <SimpleTable model={model} quantities={quantities} errors={errors} onQuantityChange={changeQuantity} />}
       </div>
@@ -333,6 +369,7 @@ export default function BulkVariantOrderTable({ model }: { model: BulkOrderModel
           <span><strong className="text-lg">{result.selectedQuantity}</strong> selected</span>
           <span><strong>Inc. VAT:</strong> {formatMoney(incVat)}</span>
           {estimatedSaving && <span className="text-primary"><strong>You save:</strong> {formatMoney(estimatedSaving)} <span className="text-xs">(est.)</span></span>}
+          {packSaving && <span className="text-primary"><strong>Pack saving vs smallest-pack rate:</strong> {formatMoney(packSaving)} <span className="text-xs">(est.)</span></span>}
           {exVat && <span><strong>Excl. VAT:</strong> {exVat}</span>}
         </div>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">

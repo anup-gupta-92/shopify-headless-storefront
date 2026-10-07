@@ -1,5 +1,6 @@
 import type { Money, Product, ProductOption, ProductVariant, QuantityRule } from "../../types/product.ts";
-import { parsePackSize } from "./unit-price.ts";
+import { moneyAmountToMinorUnits } from "./pricing.ts";
+import { parsePackSize, parseStrictPackSize } from "./unit-price.ts";
 
 export { parsePackSize } from "./unit-price.ts";
 
@@ -66,8 +67,23 @@ export interface BulkOrderEvaluation {
   baseTotalMinor: number;
   totalMinor: number;
   estimatedSavingsMinor: number;
+  packValueSavings: Record<string, PackValueSaving>;
+  /** Null means at least one resolved pack line could not be compared safely. */
+  packSavingsMinor: number | null;
   currencyCode: string;
   discountRate: number;
+}
+
+export interface PackValueSaving {
+  savingMinor: number;
+  percentageTenths: number;
+  baselinePackSize: number;
+  currencyCode: string;
+}
+
+interface PackValueComparison extends PackValueSaving {
+  savingNumerator: bigint;
+  savingDenominator: bigint;
 }
 
 function meaningfulOptions(options: ProductOption[] | undefined): ProductOption[] {
@@ -254,6 +270,106 @@ export function consolidateBulkCartLines(lines: BulkCartLine[]): BulkCartLine[] 
   return [...quantities].map(([merchandiseId, quantity]) => ({ merchandiseId, quantity }));
 }
 
+function greatestCommonDivisor(left: bigint, right: bigint): bigint {
+  const zero = BigInt(0);
+  let currentLeft = left < zero ? -left : left;
+  let currentRight = right < zero ? -right : right;
+  while (currentRight !== zero) {
+    const remainder = currentLeft % currentRight;
+    currentLeft = currentRight;
+    currentRight = remainder;
+  }
+  return currentLeft || BigInt(1);
+}
+
+function addFractions(
+  leftNumerator: bigint,
+  leftDenominator: bigint,
+  rightNumerator: bigint,
+  rightDenominator: bigint,
+): [numerator: bigint, denominator: bigint] {
+  const divisor = greatestCommonDivisor(leftDenominator, rightDenominator);
+  const leftMultiplier = rightDenominator / divisor;
+  const rightMultiplier = leftDenominator / divisor;
+  const numerator = leftNumerator * leftMultiplier + rightNumerator * rightMultiplier;
+  const denominator = leftDenominator * leftMultiplier;
+  const reduction = greatestCommonDivisor(numerator, denominator);
+  return [numerator / reduction, denominator / reduction];
+}
+
+function packValueComparisonsForRow(row: BulkMatrixRow): Map<string, PackValueComparison> {
+  const candidates = row.cells.flatMap((cell) => {
+    const packSize = parseStrictPackSize(cell.columnValue);
+    const variant = cell.variant;
+    const priceMinor = variant?.money ? moneyAmountToMinorUnits(variant.money.amount) : undefined;
+    return variant?.available === true
+      && variant.money
+      && Boolean(variant.money.currencyCode.trim())
+      && packSize !== null
+      && priceMinor !== undefined
+      ? [{ variant, packSize, priceMinor, currencyCode: variant.money.currencyCode }]
+      : [];
+  });
+
+  if (candidates.length < 2) return new Map();
+  const packSizes = candidates.map(({ packSize }) => packSize);
+  if (new Set(packSizes).size !== packSizes.length) return new Map();
+
+  candidates.sort((left, right) => left.packSize - right.packSize);
+  const baseline = candidates[0];
+  if (baseline.priceMinor <= 0) return new Map();
+
+  const comparisons = new Map<string, PackValueComparison>();
+  for (const candidate of candidates) {
+    if (candidate.currencyCode !== baseline.currencyCode) continue;
+    const baselineReferenceNumerator = BigInt(baseline.priceMinor) * BigInt(candidate.packSize);
+    const denominator = BigInt(baseline.packSize);
+    const savingNumerator = baselineReferenceNumerator - BigInt(candidate.priceMinor) * denominator;
+    const positiveSavingNumerator = savingNumerator > BigInt(0) ? savingNumerator : BigInt(0);
+    const savingMinor = Number(positiveSavingNumerator / denominator);
+    const percentageTenths = positiveSavingNumerator > BigInt(0)
+      ? Number((positiveSavingNumerator * BigInt(1_000)) / baselineReferenceNumerator)
+      : 0;
+    if (!Number.isSafeInteger(savingMinor) || !Number.isSafeInteger(percentageTenths)) continue;
+    comparisons.set(candidate.variant.id, {
+      savingMinor,
+      percentageTenths,
+      baselinePackSize: baseline.packSize,
+      currencyCode: baseline.currencyCode,
+      savingNumerator: positiveSavingNumerator,
+      savingDenominator: denominator,
+    });
+  }
+  return comparisons;
+}
+
+function buildPackValueComparisons(model: BulkOrderModel): Map<string, Map<string, PackValueComparison>> {
+  if (model.mode !== "matrix" && model.mode !== "quantity_only") return new Map();
+  return new Map(model.rows.map((row) => [row.key, packValueComparisonsForRow(row)]));
+}
+
+function publicPackValueSavings(
+  rows: Map<string, Map<string, PackValueComparison>>,
+): Record<string, PackValueSaving> {
+  const savings: Record<string, PackValueSaving> = {};
+  for (const comparisons of rows.values()) {
+    for (const [variantId, comparison] of comparisons) {
+      if (comparison.savingMinor <= 0) continue;
+      savings[variantId] = {
+        savingMinor: comparison.savingMinor,
+        percentageTenths: comparison.percentageTenths,
+        baselinePackSize: comparison.baselinePackSize,
+        currencyCode: comparison.currencyCode,
+      };
+    }
+  }
+  return savings;
+}
+
+export function getPackValueSavings(model: BulkOrderModel): Record<string, PackValueSaving> {
+  return publicPackValueSavings(buildPackValueComparisons(model));
+}
+
 function ruleError(variant: ProductVariant, quantity: number): string | null {
   if (quantity > 999) return `${variant.title} allows at most 999 packs per bulk action.`;
   const rule = variant.quantityRule;
@@ -278,6 +394,12 @@ export function evaluateBulkOrder(model: BulkOrderModel, quantities: Record<stri
   const lines: BulkCartLine[] = [];
   let baseTotalMinor = 0;
   let totalMinor = 0;
+  const packComparisons = buildPackValueComparisons(model);
+  const packValueSavings = publicPackValueSavings(packComparisons);
+  let packSelectionCount = 0;
+  let packSavingsComparable = true;
+  let packSavingsNumerator = BigInt(0);
+  let packSavingsDenominator = BigInt(1);
 
   if (matrixMode) {
     for (const row of model.rows) {
@@ -303,6 +425,18 @@ export function evaluateBulkOrder(model: BulkOrderModel, quantities: Record<stri
         const lineTotalMinor = moneyToMinor(item.variant.money!) * item.quantity;
         baseTotalMinor += lineTotalMinor;
         totalMinor += lineTotalMinor;
+        packSelectionCount += 1;
+        const comparison = packComparisons.get(row.key)?.get(item.variant.id);
+        if (!comparison) {
+          packSavingsComparable = false;
+        } else if (comparison.savingNumerator > BigInt(0)) {
+          [packSavingsNumerator, packSavingsDenominator] = addFractions(
+            packSavingsNumerator,
+            packSavingsDenominator,
+            comparison.savingNumerator * BigInt(item.quantity),
+            comparison.savingDenominator,
+          );
+        }
       }
     }
   } else {
@@ -321,6 +455,12 @@ export function evaluateBulkOrder(model: BulkOrderModel, quantities: Record<stri
     }
   }
 
+  const flooredPackSavings = packSavingsNumerator / packSavingsDenominator;
+  const packSavingsMinor = matrixMode && packSelectionCount > 0 && packSavingsComparable
+    && flooredPackSavings <= BigInt(Number.MAX_SAFE_INTEGER)
+    ? Number(flooredPackSavings)
+    : null;
+
   return {
     lines: consolidateBulkCartLines(lines),
     errors,
@@ -328,6 +468,8 @@ export function evaluateBulkOrder(model: BulkOrderModel, quantities: Record<stri
     baseTotalMinor,
     totalMinor,
     estimatedSavingsMinor: Math.max(0, baseTotalMinor - totalMinor),
+    packValueSavings,
+    packSavingsMinor,
     currencyCode,
     discountRate,
   };
