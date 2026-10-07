@@ -12,6 +12,7 @@ const nextConfig: NextConfig = {
       { source: "/products/aurelia®-vibrant", destination: "/products/aurelia-vibrant", permanent: true },
       { source: "/products/aurelia%C2%AE-vibrant", destination: "/products/aurelia-vibrant", permanent: true },
       { source: "/collections/all", destination: "/shop", permanent: true },
+      { source: "/collections/renaissance-wax-1", destination: "/collections/renaissance-wax", permanent: true },
       { source: "/pages/about-us", destination: "/about", permanent: true },
       { source: "/pages/contact", destination: "/contact", permanent: true },
       { source: "/pages/premium-hand-protection-for-every-industry", destination: "/collections/safety-gear", permanent: true },

@@ -1,7 +1,7 @@
-import type { Money, Product, ProductOption, ProductVariant, QuantityRule } from "@/types/product";
-import { parsePackSize } from "@/lib/shopify/unit-price";
+import type { Money, Product, ProductOption, ProductVariant, QuantityRule } from "../../types/product.ts";
+import { parsePackSize } from "./unit-price.ts";
 
-export { parsePackSize } from "@/lib/shopify/unit-price";
+export { parsePackSize } from "./unit-price.ts";
 
 export const BULK_DISCOUNT_TIERS = [
   { minimumQuantity: 20, rate: 0.03 },
@@ -63,7 +63,9 @@ export interface BulkOrderEvaluation {
   lines: BulkCartLine[];
   errors: BulkOrderError[];
   selectedQuantity: number;
+  baseTotalMinor: number;
   totalMinor: number;
+  estimatedSavingsMinor: number;
   currencyCode: string;
   discountRate: number;
 }
@@ -274,6 +276,7 @@ export function evaluateBulkOrder(model: BulkOrderModel, quantities: Record<stri
   const discountRate = matrixMode ? 0 : getBulkDiscountRate(selectedQuantity);
   const currencyCode = model.variants.find((variant) => variant.money)?.money?.currencyCode ?? "GBP";
   const lines: BulkCartLine[] = [];
+  let baseTotalMinor = 0;
   let totalMinor = 0;
 
   if (matrixMode) {
@@ -297,7 +300,9 @@ export function evaluateBulkOrder(model: BulkOrderModel, quantities: Record<stri
           continue;
         }
         lines.push({ merchandiseId: item.variant.id, quantity: item.quantity });
-        totalMinor += moneyToMinor(item.variant.money!) * item.quantity;
+        const lineTotalMinor = moneyToMinor(item.variant.money!) * item.quantity;
+        baseTotalMinor += lineTotalMinor;
+        totalMinor += lineTotalMinor;
       }
     }
   } else {
@@ -310,11 +315,20 @@ export function evaluateBulkOrder(model: BulkOrderModel, quantities: Record<stri
         continue;
       }
       lines.push({ merchandiseId: variant.id, quantity });
-      totalMinor += discountedUnitMinor(moneyToMinor(variant.money), discountRate) * quantity;
+      const unitMinor = moneyToMinor(variant.money);
+      baseTotalMinor += unitMinor * quantity;
+      totalMinor += discountedUnitMinor(unitMinor, discountRate) * quantity;
     }
   }
 
   return {
-    lines: consolidateBulkCartLines(lines), errors, selectedQuantity, totalMinor, currencyCode, discountRate,
+    lines: consolidateBulkCartLines(lines),
+    errors,
+    selectedQuantity,
+    baseTotalMinor,
+    totalMinor,
+    estimatedSavingsMinor: Math.max(0, baseTotalMinor - totalMinor),
+    currencyCode,
+    discountRate,
   };
 }

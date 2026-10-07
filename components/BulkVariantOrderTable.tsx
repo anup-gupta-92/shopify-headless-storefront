@@ -21,6 +21,7 @@ import type { ProductVariant } from "@/types/product";
 
 const focusClass = "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
 const cellButtonClass = `min-h-16 w-full rounded-lg border border-transparent bg-surface p-3 text-left transition hover:border-primary hover:bg-surface-muted disabled:cursor-not-allowed disabled:opacity-45 ${focusClass}`;
+const BULK_SUCCESS_MESSAGE_DURATION_MS = 4_000;
 
 function normalizedQuantity(value: string): number {
   const quantity = Number.parseInt(value, 10);
@@ -177,11 +178,21 @@ function SimpleTable({
   errors: Map<string, string>;
   onQuantityChange: (key: string, value: number) => void;
 }) {
-  const tierLabels = ["1–9 pack(s)", "10–19 packs", "20+ packs"];
+  const tiers = [
+    { step: SIMPLE_TIER_STEPS[0], label: "1–9 packs" },
+    { step: SIMPLE_TIER_STEPS[1], label: "10–19 packs" },
+    { step: SIMPLE_TIER_STEPS[2], label: "20+ packs" },
+  ];
   return <table className="w-full min-w-[48rem] border-collapse text-sm">
     <thead><tr className="bg-surface-muted text-left">
       <th scope="col" className="border border-border px-4 py-3 font-bold">Variant</th>
-      {tierLabels.map((label) => <th scope="col" key={label} className="border border-border px-4 py-3 font-bold">{label}</th>)}
+      {tiers.map(({ step, label }) => {
+        const discountRate = getBulkDiscountRate(step);
+        return <th scope="col" key={label} className="border border-border px-4 py-3 font-bold">
+          <span className="block">{label}</span>
+          {discountRate > 0 && <span className="mt-1 inline-flex rounded-full bg-primary/10 px-2 py-0.5 text-[0.6875rem] font-bold uppercase tracking-wide text-primary">Save {Math.round(discountRate * 100)}%</span>}
+        </th>;
+      })}
       <th scope="col" className="border border-border px-4 py-3 font-bold">Order</th>
     </tr></thead>
     <tbody>{model.rows.map((row) => {
@@ -191,7 +202,7 @@ function SimpleTable({
       const selectable = variantIsSelectable(variant);
       return <tr key={variant.id} className="bg-surface">
         <th scope="row" className="border border-border px-4 py-4 text-left font-semibold">{row.label}</th>
-        {SIMPLE_TIER_STEPS.map((step) => {
+        {tiers.map(({ step }) => {
           const rate = getBulkDiscountRate(step);
           const disabled = !selectable || (limit !== null && value + step > limit);
           return <td key={step} className="border border-border p-2">
@@ -224,6 +235,14 @@ export default function BulkVariantOrderTable({ model }: { model: BulkOrderModel
     return () => document.body.classList.remove("bulk-order-summary-visible");
   }, [showSummary]);
 
+  useEffect(() => {
+    if (message?.kind !== "success") return;
+    const timeoutId = window.setTimeout(() => {
+      setMessage((current) => current?.kind === "success" ? null : current);
+    }, BULK_SUCCESS_MESSAGE_DURATION_MS);
+    return () => window.clearTimeout(timeoutId);
+  }, [message]);
+
   if (!model || !evaluation) return null;
 
   const result = evaluation;
@@ -233,6 +252,9 @@ export default function BulkVariantOrderTable({ model }: { model: BulkOrderModel
   const linesFingerprint = JSON.stringify(result.lines);
   const incVat = minorToMoney(result.totalMinor, result.currencyCode);
   const exVat = formatUkPriceExcludingVat(incVat);
+  const estimatedSaving = result.estimatedSavingsMinor > 0
+    ? minorToMoney(result.estimatedSavingsMinor, result.currencyCode)
+    : null;
   const busy = submitting !== null || cartLoading;
 
   function changeQuantity(key: string, value: number) {
@@ -310,6 +332,7 @@ export default function BulkVariantOrderTable({ model }: { model: BulkOrderModel
         <div className="flex flex-wrap items-baseline gap-x-5 gap-y-1 text-sm sm:text-base" aria-live="polite">
           <span><strong className="text-lg">{result.selectedQuantity}</strong> selected</span>
           <span><strong>Inc. VAT:</strong> {formatMoney(incVat)}</span>
+          {estimatedSaving && <span className="text-primary"><strong>You save:</strong> {formatMoney(estimatedSaving)} <span className="text-xs">(est.)</span></span>}
           {exVat && <span><strong>Excl. VAT:</strong> {exVat}</span>}
         </div>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
