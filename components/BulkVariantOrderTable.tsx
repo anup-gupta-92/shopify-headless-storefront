@@ -99,7 +99,7 @@ function MatrixPrice({
     )}
     {saving && mode === "matrix" && saving.percentageTenths > 0 && (
       <span className="mt-1.5 block text-xs font-semibold text-primary">
-        {percentageLabel(saving.percentageTenths)} less/item
+        {percentageLabel(saving.percentageTenths)} savings
       </span>
     )}
   </>;
@@ -369,7 +369,7 @@ export default function BulkVariantOrderTable({ model }: { model: BulkOrderModel
           <span><strong className="text-lg">{result.selectedQuantity}</strong> selected</span>
           <span><strong>Inc. VAT:</strong> {formatMoney(incVat)}</span>
           {estimatedSaving && <span className="text-primary"><strong>You save:</strong> {formatMoney(estimatedSaving)} <span className="text-xs">(est.)</span></span>}
-          {packSaving && <span className="text-primary"><strong>Pack saving vs smallest-pack rate:</strong> {formatMoney(packSaving)} <span className="text-xs">(est.)</span></span>}
+          {packSaving && <span className="text-primary"><strong>Pack saving:</strong> {formatMoney(packSaving)} <span className="text-xs">(est.)</span></span>}
           {exVat && <span><strong>Excl. VAT:</strong> {exVat}</span>}
         </div>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
