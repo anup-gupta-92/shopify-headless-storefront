@@ -12,6 +12,7 @@ import {
 interface CookieConsentContextValue {
   consent: ConsentPreferences | null;
   ready: boolean;
+  preferencesOpen: boolean;
   hasConsent: (category: ConsentCategory) => boolean;
   openPreferences: (opener?: HTMLElement | null) => void;
 }
@@ -65,9 +66,10 @@ export default function CookieConsentProvider({ children }: { children: React.Re
   const value = useMemo<CookieConsentContextValue>(() => ({
     consent,
     ready,
+    preferencesOpen,
     hasConsent: (category) => categoryHasConsent(consent, category),
     openPreferences,
-  }), [consent, openPreferences, ready]);
+  }), [consent, openPreferences, preferencesOpen, ready]);
 
   const showBanner = ready && consent === null && !preferencesOpen;
 

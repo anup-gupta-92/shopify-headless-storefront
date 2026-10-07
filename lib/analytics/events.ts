@@ -128,3 +128,23 @@ export function trackViewCart(cart: Cart) {
     items: cart.lines.map((line) => cartLineItem(line)),
   });
 }
+
+export function trackPwaPromptShown(platform: "chromium" | "ios") {
+  sendGoogleEvent("pwa_install_prompt_shown", { platform });
+}
+
+export function trackPwaInstallClicked(platform: "chromium" | "ios") {
+  sendGoogleEvent("pwa_install_clicked", { platform });
+}
+
+export function trackPwaInstalled() {
+  sendGoogleEvent("pwa_installed", { platform: "chromium" });
+}
+
+export function trackPwaInstallDismissed(source: "not_now" | "native_prompt") {
+  sendGoogleEvent("pwa_install_dismissed", { source });
+}
+
+export function trackPwaLaunchedStandalone() {
+  sendGoogleEvent("pwa_launched_standalone", {});
+}
