@@ -8,6 +8,8 @@ export default function ProductGallery({ images, title }: { images: ProductImage
   const [active, setActive] = useState(0);
   const [expanded, setExpanded] = useState(false);
   const strip = useRef<HTMLDivElement>(null);
+  const thumbnailStrip = useRef<HTMLDivElement>(null);
+  const thumbnails = useRef<Array<HTMLButtonElement | null>>([]);
   const dialog = useRef<HTMLDialogElement>(null);
   const multiple = images.length > 1;
   const control = "min-h-11 min-w-11 rounded-lg border border-border bg-surface p-2 text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
@@ -17,6 +19,20 @@ export default function ProductGallery({ images, title }: { images: ProductImage
     setActive(next);
     if (strip.current) strip.current.scrollTo({ left: next * strip.current.clientWidth, behavior: "instant" });
   }
+
+  useEffect(() => {
+    const rail = thumbnailStrip.current;
+    const thumbnail = thumbnails.current[active];
+    if (!rail || !thumbnail) return;
+
+    const railBounds = rail.getBoundingClientRect();
+    const thumbnailBounds = thumbnail.getBoundingClientRect();
+    if (thumbnailBounds.left < railBounds.left) {
+      rail.scrollBy({ left: thumbnailBounds.left - railBounds.left });
+    } else if (thumbnailBounds.right > railBounds.right) {
+      rail.scrollBy({ left: thumbnailBounds.right - railBounds.right });
+    }
+  }, [active]);
 
   useEffect(() => {
     if (!expanded) return;
@@ -36,22 +52,15 @@ export default function ProductGallery({ images, title }: { images: ProductImage
 
   return (
     <section aria-label="Product images" className="min-w-0">
-      <div className={multiple ? "min-w-0 md:grid md:grid-cols-[4rem_minmax(0,1fr)] md:gap-3" : "min-w-0"}>
-        {multiple && <div className="relative hidden min-h-0 md:block">
-          <div className="absolute inset-0 flex flex-col gap-3 overflow-y-auto">
-            {images.map((image, index) => <button key={image.url} type="button" aria-label={`View image ${index + 1}`} aria-pressed={active === index} onClick={() => select(index)} className={`relative aspect-square w-full shrink-0 overflow-hidden rounded-lg border-2 bg-surface focus-visible:outline-2 focus-visible:outline-primary ${active === index ? "border-primary" : "border-border"}`}>
-              <Image src={image.url} alt={image.altText || `${title}, image ${index + 1}`} fill sizes="64px" className="object-contain" style={{ objectFit: "contain" }} />
-            </button>)}
-          </div>
-        </div>}
-        <div ref={strip} onScroll={(event) => { const el = event.currentTarget; setActive(Math.min(images.length - 1, Math.max(0, Math.round(el.scrollLeft / el.clientWidth)))); }} className="flex min-w-0 flex-1 snap-x snap-mandatory overflow-x-auto rounded-xl border border-border bg-surface [scrollbar-width:none]">
-          {images.map((image, index) => <button key={image.url} type="button" aria-label={`Expand image ${index + 1} of ${images.length}`} onClick={() => { setActive(index); setExpanded(true); }} className="relative aspect-square w-full shrink-0 snap-center focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary">
-            <Image src={image.url} alt={image.altText || `${title}, image ${index + 1}`} fill sizes="(max-width: 767px) 100vw, 45vw" loading={index === 0 ? "eager" : "lazy"} className="object-contain" style={{ objectFit: "contain" }} />
-          </button>)}
-        </div>
+      <div ref={strip} onScroll={(event) => { const el = event.currentTarget; setActive(Math.min(images.length - 1, Math.max(0, Math.round(el.scrollLeft / el.clientWidth)))); }} className="flex min-w-0 snap-x snap-mandatory overflow-x-auto rounded-xl border border-border bg-surface [scrollbar-width:none]">
+        {images.map((image, index) => <button key={image.url} type="button" aria-label={`Expand image ${index + 1} of ${images.length}`} onClick={() => { setActive(index); setExpanded(true); }} className="relative aspect-square w-full shrink-0 snap-center focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary">
+          <Image src={image.url} alt={image.altText || `${title}, image ${index + 1}`} fill sizes="(max-width: 767px) 100vw, 45vw" loading={index === 0 ? "eager" : "lazy"} className="object-contain" style={{ objectFit: "contain" }} />
+        </button>)}
       </div>
-      {multiple && <div className="mt-3 flex flex-wrap justify-center gap-1" aria-label="Choose product image">
-        {images.map((image, index) => <button key={image.url} type="button" onClick={() => select(index)} aria-label={`Show image ${index + 1}`} aria-pressed={active === index} className="flex size-6 items-center justify-center rounded focus-visible:outline-2 focus-visible:outline-primary"><span className={`size-2 rounded-full ${active === index ? "bg-primary" : "bg-border"}`} /></button>)}
+      {multiple && <div ref={thumbnailStrip} role="group" className="mt-3 flex flex-nowrap gap-3 overflow-x-auto overflow-y-hidden overscroll-x-contain scroll-smooth pb-1 motion-reduce:scroll-auto [scrollbar-color:var(--border)_transparent] [scrollbar-width:thin]" aria-label="Choose product image">
+        {images.map((image, index) => <button ref={(node) => { thumbnails.current[index] = node; }} key={image.url} type="button" aria-label={`View image ${index + 1}`} aria-pressed={active === index} onClick={() => select(index)} className={`relative size-16 flex-none overflow-hidden rounded-lg border-2 bg-surface focus-visible:outline-2 focus-visible:outline-primary ${active === index ? "border-primary" : "border-border"}`}>
+          <Image src={image.url} alt={image.altText || `${title}, image ${index + 1}`} fill sizes="64px" className="object-contain" style={{ objectFit: "contain" }} />
+        </button>)}
       </div>}
       <p className="mt-2 text-center text-xs text-muted">Tap an image to enlarge{multiple ? " · Swipe to browse" : ""}</p>
       <dialog ref={dialog} onCancel={(event) => { event.preventDefault(); setExpanded(false); }} onClose={() => setExpanded(false)} aria-label={`${title} expanded images`} className="fixed inset-0 m-auto h-[100dvh] max-h-none w-screen max-w-none bg-background p-4 text-foreground backdrop:bg-background/90" onKeyDown={(event) => { if (multiple && event.key === "ArrowRight") select(active + 1); if (multiple && event.key === "ArrowLeft") select(active - 1); }}>

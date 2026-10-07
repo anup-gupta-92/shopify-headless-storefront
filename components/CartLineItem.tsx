@@ -41,6 +41,9 @@ export default function CartLineItem({
     (option) => !(option.name === "Title" && option.value === "Default Title"),
   );
   const displayedUnitPrice = unitPrice(line);
+  const sellingPlan = line.sellingPlanAllocation?.sellingPlan;
+  const sellingPlanDetails = sellingPlan?.options.map((option) => option.value).filter(Boolean).join(" · ")
+    || sellingPlan?.name;
 
   return (
     <li className={isDrawer
@@ -78,6 +81,9 @@ export default function CartLineItem({
           <p className="mt-1 break-words text-sm text-muted">
             {displayOptions.map((option) => `${option.name}: ${option.value}`).join(" · ")}
           </p>
+        )}
+        {sellingPlanDetails && (
+          <p className="mt-1 text-sm font-medium text-primary">Subscribe · {sellingPlanDetails}</p>
         )}
         {line.merchandise.productCode && (
           <p className="mt-1 break-all font-mono text-xs text-muted">Product Code: {line.merchandise.productCode}</p>

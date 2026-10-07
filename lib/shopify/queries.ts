@@ -18,6 +18,19 @@ const variantFields = `
   price { amount currencyCode } compareAtPrice { amount currencyCode }
   unitPrice { amount currencyCode }
   unitPriceMeasurement { measuredType quantityUnit quantityValue referenceUnit referenceValue }
+  sellingPlanAllocations(first: 50) {
+    nodes {
+      sellingPlan {
+        id name description
+        options { name value }
+      }
+      priceAdjustments {
+        price { amount currencyCode }
+        compareAtPrice { amount currencyCode }
+        perDeliveryPrice { amount currencyCode }
+      }
+    }
+  }
 `;
 const cardVariantFields = `variants(first: 250) {
   nodes {
@@ -78,6 +91,12 @@ export const PRODUCT_QUERY = `
       featuredImage { ${imageFields} }
       images(first: 15) { nodes { ${imageFields} } }
       collections(first: 250) { nodes { handle title } }
+      sellingPlanGroups(first: 20) {
+        nodes {
+          name
+          sellingPlans(first: 50) { nodes { id } }
+        }
+      }
       options { name values }
       priceRange { minVariantPrice { amount currencyCode } maxVariantPrice { amount currencyCode } }
       variants(first: 100) {

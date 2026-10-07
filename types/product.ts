@@ -12,6 +12,19 @@ export interface QuantityRule {
   maximum: number | null;
   increment: number;
 }
+export interface SellingPlanOption { name: string; value: string }
+export interface SellingPlanAllocation {
+  sellingPlan: {
+    id: string;
+    name: string;
+    description?: string;
+    groupName?: string;
+    options: SellingPlanOption[];
+  };
+  price: Money;
+  compareAtPrice?: Money;
+  perDeliveryPrice?: Money;
+}
 export interface ProductSummary {
   id: string; handle: string; title: string; category: string; image: string;
   reviewRating?: ReviewRating;
@@ -45,6 +58,7 @@ export interface ProductVariant {
   /** Available only when the Storefront token has product-inventory access. */
   quantityAvailable?: number | null;
   quantityRule?: QuantityRule;
+  sellingPlanAllocations?: SellingPlanAllocation[];
 }
 
 export interface Product {

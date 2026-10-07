@@ -96,7 +96,17 @@ export default async function ProductPage({ params }: ProductPageProps) {
         </div>
 
         <BulkVariantOrderTable model={bulkOrderModel} />
-        <ProductDescription html={product.descriptionHtml} text={product.description} />
+        <ProductDescription
+          html={product.descriptionHtml}
+          text={product.description}
+          variants={(product.variants ?? []).map(({ id, available, productCode }) => ({
+            id,
+            available,
+            productCode,
+          }))}
+          defaultVariantId={product.defaultVariantId}
+          productCode={product.productCode ?? product.sku}
+        />
         {product.id && <Suspense fallback={<ReviewsSkeleton />}><ProductReviews productId={product.id} productTitle={product.title} rating={product.reviewRating} /></Suspense>}
         {recommendations.length > 0 && <section className="mt-12" aria-labelledby="recommendations">
           <h2 id="recommendations" className="mb-6 text-2xl font-bold">You May Also Like</h2>

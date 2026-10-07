@@ -106,11 +106,29 @@ export function mapProductSummary(product: ShopifyProductSummary): ProductSummar
   };
 }
 
-function mapVariant(variant: ShopifyVariant): ProductVariant {
+function mapVariant(variant: ShopifyVariant, sellingPlanGroupNames = new Map<string, string>()): ProductVariant {
   const measurement = variant.unitPriceMeasurement;
   const unitPrice = variant.unitPrice && measurement?.referenceUnit
     ? `${formatMoney(variant.unitPrice)} / ${measurement.referenceValue === 1 ? "" : measurement.referenceValue}${measurement.referenceUnit.toLowerCase()}`
     : undefined;
+  const sellingPlanAllocations = (variant.sellingPlanAllocations?.nodes ?? []).flatMap((allocation) => {
+    const { sellingPlan } = allocation;
+    if (!sellingPlan?.id?.startsWith("gid://shopify/SellingPlan/") || !sellingPlan.name?.trim()) return [];
+    const adjustment = allocation.priceAdjustments?.[0];
+    return [{
+      sellingPlan: {
+        id: sellingPlan.id,
+        name: sellingPlan.name,
+        description: sellingPlan.description?.trim() || undefined,
+        groupName: sellingPlanGroupNames.get(sellingPlan.id),
+        options: sellingPlan.options ?? [],
+      },
+      // Shopify returns no allocation adjustment for a genuine 0% plan.
+      price: adjustment?.price ?? variant.price,
+      compareAtPrice: adjustment?.compareAtPrice,
+      perDeliveryPrice: adjustment?.perDeliveryPrice,
+    }];
+  });
   return {
     id: variant.id, title: variant.title, productCode: variant.sku || undefined,
     available: variant.availableForSale, currentlyNotInStock: variant.currentlyNotInStock,
@@ -118,6 +136,7 @@ function mapVariant(variant: ShopifyVariant): ProductVariant {
     price: formatMoney(variant.price), money: variant.price, currencyCode: variant.price.currencyCode,
     priceExVat: formatUkPriceExcludingVat(variant.price), compareAtPrice: variant.compareAtPrice ?? undefined,
     unitPrice, unitPriceMoney: variant.unitPrice ?? undefined, unitPriceMeasurement: measurement ?? undefined,
+    sellingPlanAllocations,
   };
 }
 
@@ -129,6 +148,11 @@ export const getHomepageProducts = cache(async (): Promise<ProductSummary[]> => 
 export const getProductByHandle = cache(async (handle: string): Promise<Product | null> => {
   const { product } = await storefrontRequest<{ product: ShopifyProduct | null }>(PRODUCT_QUERY, { handle });
   if (!product) return null;
+  const sellingPlanGroupNames = new Map(
+    product.sellingPlanGroups.nodes.flatMap((group) =>
+      group.sellingPlans.nodes.map((plan) => [plan.id, group.name] as const),
+    ),
+  );
   const collectionHandles = new Set<string>();
   const normalizedCollections = product.collections.nodes.filter((collection) => {
     const handle = collection.handle.trim().toLocaleLowerCase();
@@ -152,7 +176,7 @@ export const getProductByHandle = cache(async (handle: string): Promise<Product 
     vendor: product.vendor, tags: product.tags, images: product.images.nodes, options: product.options,
     collections,
     collectionHandles: [...collectionHandles],
-    sku: "", variants: variants.map(mapVariant),
+    sku: "", variants: variants.map((variant) => mapVariant(variant, sellingPlanGroupNames)),
     available: variants.length > 0 && product.availableForSale,
   };
 });

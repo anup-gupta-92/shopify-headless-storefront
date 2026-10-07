@@ -3,6 +3,13 @@ import type { Money, ProductImage, SelectedOption } from "@/types/product";
 export interface CartLine {
   id: string;
   quantity: number;
+  sellingPlanAllocation?: {
+    sellingPlan: {
+      id: string;
+      name: string;
+      options: Array<{ name: string; value: string }>;
+    };
+  };
   cost: {
     totalAmount: Money;
   };
@@ -34,4 +41,5 @@ export interface Cart {
 export interface CartAddLine {
   merchandiseId: string;
   quantity: number;
+  sellingPlanId?: string;
 }

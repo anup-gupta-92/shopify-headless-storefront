@@ -1,4 +1,4 @@
-import type { Money, ProductImage, ProductOption, QuantityRule, SelectedOption, UnitPriceMeasurement } from "@/types/product";
+import type { Money, ProductImage, ProductOption, QuantityRule, SelectedOption, SellingPlanOption, UnitPriceMeasurement } from "@/types/product";
 import type { RatingMetafields } from "@/lib/judgeme/product";
 
 export interface ShopifySeo {
@@ -13,6 +13,21 @@ export interface ShopifyVariant {
   selectedOptions: SelectedOption[];
   price: Money; compareAtPrice: Money | null;
   unitPrice: Money | null; unitPriceMeasurement: UnitPriceMeasurement | null;
+  sellingPlanAllocations: {
+    nodes: Array<{
+      sellingPlan: {
+        id: string;
+        name: string;
+        description: string | null;
+        options: SellingPlanOption[];
+      };
+      priceAdjustments: Array<{
+        price: Money;
+        compareAtPrice: Money;
+        perDeliveryPrice: Money;
+      }>;
+    }>;
+  };
 }
 export interface VariantConnection {
   nodes: ShopifyVariant[];
@@ -32,6 +47,12 @@ export interface ShopifyProduct extends ShopifyProductSummary {
   seo: ShopifySeo;
   images: { nodes: ProductImage[] }; options: ProductOption[];
   collections: { nodes: Array<{ handle: string; title: string }> };
+  sellingPlanGroups: {
+    nodes: Array<{
+      name: string;
+      sellingPlans: { nodes: Array<{ id: string }> };
+    }>;
+  };
   variants: VariantConnection;
 }
 

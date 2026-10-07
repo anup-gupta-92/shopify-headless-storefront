@@ -87,12 +87,19 @@ export function trackSearch(searchTerm: string) {
 }
 
 export function trackAddToCart(cart: Cart, addedLines: CartAddLine[]) {
-  const quantities = new Map<string, number>();
+  const quantities = new Map<string, CartAddLine>();
   for (const line of addedLines) {
-    quantities.set(line.merchandiseId, (quantities.get(line.merchandiseId) ?? 0) + line.quantity);
+    const key = `${line.merchandiseId}\0${line.sellingPlanId ?? ""}`;
+    quantities.set(key, {
+      ...line,
+      quantity: (quantities.get(key)?.quantity ?? 0) + line.quantity,
+    });
   }
-  const items = [...quantities].flatMap(([merchandiseId, quantity]) => {
-    const line = cart.lines.find((candidate) => candidate.merchandise.id === merchandiseId);
+  const items = [...quantities.values()].flatMap(({ merchandiseId, quantity, sellingPlanId }) => {
+    const line = cart.lines.find((candidate) =>
+      candidate.merchandise.id === merchandiseId
+      && candidate.sellingPlanAllocation?.sellingPlan.id === sellingPlanId,
+    );
     return line ? [cartLineItem(line, quantity)] : [];
   });
   if (!items.length) return;

@@ -50,7 +50,7 @@ export function compareMoney(left: Money, right: Money): -1 | 0 | 1 | undefined 
   return normalizedLeft < normalizedRight ? -1 : normalizedLeft > normalizedRight ? 1 : 0;
 }
 
-function moneyAmountToMinorUnits(amount: string): number | undefined {
+export function moneyAmountToMinorUnits(amount: string): number | undefined {
   const match = /^(\d+)(?:\.(\d+))?$/.exec(amount.trim());
   if (!match) return undefined;
 

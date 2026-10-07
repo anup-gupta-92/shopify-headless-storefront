@@ -15,7 +15,7 @@ interface CartContextValue {
   checkoutLoading: boolean;
   drawerOpen: boolean;
   error: string | null;
-  addItem: (merchandiseId: string, quantity: number) => Promise<void>;
+  addItem: (merchandiseId: string, quantity: number, sellingPlanId?: string) => Promise<void>;
   addLines: (lines: CartAddLine[], options?: { openDrawer?: boolean }) => Promise<void>;
   updateLine: (lineId: string, quantity: number) => Promise<void>;
   removeLine: (lineId: string) => Promise<void>;
@@ -118,9 +118,10 @@ export default function CartProvider({ children }: { children: React.ReactNode }
     }
   }, []);
 
-  const addItem = useCallback(async (merchandiseId: string, quantity: number) => {
-    const nextCart = await mutate({ action: "add", merchandiseId, quantity });
-    if (nextCart) trackAddToCart(nextCart, [{ merchandiseId, quantity }]);
+  const addItem = useCallback(async (merchandiseId: string, quantity: number, sellingPlanId?: string) => {
+    const line = { merchandiseId, quantity, ...(sellingPlanId ? { sellingPlanId } : {}) };
+    const nextCart = await mutate({ action: "add", ...line });
+    if (nextCart) trackAddToCart(nextCart, [line]);
     setDrawerOpen(true);
   }, [mutate]);
 

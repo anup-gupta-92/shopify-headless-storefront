@@ -7,6 +7,13 @@ import { storefrontRequest } from "./client";
 interface ShopifyCartLine {
   id: string;
   quantity: number;
+  sellingPlanAllocation: {
+    sellingPlan: {
+      id: string;
+      name: string;
+      options: Array<{ name: string; value: string }>;
+    };
+  } | null;
   cost: { totalAmount: Money };
   merchandise: {
     id: string;
@@ -39,6 +46,7 @@ interface CartMutationPayload {
 interface CartLineInput {
   merchandiseId: string;
   quantity: number;
+  sellingPlanId?: string;
 }
 
 interface CartCreateOptions {
@@ -62,6 +70,9 @@ const CART_FIELDS = `
     nodes {
       id
       quantity
+      sellingPlanAllocation {
+        sellingPlan { id name options { name value } }
+      }
       cost { totalAmount { amount currencyCode } }
       merchandise {
         ... on ProductVariant {
@@ -176,6 +187,7 @@ function mapLine(line: ShopifyCartLine): CartLine {
   return {
     id: line.id,
     quantity: line.quantity,
+    sellingPlanAllocation: line.sellingPlanAllocation ?? undefined,
     cost: line.cost,
     merchandise: {
       id: line.merchandise.id,
