@@ -5,8 +5,8 @@ export const siteConfig = {
     "Shop packaging supplies, PPE, abrasives, cleaning and workplace essentials from Apex Business Supplies. Reliable UK supply, same-day dispatch and free delivery over £79.",
   url: "https://www.apexbusinesssupplies.co.uk",
   logo: {
-    lightTheme: "/images/logo-for-light.png",
-    darkTheme: "/images/logo-for-dark.png",
+    lightTheme: "/images/logo-for-light.webp",
+    darkTheme: "/images/logo-for-dark.webp",
     alt: "Apex Business Supplies",
   },
   mainNav: [
