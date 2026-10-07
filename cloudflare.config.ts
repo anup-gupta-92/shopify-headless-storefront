@@ -7,6 +7,7 @@ export default defineConfig({
     compatibilityDate: "2026-10-01",
     compatibilityFlags: ["nodejs_compat"],
     assets: { notFoundHandling: "none" },
+    workersDev: false,
     previewUrls: false,
     observability: {
       enabled: true,
