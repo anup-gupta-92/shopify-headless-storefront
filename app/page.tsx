@@ -106,7 +106,7 @@ export default async function HomePage() {
           </div>
         </section>
 
-        <div className="mt-12 sm:mt-16">
+        <div className="mt-6 sm:mt-16">
           <HomepageCategoryShowcase categories={categories} />
         </div>
 
