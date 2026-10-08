@@ -1,6 +1,13 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { AGENT_DISCOVERY_MARKDOWN, agentDiscoveryResponse } from "../lib/agent-discovery.ts";
+import {
+  AGENT_DISCOVERY_MARKDOWN,
+  LLMS_DISCOVERY_MARKDOWN,
+  LLMS_FULL_DISCOVERY_MARKDOWN,
+  agentDiscoveryResponse,
+  llmsDiscoveryResponse,
+  llmsFullDiscoveryResponse,
+} from "../lib/agent-discovery.ts";
 import {
   shopifyAgenticRequestHeaders,
   shopifyAgenticResponseHeaders,
@@ -30,6 +37,74 @@ test("agent discovery describes the headless routes without advertising legacy J
   assert.equal(response.status, 200);
   assert.equal(response.headers.get("content-type"), "text/markdown; charset=utf-8");
   assert.equal(await response.text(), AGENT_DISCOVERY_MARKDOWN);
+});
+
+test("llms discovery is concise linked Markdown with canonical public routes", async () => {
+  assert.match(LLMS_DISCOVERY_MARKDOWN, /^# Apex Business Supplies$/m);
+
+  const links = [...LLMS_DISCOVERY_MARKDOWN.matchAll(/\[[^\]]+\]\((https:\/\/[^)]+)\)/g)]
+    .map((match) => match[1]);
+  assert.deepEqual(links, [
+    "https://www.apexbusinesssupplies.co.uk/shop",
+    "https://www.apexbusinesssupplies.co.uk/collections/packaging-supplies",
+    "https://www.apexbusinesssupplies.co.uk/collections/safety-gear",
+    "https://www.apexbusinesssupplies.co.uk/collections/abrasives",
+    "https://www.apexbusinesssupplies.co.uk/collections/protection-cleaning",
+    "https://www.apexbusinesssupplies.co.uk/about",
+    "https://www.apexbusinesssupplies.co.uk/contact",
+    "https://www.apexbusinesssupplies.co.uk/blogs",
+    "https://www.apexbusinesssupplies.co.uk/policies/shipping-policy",
+    "https://www.apexbusinesssupplies.co.uk/policies/refund-policy",
+    "https://www.apexbusinesssupplies.co.uk/policies/privacy-policy",
+    "https://www.apexbusinesssupplies.co.uk/policies/terms-of-service",
+  ]);
+  assert.equal(new Set(links).size, links.length);
+  const describedLinks = [...LLMS_DISCOVERY_MARKDOWN.matchAll(
+    /\[[^\]]+\]\(https:\/\/[^)]+\): [^\n]+/g,
+  )];
+  assert.equal(describedLinks.length, links.length);
+  assert.doesNotMatch(LLMS_DISCOVERY_MARKDOWN, /localhost|workers\.dev|\/api\/|\/account|\/cart|checkout\./i);
+
+  const response = llmsDiscoveryResponse();
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get("content-type"), "text/plain; charset=utf-8");
+  assert.equal(response.headers.get("cache-control"), "public, max-age=0, must-revalidate");
+  assert.equal(await response.text(), LLMS_DISCOVERY_MARKDOWN);
+});
+
+test("llms-full provides expanded public storefront context without restricted routes", async () => {
+  assert.match(LLMS_FULL_DISCOVERY_MARKDOWN, /^# Apex Business Supplies$/m);
+  assert.match(LLMS_FULL_DISCOVERY_MARKDOWN, /Shopify provides the authoritative catalogue, current prices and product availability/);
+  assert.match(LLMS_FULL_DISCOVERY_MARKDOWN, /Product and collection pages are server-rendered/);
+  assert.match(LLMS_FULL_DISCOVERY_MARKDOWN, /## Catalogue/);
+  assert.match(LLMS_FULL_DISCOVERY_MARKDOWN, /## Company and guidance/);
+  assert.match(LLMS_FULL_DISCOVERY_MARKDOWN, /## Store policies/);
+  assert.match(LLMS_FULL_DISCOVERY_MARKDOWN, /## Shopping behaviour/);
+  assert.match(LLMS_FULL_DISCOVERY_MARKDOWN, /## Data accuracy/);
+  assert.match(
+    LLMS_FULL_DISCOVERY_MARKDOWN,
+    /\[Sitemap\]\(https:\/\/www\.apexbusinesssupplies\.co\.uk\/sitemap\.xml\): Canonical index of current product, collection, blog and information pages\./,
+  );
+  assert.match(
+    LLMS_FULL_DISCOVERY_MARKDOWN,
+    /Use product pages for current prices, variants and availability\. Use the storefront cart to create a basket\. Checkout is completed through Shopify's hosted checkout\./,
+  );
+  assert.notEqual(LLMS_FULL_DISCOVERY_MARKDOWN, LLMS_DISCOVERY_MARKDOWN);
+
+  const links = [...LLMS_FULL_DISCOVERY_MARKDOWN.matchAll(/\[[^\]]+\]\((https:\/\/[^)]+)\): [^\n]+/g)]
+    .map((match) => match[1]);
+  assert.equal(links.length, 14);
+  assert.equal(new Set(links).size, links.length);
+  assert.doesNotMatch(
+    LLMS_FULL_DISCOVERY_MARKDOWN,
+    /localhost|workers\.dev|https?:\/\/[^)\s]*\/(?:api|account|cart)(?:\/|\b)|https?:\/\/checkout\.|customer data|crawler/i,
+  );
+
+  const response = llmsFullDiscoveryResponse();
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get("content-type"), "text/plain; charset=utf-8");
+  assert.equal(response.headers.get("cache-control"), "public, max-age=0, must-revalidate");
+  assert.equal(await response.text(), LLMS_FULL_DISCOVERY_MARKDOWN);
 });
 
 test("Shopify agentic upstream URLs are fixed and MCP query parameters are preserved", () => {

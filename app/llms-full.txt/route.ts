@@ -1,5 +1,5 @@
-import { agentDiscoveryResponse } from "@/lib/agent-discovery";
+import { llmsFullDiscoveryResponse } from "@/lib/agent-discovery";
 
 export function GET() {
-  return agentDiscoveryResponse();
+  return llmsFullDiscoveryResponse();
 }

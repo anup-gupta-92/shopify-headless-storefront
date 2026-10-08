@@ -77,6 +77,90 @@ Shopify remains authoritative for live prices and availability.
 - Use the public storefront and sitemap for read-only discovery.
 `;
 
+export const LLMS_DISCOVERY_MARKDOWN = `# Apex Business Supplies
+
+> UK supplier of packaging, PPE, abrasives, cleaning products and business supplies.
+
+## Shop
+
+- [Shop all products](${PRODUCTION_ORIGIN}/shop): Browse the full Apex Business Supplies product catalogue.
+
+## Main collections
+
+- [Packaging supplies](${PRODUCTION_ORIGIN}/collections/packaging-supplies): Mailing bags, boxes, tapes and other shipping essentials.
+- [PPE and safety gear](${PRODUCTION_ORIGIN}/collections/safety-gear): Masks, gloves and workplace protection products.
+- [Abrasives](${PRODUCTION_ORIGIN}/collections/abrasives): Professional sanding and surface-preparation products.
+- [Surface protection and cleaning](${PRODUCTION_ORIGIN}/collections/protection-cleaning): Cloths, waxes, cleaning products and surface-protection supplies.
+
+## Information
+
+- [About Apex Business Supplies](${PRODUCTION_ORIGIN}/about): Learn about the business and its approach to supplying UK customers.
+- [Contact](${PRODUCTION_ORIGIN}/contact): Find contact details and send a product or order enquiry.
+- [Blog](${PRODUCTION_ORIGIN}/blogs): Read practical guides, product comparisons and business-supplies advice.
+
+## Policies
+
+- [Shipping policy](${PRODUCTION_ORIGIN}/policies/shipping-policy): Review dispatch, delivery and shipping-charge information.
+- [Refund and returns policy](${PRODUCTION_ORIGIN}/policies/refund-policy): Review return eligibility, timeframes and the refund process.
+- [Privacy policy](${PRODUCTION_ORIGIN}/policies/privacy-policy): Learn how personal information is collected, used and protected.
+- [Terms of service](${PRODUCTION_ORIGIN}/policies/terms-of-service): Review the terms governing use of the storefront and its services.
+`;
+
+export const LLMS_FULL_DISCOVERY_MARKDOWN = `# Apex Business Supplies
+
+> UK supplier of packaging, PPE, abrasives, cleaning products and business supplies.
+
+## Storefront context
+
+Apex Business Supplies operates a headless public storefront at ${PRODUCTION_ORIGIN}. Shopify provides the authoritative catalogue, current prices and product availability.
+
+Product and collection pages are server-rendered and include structured product information. Use the public storefront pages below for read-only catalogue discovery.
+
+## Catalogue
+
+- [Shop all products](${PRODUCTION_ORIGIN}/shop): Browse the complete product catalogue, with filtering, sorting and crawlable pagination.
+- [Packaging supplies](${PRODUCTION_ORIGIN}/collections/packaging-supplies): Mailing bags, boxes, tapes and other shipping essentials.
+- [PPE and safety gear](${PRODUCTION_ORIGIN}/collections/safety-gear): Masks, gloves and workplace protection products.
+- [Abrasives](${PRODUCTION_ORIGIN}/collections/abrasives): Professional sanding and surface-preparation products.
+- [Surface protection and cleaning](${PRODUCTION_ORIGIN}/collections/protection-cleaning): Cloths, waxes, cleaning products and surface-protection supplies.
+- [Sitemap](${PRODUCTION_ORIGIN}/sitemap.xml): Canonical index of current product, collection, blog and information pages.
+
+Individual products use canonical URLs under ${PRODUCTION_ORIGIN}/products/. Individual collections use canonical URLs under ${PRODUCTION_ORIGIN}/collections/.
+
+## Company and guidance
+
+- [Apex Business Supplies homepage](${PRODUCTION_ORIGIN}/): Start from the main storefront and browse featured departments and products.
+- [About Apex Business Supplies](${PRODUCTION_ORIGIN}/about): Learn about the business and its approach to supplying UK customers.
+- [Contact](${PRODUCTION_ORIGIN}/contact): Find contact details and send a product or order enquiry.
+- [Blog](${PRODUCTION_ORIGIN}/blogs): Read practical guides, product comparisons and business-supplies advice.
+
+## Store policies
+
+- [Shipping policy](${PRODUCTION_ORIGIN}/policies/shipping-policy): Review dispatch, delivery and shipping-charge information.
+- [Refund and returns policy](${PRODUCTION_ORIGIN}/policies/refund-policy): Review return eligibility, timeframes and the refund process.
+- [Privacy policy](${PRODUCTION_ORIGIN}/policies/privacy-policy): Learn how personal information is collected, used and protected.
+- [Terms of service](${PRODUCTION_ORIGIN}/policies/terms-of-service): Review the terms governing use of the storefront and its services.
+
+## Shopping behaviour
+
+Use product pages for current prices, variants and availability. Use the storefront cart to create a basket. Checkout is completed through Shopify's hosted checkout.
+
+## Data accuracy
+
+Shopify remains authoritative for live product prices and availability. Refer to the relevant public product page for current product details rather than relying on previously stored copies of catalogue information.
+`;
+
+function markdownResponse(markdown: string): Response {
+  return new Response(markdown, {
+    status: 200,
+    headers: {
+      "Content-Type": "text/plain; charset=utf-8",
+      "Cache-Control": "public, max-age=0, must-revalidate",
+      "X-Content-Type-Options": "nosniff",
+    },
+  });
+}
+
 export function agentDiscoveryResponse(): Response {
   return new Response(AGENT_DISCOVERY_MARKDOWN, {
     status: 200,
@@ -86,4 +170,12 @@ export function agentDiscoveryResponse(): Response {
       "X-Content-Type-Options": "nosniff",
     },
   });
+}
+
+export function llmsDiscoveryResponse(): Response {
+  return markdownResponse(LLMS_DISCOVERY_MARKDOWN);
+}
+
+export function llmsFullDiscoveryResponse(): Response {
+  return markdownResponse(LLMS_FULL_DISCOVERY_MARKDOWN);
 }
