@@ -261,17 +261,14 @@ export default function ProductInformation({ product }: { product: Product }) {
           <output aria-live="polite" aria-label="Purchase quantity" className="min-w-8 text-center font-semibold tabular-nums">{quantity}</output>
           <button type="button" aria-label="Increase quantity" onClick={() => setQuantity((value) => value + 1)} className={controlClass}>+</button>
         </div>
-        {selectedVariant && <p className="mt-2 text-sm text-muted">Quantity is the number of the selected item.</p>}
       </fieldset>
 
       <button
         type="button"
         disabled={!selectedVariant || selectedVariant.available === false || adding || cartLoading}
-        aria-describedby={`${selectId}-cart-note`}
         onClick={() => void handleAddToCart()}
         className="mt-6 min-h-12 w-full rounded-xl bg-primary px-6 py-3 font-bold text-primary-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:bg-surface-muted disabled:text-muted"
       >{adding ? "Adding…" : "Add to Cart"}</button>
-      <p id={`${selectId}-cart-note`} className="mt-2 text-sm text-muted">Adds the selected option and quantity to your Shopify cart.</p>
       {cartError && <p role="alert" className="mt-3 rounded-lg border border-border bg-surface-muted p-3 text-sm text-foreground">{cartError}</p>}
     </section>
   );
