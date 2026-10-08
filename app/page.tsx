@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { getImageProps } from "next/image";
 import Link from "next/link";
 import HomepageAboutSection from "@/components/HomepageAboutSection";
 import HomepageBrandsSection from "@/components/HomepageBrandsSection";
@@ -14,38 +13,22 @@ const homepageTitle = "Apex Business Supplies | Packaging, PPE, Abrasives & Busi
 const homepageHeroAlt = "Everything Your Business Needs from Apex Business Supplies, including PPE, packaging, abrasives and cleaning essentials";
 
 function HomepageHeroImage() {
-  const common = {
-    alt: homepageHeroAlt,
-    fetchPriority: "high" as const,
-    loading: "eager" as const,
-  };
-  const {
-    props: { sizes: desktopSizes, srcSet: desktopSrcSet },
-  } = getImageProps({
-    ...common,
-    src: "/images/home/homepage_banner.jpg",
-    width: 1672,
-    height: 825,
-    sizes: "(max-width: 1439px) calc(100vw - 3rem), (max-width: 1599px) calc(100vw - 4rem), (max-width: 1919px) calc(100vw - 5rem), 1696px",
-  });
-  const {
-    props: { sizes: mobileSizes, srcSet: mobileSrcSet, ...mobileImageProps },
-  } = getImageProps({
-    ...common,
-    src: "/images/home/mobile_banner.jpg",
-    width: 720,
-    height: 540,
-    sizes: "(max-width: 639px) calc(100vw - 2rem), 720px",
-  });
-
   return (
     <picture>
-      <source media="(min-width: 1024px)" sizes={desktopSizes} srcSet={desktopSrcSet} />
-      <source media="(max-width: 1023px)" sizes={mobileSizes} srcSet={mobileSrcSet} />
+      <source
+        media="(min-width: 1024px)"
+        srcSet="/images/home/homepage_banner.jpg"
+        width="1672"
+        height="825"
+      />
       <img
-        {...mobileImageProps}
+        src="/images/home/mobile_banner.jpg"
         alt={homepageHeroAlt}
-        sizes={mobileSizes}
+        width="720"
+        height="540"
+        loading="eager"
+        fetchPriority="high"
+        decoding="async"
         className="aspect-[4/3] h-auto w-full object-cover lg:aspect-[1672/825]"
       />
     </picture>
