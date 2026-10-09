@@ -81,9 +81,10 @@ export default function HomepageCategoryShowcase({ categories }: HomepageCategor
                 <Image
                   src={category.image}
                   alt={`${category.title} supplies`}
-                  fill
+                  width={400}
+                  height={400}
                   sizes="(max-width: 639px) 112px, (max-width: 767px) 128px, (max-width: 1023px) 96px, (max-width: 1279px) 96px, 112px"
-                  className="object-cover object-center transition duration-300 group-hover:scale-[1.025] motion-reduce:transition-none"
+                  className="h-full w-full object-cover object-center transition duration-300 group-hover:scale-[1.025] motion-reduce:transition-none"
                 />
               </span>
               <span className="flex min-h-[4.25rem] flex-1 flex-col justify-center p-2.5 md:min-h-0 md:min-w-0 md:p-3">
