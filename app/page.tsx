@@ -17,12 +17,12 @@ function HomepageHeroImage() {
     <picture>
       <source
         media="(min-width: 1024px)"
-        srcSet="/images/home/homepage_banner.jpg"
+        srcSet="/images/home/homepage_banner.webp"
         width="1672"
         height="825"
       />
       <img
-        src="/images/home/mobile_banner.jpg"
+        src="/images/home/mobile_banner.webp"
         alt={homepageHeroAlt}
         width="720"
         height="540"
