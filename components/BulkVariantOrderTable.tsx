@@ -74,6 +74,17 @@ function percentageLabel(percentageTenths: number): string {
   return `${(percentageTenths / 10).toFixed(1)}%`;
 }
 
+function VariantCode({ variant }: { variant: ProductVariant }) {
+  const productCode = variant.productCode?.trim();
+  if (!productCode) return null;
+
+  return (
+    <span className="mt-1 block break-all font-mono text-xs font-normal text-muted">
+      Code: {productCode}
+    </span>
+  );
+}
+
 function MatrixPrice({
   variant,
   packLabel,
@@ -91,6 +102,7 @@ function MatrixPrice({
     {unitPrice
       ? <span className="mt-1 block text-xs text-muted">{unitPrice} each</span>
       : variant.unitPrice && <span className="mt-1 block text-xs text-muted">{variant.unitPrice}</span>}
+    <VariantCode variant={variant} />
     {saving && mode === "quantity_only" && (
       <span className="mt-1.5 block text-xs font-semibold text-primary">
         Save {formatMoney(minorToMoney(saving.savingMinor, saving.currencyCode))}
@@ -191,6 +203,7 @@ function VariantMatrixTable({
           {variant?.money ? <button type="button" disabled={disabled} onClick={() => onQuantityChange(variant.id, selected + 1)} aria-label={`Add one ${row.label}, ${cell.columnValue}`} className={cellButtonClass}>
             <span className="block font-semibold">{formatUnitPrice(minorToMoney(discountedUnitMinor(moneyToMinor(variant.money), discountRate), variant.money.currencyCode))}</span>
             <span className="mt-1 block text-xs text-muted">each</span>
+            <VariantCode variant={variant} />
             {selected > 0 && <span className="mt-2 block text-xs font-semibold text-primary">{selected} selected</span>}
             {errors.get(variant.id) && <span className="mt-2 block text-xs text-red-600 dark:text-red-400">{errors.get(variant.id)}</span>}
           </button> : <span aria-label={`${row.label}, ${cell.columnValue} unavailable`} className="block px-3 text-center text-muted">—</span>}
@@ -234,7 +247,10 @@ function SimpleTable({
       const limit = getInventoryLimit(variant);
       const selectable = variantIsSelectable(variant);
       return <tr key={variant.id} className="bg-surface">
-        <th scope="row" className="border border-border px-4 py-4 text-left font-semibold">{row.label}</th>
+        <th scope="row" className="border border-border px-4 py-4 text-left font-semibold">
+          <span className="block">{row.label}</span>
+          <VariantCode variant={variant} />
+        </th>
         {tiers.map(({ step }) => {
           const rate = getBulkDiscountRate(step);
           const disabled = !selectable || (limit !== null && value + step > limit);

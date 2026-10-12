@@ -98,6 +98,7 @@ export default function ProductInformation({ product }: { product: Product }) {
   const displayedPrice = displayedMoney ? formatMoney(displayedMoney) : configuration.price;
   const displayedPriceExVat = displayedMoney ? formatUkPriceExcludingVat(displayedMoney) : configuration.priceExVat;
   const savingsPercent = sellingPlanSavingsPercent(selectedVariant?.money, selectedSellingPlan?.price);
+  const productCode = selectedVariant?.productCode?.trim();
   const hasOptions = (product.variants?.length ?? 0) > 1;
   const controlClass = "inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-border bg-surface text-foreground hover:bg-surface-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-40";
 
@@ -145,6 +146,11 @@ export default function ProductInformation({ product }: { product: Product }) {
         <p className="text-sm font-bold uppercase tracking-wider text-primary">{product.category}</p>
       )}
       <h1 className="mt-2 break-words text-3xl font-extrabold tracking-tight lg:text-4xl">{product.title}</h1>
+      {productCode && (
+        <p className="mt-1 break-all text-sm text-muted">
+          Product Code: <span className="font-mono">{productCode}</span>
+        </p>
+      )}
       {product.reviewRating && <a href="#customer-reviews" className="mt-3 inline-flex min-h-10 items-center rounded text-sm hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary" aria-label={`Read ${product.reviewRating.count} customer reviews`}><ReviewStars {...product.reviewRating} /></a>}
       <div aria-live="polite" aria-atomic="true" className="mt-3 space-y-2">
         <div className="mt-4 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
