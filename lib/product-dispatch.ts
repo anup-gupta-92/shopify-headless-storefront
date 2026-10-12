@@ -48,5 +48,5 @@ export function getLondonDispatchMessage(now: Date = new Date()): string {
     ? `${hours}h${minutes > 0 ? ` : ${minutes}m` : ""}`
     : `${minutes}m`;
 
-  return `Order within ${duration} for delivery as soon as tomorrow`;
+  return `Order within ${duration} for same-day dispatch`;
 }

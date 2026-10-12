@@ -17,21 +17,21 @@ test("shows the London countdown before the cutoff in winter", () => {
   assert.equal(LONDON_TIME_ZONE, "Europe/London");
   assert.equal(
     getLondonDispatchMessage(new Date("2026-01-15T12:43:00Z")),
-    "Order within 2h : 17m for delivery as soon as tomorrow",
+    "Order within 2h : 17m for same-day dispatch",
   );
 });
 
 test("uses Europe/London daylight saving time automatically", () => {
   assert.equal(
     getLondonDispatchMessage(new Date("2026-07-15T11:43:00Z")),
-    "Order within 2h : 17m for delivery as soon as tomorrow",
+    "Order within 2h : 17m for same-day dispatch",
   );
 });
 
 test("uses minutes only when less than one hour remains", () => {
   assert.equal(
     getLondonDispatchMessage(new Date("2026-01-15T14:18:00Z")),
-    "Order within 42m for delivery as soon as tomorrow",
+    "Order within 42m for same-day dispatch",
   );
 });
 
