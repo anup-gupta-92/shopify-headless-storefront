@@ -19,6 +19,10 @@ export default defineConfig({
       VINEXT_KV_CACHE: bindings.kv({
         id: "2d1527ad0453433d99893df9ce5a14c8",
       }),
+      ANALYTICS_DB: bindings.d1({
+        name: "apex-analytics",
+        id: "bfa7116a-3210-42ac-a967-d0b5615c7cd6",
+      }),
       SHOPIFY_STORE_DOMAIN: bindings.secret(),
       SHOPIFY_STOREFRONT_PRIVATE_TOKEN: bindings.secret(),
       SHOPIFY_STOREFRONT_API_VERSION: bindings.text("2026-07"),
