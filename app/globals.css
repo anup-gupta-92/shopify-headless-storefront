@@ -224,3 +224,7 @@ body.bulk-order-summary-visible {
     transition: none;
   }
 }
+
+body:has([data-admin-layout]) [data-storefront-chrome] {
+  display: none;
+}

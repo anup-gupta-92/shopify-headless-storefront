@@ -30,7 +30,7 @@ export default function Footer() {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="mt-20 w-full border-t border-border bg-surface text-sm">
+    <footer data-storefront-chrome="footer" className="mt-20 w-full border-t border-border bg-surface text-sm">
       <div className="site-container grid gap-7 py-9 sm:grid-cols-2 sm:gap-x-10 lg:grid-cols-[1.35fr_1fr_1fr_1fr] lg:gap-8">
         <section aria-labelledby="footer-about-heading">
           <h2 id="footer-about-heading" className="text-base font-bold text-foreground">

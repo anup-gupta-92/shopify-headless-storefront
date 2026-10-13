@@ -11,9 +11,9 @@ export const metadata: Metadata = {
 
 export default function AdminAnalyticsPage() {
   return (
-    <main className="flex min-h-[60vh] items-center bg-background py-10 text-foreground sm:py-14">
-      <div className="site-container flex justify-center">
-        <section className="w-full max-w-2xl rounded-2xl border border-border bg-surface p-6 text-center shadow-sm sm:p-8" aria-labelledby="analytics-heading">
+    <main className="flex min-h-[100dvh] items-center px-4 py-10 text-foreground sm:px-6 sm:py-14 lg:px-10">
+      <div className="mx-auto flex w-full max-w-3xl justify-center">
+        <section id="overview" className="w-full rounded-2xl border border-border bg-surface p-6 text-center shadow-sm sm:p-8" aria-labelledby="analytics-heading">
           <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">Internal dashboard</p>
           <h1 id="analytics-heading" className="mt-2 text-3xl font-extrabold tracking-tight sm:text-4xl">Apex Analytics</h1>
           <p className="mt-3 text-muted">Analytics dashboard is being prepared.</p>

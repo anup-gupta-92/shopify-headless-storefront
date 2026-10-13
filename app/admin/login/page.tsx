@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 
 export default function AdminLoginPage() {
   return (
-    <main className="flex min-h-[60vh] items-center bg-background py-10 text-foreground sm:py-14">
+    <main className="flex min-h-[100dvh] items-center bg-background py-10 text-foreground sm:py-14">
       <div className="site-container flex justify-center">
         <section className="w-full max-w-md rounded-2xl border border-border bg-surface p-6 text-center shadow-sm sm:p-8" aria-labelledby="admin-login-heading">
           <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">Internal access</p>
