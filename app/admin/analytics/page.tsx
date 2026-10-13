@@ -122,21 +122,34 @@ function DashboardFilters({ data, query }: Readonly<{
   const browsers = withSelectedOption(options.browsers, query.browser);
   const operatingSystems = withSelectedOption(options.operatingSystems, query.os);
   const returnTo = `/admin/analytics?${analyticsDashboardQueryString(query)}`;
+  const countryFilter = query.countryMode !== "all" && query.country
+    ? `${query.countryMode}:${query.country}`
+    : "";
 
   return (
-    <div className="mt-4 rounded-xl border border-border bg-surface p-3 shadow-sm sm:p-4">
-      <form action="/admin/analytics" method="get" className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-7 xl:items-end">
+    <div className="rounded-xl border border-border bg-surface p-3 shadow-sm sm:p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h1 id="overview-heading" className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">Overview</h1>
+          <p className="mt-1 text-sm text-muted">
+            {data ? formatRelativeRefresh(data.refreshedAt) : "Analytics data is temporarily unavailable."}
+          </p>
+        </div>
+        <form action={refreshAnalytics} className="shrink-0">
+          <input type="hidden" name="returnTo" value={returnTo} />
+          <button type="submit" className="min-h-10 rounded-lg border border-border bg-background px-3 py-2 text-sm font-semibold text-foreground transition hover:bg-surface-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary sm:px-4">
+            Refresh analytics
+          </button>
+        </form>
+      </div>
+      <form action="/admin/analytics" method="get" className="mt-3 grid grid-cols-2 gap-3 border-t border-border pt-3 md:grid-cols-3 xl:grid-cols-[repeat(5,minmax(0,1fr))_auto] xl:items-end">
         <SelectField label="Date range" name="range" defaultValue={query.range}>
           {rangeOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
         </SelectField>
-        <SelectField label="Country rule" name="countryMode" defaultValue={query.countryMode}>
-          <option value="all">All countries</option>
-          <option value="include">Include country</option>
-          <option value="exclude">Exclude country</option>
-        </SelectField>
-        <SelectField label="Country" name="country" defaultValue={query.country ?? ""}>
-          <option value="">Select country…</option>
-          {countries.map((country) => <option key={country} value={country}>{countryLabel(country)}</option>)}
+        <SelectField label="Country" name="countryFilter" defaultValue={countryFilter}>
+          <option value="">All countries</option>
+          {countries.map((country) => <option key={`include:${country}`} value={`include:${country}`}>{countryLabel(country)}</option>)}
+          {countries.map((country) => <option key={`exclude:${country}`} value={`exclude:${country}`}>Exclude {countryLabel(country)}</option>)}
         </SelectField>
         <SelectField label="Device" name="device" defaultValue={query.device ?? ""}>
           <option value="">All devices</option>
@@ -146,22 +159,14 @@ function DashboardFilters({ data, query }: Readonly<{
           <option value="">All browsers</option>
           {browsers.map((browser) => <option key={browser} value={browser}>{browser}</option>)}
         </SelectField>
-        <SelectField label="Operating system" name="os" defaultValue={query.os ?? ""}>
-          <option value="">All operating systems</option>
+        <SelectField label="OS" name="os" defaultValue={query.os ?? ""}>
+          <option value="">All OS</option>
           {operatingSystems.map((os) => <option key={os} value={os}>{os}</option>)}
         </SelectField>
         <button type="submit" className="min-h-10 self-end rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
           Apply filters
         </button>
       </form>
-      <div className="mt-3 flex justify-end border-t border-border pt-3">
-        <form action={refreshAnalytics}>
-          <input type="hidden" name="returnTo" value={returnTo} />
-          <button type="submit" className="min-h-10 rounded-lg border border-border bg-background px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-surface-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
-            Refresh analytics
-          </button>
-        </form>
-      </div>
     </div>
   );
 }
@@ -211,10 +216,6 @@ export default async function AdminAnalyticsPage({
       <div className="mx-auto w-full max-w-[100rem]">
         <section id="overview" aria-labelledby="overview-heading">
           <div className="border-b border-border pb-5">
-            <h1 id="overview-heading" className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">Overview</h1>
-            <p className="mt-1 text-sm text-muted">
-              {data ? formatRelativeRefresh(data.refreshedAt) : "Analytics data is temporarily unavailable."}
-            </p>
             <DashboardFilters data={data} query={query} />
           </div>
 

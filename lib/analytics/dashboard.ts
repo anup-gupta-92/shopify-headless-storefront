@@ -67,12 +67,16 @@ export function parseAnalyticsDashboardQuery(searchParams: Record<string, Search
   const range = ANALYTICS_OVERVIEW_RANGES.includes(rangeValue as AnalyticsOverviewRange)
     ? rangeValue as AnalyticsOverviewRange
     : "30d";
-  const countryValue = firstValue(searchParams.country)?.trim().toUpperCase() ?? "";
-  const country = /^[A-Z]{2}$/.test(countryValue) ? countryValue : null;
-  const modeValue = firstValue(searchParams.countryMode);
-  const countryMode: AnalyticsCountryMode = country && (modeValue === "include" || modeValue === "exclude")
-    ? modeValue
-    : "all";
+  const combinedCountry = firstValue(searchParams.countryFilter)?.trim();
+  const combinedMatch = combinedCountry?.match(/^(include|exclude):([A-Za-z]{2})$/);
+  const legacyCountry = firstValue(searchParams.country)?.trim().toUpperCase() ?? "";
+  const legacyMode = firstValue(searchParams.countryMode);
+  const country = combinedMatch
+    ? combinedMatch[2].toUpperCase()
+    : /^[A-Z]{2}$/.test(legacyCountry) ? legacyCountry : null;
+  const countryMode: AnalyticsCountryMode = combinedMatch
+    ? combinedMatch[1] as AnalyticsCountryMode
+    : country && (legacyMode === "include" || legacyMode === "exclude") ? legacyMode : "all";
   const deviceValue = firstValue(searchParams.device)?.trim().toLowerCase();
   const device = DEVICE_VALUES.includes(deviceValue as (typeof DEVICE_VALUES)[number]) ? deviceValue! : null;
 
@@ -89,8 +93,7 @@ export function parseAnalyticsDashboardQuery(searchParams: Record<string, Search
 export function analyticsDashboardQueryString(query: AnalyticsDashboardQuery): string {
   const params = new URLSearchParams({ range: query.range });
   if (query.countryMode !== "all" && query.country) {
-    params.set("countryMode", query.countryMode);
-    params.set("country", query.country);
+    params.set("countryFilter", `${query.countryMode}:${query.country}`);
   }
   if (query.device) params.set("device", query.device);
   if (query.browser) params.set("browser", query.browser);
