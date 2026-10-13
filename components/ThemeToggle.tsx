@@ -23,7 +23,7 @@ function MoonIcon() {
   );
 }
 
-export default function ThemeToggle() {
+export default function ThemeToggle({ analyticsEnabled = true }: Readonly<{ analyticsEnabled?: boolean }>) {
   const { resolvedTheme, setTheme } = useTheme();
   const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
   const dark = mounted && resolvedTheme === "dark";
@@ -32,8 +32,10 @@ export default function ThemeToggle() {
     const from = dark ? "dark" : "light";
     const to = dark ? "light" : "dark";
     setTheme(to);
-    updateAnalyticsTheme(to);
-    trackAnalyticsEvent({ eventName: "theme_changed", sourceSurface: "header", properties: { from, to, trigger: "header_toggle" } });
+    if (analyticsEnabled) {
+      updateAnalyticsTheme(to);
+      trackAnalyticsEvent({ eventName: "theme_changed", sourceSurface: "header", properties: { from, to, trigger: "header_toggle" } });
+    }
   }
 
   return (
