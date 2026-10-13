@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import SupplyDepartments from "@/components/SupplyDepartments";
+import NotFoundAnalytics from "@/components/NotFoundAnalytics";
 
 export const metadata: Metadata = {
   title: "Page not found",
@@ -13,6 +14,7 @@ const focusClasses =
 export default function NotFound() {
   return (
     <main className="bg-background py-10 text-foreground sm:py-14 lg:py-16">
+      <NotFoundAnalytics />
       <div className="site-container">
         <div className="grid items-center gap-9 lg:min-h-[42vh] lg:grid-cols-2 lg:gap-12 xl:gap-16">
           <div className="overflow-hidden rounded-2xl border border-border bg-surface-muted p-3 sm:p-5">

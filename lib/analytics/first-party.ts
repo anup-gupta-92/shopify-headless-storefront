@@ -59,6 +59,7 @@ function internallyExcluded(): boolean {
 
 export function isFirstPartyAnalyticsEligible(): boolean {
   if (typeof window === "undefined") return false;
+  if (window.location.pathname.startsWith("/admin")) return false;
   return shouldCollectAnalytics({
     hostname: window.location.hostname,
     localEnabled: analyticsHostEnabled() && !PRODUCTION_HOSTS.has(window.location.hostname),

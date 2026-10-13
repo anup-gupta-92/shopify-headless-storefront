@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { trackAnalyticsEvent } from "@/lib/analytics/first-party";
 
 export interface ShopTheWorkHotspot {
   id: string;
@@ -12,6 +13,7 @@ export interface ShopTheWorkHotspot {
   y: number;
   popoverClassName: string;
   product: {
+    id: string;
     handle: string;
     title: string;
     imageUrl: string;
@@ -29,7 +31,8 @@ export default function InteractiveShopTheWork({ hotspots }: InteractiveShopTheW
   const containerRef = useRef<HTMLDivElement>(null);
   const buttonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const suppressFocusOpenRef = useRef(false);
-  const activeHotspot = hotspots.find((hotspot) => hotspot.id === openHotspot);
+  const activeHotspotIndex = hotspots.findIndex((hotspot) => hotspot.id === openHotspot);
+  const activeHotspot = activeHotspotIndex >= 0 ? hotspots[activeHotspotIndex] : undefined;
 
   function showHotspot(id: string) {
     if (id === openHotspot) return;
@@ -143,6 +146,15 @@ export default function InteractiveShopTheWork({ hotspots }: InteractiveShopTheW
               <p className="line-clamp-3 text-sm font-semibold leading-5">{activeHotspot.product.title}</p>
               <Link
                 href={`/products/${activeHotspot.product.handle}`}
+                onClick={() => trackAnalyticsEvent({
+                  eventName: "product_hotspot_clicked",
+                  pagePath: window.location.pathname,
+                  pageType: "home",
+                  sourceSurface: "homepage_tagged_image",
+                  productId: activeHotspot.product.id,
+                  productHandle: activeHotspot.product.handle,
+                  properties: { hotspot_index: activeHotspotIndex },
+                })}
                 className="mt-2 inline-flex rounded text-sm font-semibold text-primary hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
               >
                 View product <span aria-hidden="true">→</span>

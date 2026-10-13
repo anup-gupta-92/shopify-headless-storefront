@@ -1,5 +1,5 @@
 export const ANALYTICS_EVENT_NAMES = [
-  "session_started", "page_view", "product_view", "catalog_view", "search_performed",
+  "session_started", "page_view", "404_view", "product_view", "product_hotspot_clicked", "catalog_view", "search_performed",
   "add_to_cart", "remove_from_cart", "cart_opened", "cart_quantity_changed", "checkout_started",
   "bulk_order_interaction", "purchase_option_changed", "theme_changed",
   "pwa_install_prompt_shown", "pwa_install_clicked", "pwa_install_dismissed", "pwa_installed",
@@ -7,7 +7,7 @@ export const ANALYTICS_EVENT_NAMES = [
 ] as const;
 
 export const ANALYTICS_SOURCE_SURFACES = [
-  "homepage_category", "homepage_best_sellers", "shop", "collection", "search_results",
+  "homepage_category", "homepage_best_sellers", "homepage_tagged_image", "shop", "collection", "search_results",
   "header_search", "product_page", "recommendations", "bulk_table", "cart_drawer", "cart_page",
   "buy_again", "header", "site",
 ] as const;

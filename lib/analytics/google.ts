@@ -24,7 +24,7 @@ function setCollectionDisabled(disabled: boolean) {
 }
 
 function analyticsConsentGranted() {
-  return hasConsent(getStoredConsent(), "analytics");
+  return !window.location.pathname.startsWith("/admin") && hasConsent(getStoredConsent(), "analytics");
 }
 
 export function getGoogleMeasurementId() {

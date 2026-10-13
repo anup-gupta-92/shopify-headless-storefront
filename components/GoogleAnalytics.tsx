@@ -36,9 +36,10 @@ function PageViewTracker({ enabled }: { enabled: boolean }) {
 }
 
 export default function GoogleAnalytics() {
+  const pathname = usePathname();
   const { ready, hasConsent } = useCookieConsent();
   const measurementId = getGoogleMeasurementId();
-  const enabled = Boolean(ready && measurementId && hasConsent("analytics"));
+  const enabled = Boolean(ready && measurementId && hasConsent("analytics") && !pathname.startsWith("/admin"));
 
   useEffect(() => {
     if (enabled) initializeGoogleAnalytics();

@@ -91,6 +91,7 @@ export default function HomepageShopTheWorkSection({ products }: HomepageShopThe
     return [{
       ...hotspot,
       product: {
+        id: product.id,
         handle: product.handle,
         title: product.title,
         imageUrl: product.featuredImage?.url ?? "",
