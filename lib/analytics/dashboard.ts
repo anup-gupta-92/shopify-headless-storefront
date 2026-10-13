@@ -22,6 +22,11 @@ export type AnalyticsDashboardQuery = AnalyticsDashboardFilters & {
 };
 
 export type AnalyticsBreakdownItem = { label: string; count: number };
+export type AnalyticsProductItem = AnalyticsBreakdownItem & {
+  handle: string | null;
+  productId: string | null;
+  sku: string | null;
+};
 export type AnalyticsFilterOptions = {
   countries: string[];
   devices: string[];
@@ -47,6 +52,8 @@ export type AnalyticsOverview = {
   browsers: AnalyticsBreakdownItem[];
   operatingSystems: AnalyticsBreakdownItem[];
   acquisitionChannels: AnalyticsBreakdownItem[];
+  landingPages: AnalyticsBreakdownItem[];
+  topViewedProducts: AnalyticsProductItem[];
   theme: {
     initialLight: number;
     initialDark: number;
@@ -199,6 +206,18 @@ function options(rows: QueryRow[], dimension: string): string[] {
     .map((row) => row.label as string);
 }
 
+function productBreakdown(rows: QueryRow[], dimension: string): AnalyticsProductItem[] {
+  return rows
+    .filter((row) => row.dimension === dimension && typeof row.label === "string")
+    .map((row) => ({
+      label: row.label as string,
+      count: count(row, "total"),
+      handle: typeof row.handle === "string" ? row.handle : null,
+      productId: typeof row.product_id === "string" ? row.product_id : null,
+      sku: typeof row.sku === "string" ? row.sku : null,
+    }));
+}
+
 function utcDate(timestampSeconds: number): string {
   return new Date(timestampSeconds * 1000).toISOString().slice(0, 10);
 }
@@ -334,11 +353,14 @@ async function queryAnalyticsOverview(
         INNER JOIN analytics_sessions AS s ON s.session_id = e.session_id
         WHERE e.occurred_at >= ? AND e.occurred_at < ?${sessionFilter.sql}
       )
-      SELECT dimension, label, total FROM (
+      SELECT dimension, label, total, handle, product_id, sku FROM (
         SELECT
           'search_term' AS dimension,
           MIN(trim(json_extract(properties_json, '$.query'))) AS label,
-          COUNT(*) AS total
+          COUNT(*) AS total,
+          NULL AS handle,
+          NULL AS product_id,
+          NULL AS sku
         FROM filtered_events
         WHERE event_name = 'search_performed'
           AND json_type(properties_json, '$.query') = 'text'
@@ -347,26 +369,60 @@ async function queryAnalyticsOverview(
         ORDER BY total DESC, label ASC LIMIT 5
       )
       UNION ALL
-      SELECT dimension, label, total FROM (
-        SELECT 'not_found_path' AS dimension, page_path AS label, COUNT(*) AS total
+      SELECT dimension, label, total, handle, product_id, sku FROM (
+        SELECT 'not_found_path' AS dimension, page_path AS label, COUNT(*) AS total,
+          NULL AS handle, NULL AS product_id, NULL AS sku
         FROM filtered_events
         WHERE event_name = '404_view' AND page_path IS NOT NULL AND page_path <> ''
           AND page_path <> '/admin' AND page_path NOT LIKE '/admin/%'
         GROUP BY page_path ORDER BY total DESC, label ASC LIMIT 5
       )
       UNION ALL
-      SELECT dimension, label, total FROM (
+      SELECT dimension, label, total, handle, product_id, sku FROM (
         SELECT
           'hotspot_product' AS dimension,
           COALESCE(NULLIF(product_handle, ''), NULLIF(product_id, '')) AS label,
-          COUNT(*) AS total
+          COUNT(*) AS total,
+          NULL AS handle,
+          NULL AS product_id,
+          NULL AS sku
         FROM filtered_events
         WHERE event_name = 'product_hotspot_clicked'
           AND source_surface = 'homepage_tagged_image'
           AND COALESCE(NULLIF(product_handle, ''), NULLIF(product_id, '')) IS NOT NULL
         GROUP BY label ORDER BY total DESC, label ASC LIMIT 5
       )
-    `).bind(startAt, endAt, ...sessionFilter.values),
+      UNION ALL
+      SELECT dimension, label, total, handle, product_id, sku FROM (
+        SELECT
+          'landing_path' AS dimension,
+          COALESCE(NULLIF(s.landing_path, ''), '/') AS label,
+          COUNT(*) AS total,
+          NULL AS handle,
+          NULL AS product_id,
+          NULL AS sku
+        FROM analytics_sessions AS s
+        WHERE s.started_at >= ? AND s.started_at < ?${sessionFilter.sql}
+        GROUP BY label ORDER BY total DESC, label ASC LIMIT 5
+      )
+      UNION ALL
+      SELECT dimension, label, total, handle, product_id, sku FROM (
+        SELECT
+          'viewed_product' AS dimension,
+          COALESCE(NULLIF(product_handle, ''), NULLIF(product_id, '')) AS label,
+          COUNT(*) AS total,
+          NULLIF(product_handle, '') AS handle,
+          MIN(NULLIF(product_id, '')) AS product_id,
+          MIN(NULLIF(sku, '')) AS sku
+        FROM filtered_events
+        WHERE event_name = 'product_view'
+          AND COALESCE(NULLIF(product_handle, ''), NULLIF(product_id, '')) IS NOT NULL
+        GROUP BY label, handle ORDER BY total DESC, label ASC LIMIT 5
+      )
+    `).bind(
+      startAt, endAt, ...sessionFilter.values,
+      startAt, endAt, ...sessionFilter.values,
+    ),
     db.prepare(`
       SELECT
         COALESCE(SUM(CASE WHEN decision = 'accepted' THEN count ELSE 0 END), 0) AS accepted,
@@ -407,6 +463,8 @@ async function queryAnalyticsOverview(
     browsers: breakdown(breakdownResult.results, "browser"),
     operatingSystems: breakdown(breakdownResult.results, "os"),
     acquisitionChannels: breakdown(breakdownResult.results, "acquisition"),
+    landingPages: breakdown(topListResult.results, "landing_path"),
+    topViewedProducts: productBreakdown(topListResult.results, "viewed_product"),
     theme: {
       initialLight: count(sessionRow, "initial_light"),
       initialDark: count(sessionRow, "initial_dark"),
@@ -461,7 +519,7 @@ async function queryAnalyticsOverview(
 
 const cachedAnalyticsOverview = unstable_cache(
   queryAnalyticsOverview,
-  ["analytics-overview-v3"],
+  ["analytics-overview-v4"],
   { revalidate: 3600, tags: ["analytics-overview"] },
 );
 

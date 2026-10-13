@@ -1,6 +1,7 @@
 "use client";
 
 import { getStoredConsent, hasConsent } from "@/lib/consent";
+import { isAnalyticsPreviewActive } from "@/lib/analytics/preview";
 
 type GoogleTag = (...args: unknown[]) => void;
 
@@ -24,7 +25,9 @@ function setCollectionDisabled(disabled: boolean) {
 }
 
 function analyticsConsentGranted() {
-  return !window.location.pathname.startsWith("/admin") && hasConsent(getStoredConsent(), "analytics");
+  return !window.location.pathname.startsWith("/admin")
+    && !isAnalyticsPreviewActive()
+    && hasConsent(getStoredConsent(), "analytics");
 }
 
 export function getGoogleMeasurementId() {

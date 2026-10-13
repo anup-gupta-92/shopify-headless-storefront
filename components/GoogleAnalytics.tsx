@@ -14,6 +14,7 @@ import {
   CONSENT_CHANGE_EVENT,
   type ConsentPreferences,
 } from "@/lib/consent";
+import { isAnalyticsPreviewActive, useAnalyticsPreviewActive } from "@/lib/analytics/preview";
 
 function PageViewTracker({ enabled }: { enabled: boolean }) {
   const pathname = usePathname();
@@ -39,7 +40,8 @@ export default function GoogleAnalytics() {
   const pathname = usePathname();
   const { ready, hasConsent } = useCookieConsent();
   const measurementId = getGoogleMeasurementId();
-  const enabled = Boolean(ready && measurementId && hasConsent("analytics") && !pathname.startsWith("/admin"));
+  const previewActive = useAnalyticsPreviewActive();
+  const enabled = Boolean(ready && measurementId && hasConsent("analytics") && !pathname.startsWith("/admin") && !previewActive && !isAnalyticsPreviewActive());
 
   useEffect(() => {
     if (enabled) initializeGoogleAnalytics();

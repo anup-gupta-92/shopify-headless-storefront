@@ -7,6 +7,7 @@ import {
   type AnalyticsDashboardQuery,
   type AnalyticsOverview,
   type AnalyticsOverviewRange,
+  type AnalyticsProductItem,
 } from "@/lib/analytics/dashboard";
 import { refreshAnalytics } from "@/app/admin/analytics/actions";
 
@@ -104,12 +105,14 @@ function SummaryCard({
   details,
   detailsTitle,
   formatDetailLabel = humaniseLabel,
+  detailHref,
 }: Readonly<{
   title: string;
   stats: Array<{ label: string; value: string | number }>;
   details?: AnalyticsBreakdownItem[];
   detailsTitle?: string;
   formatDetailLabel?: (label: string) => string;
+  detailHref?: (item: AnalyticsBreakdownItem) => string | null;
 }>) {
   return (
     <article className="overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
@@ -128,17 +131,67 @@ function SummaryCard({
         <div className="border-t border-border px-4 py-3 sm:px-5">
           {detailsTitle ? <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted">{detailsTitle}</p> : null}
           <div className="space-y-2">
-            {details.map((item) => (
+            {details.map((item) => {
+              const href = detailHref?.(item);
+              const label = formatDetailLabel(item.label);
+              return (
               <div key={item.label} className="flex items-center justify-between gap-4 text-sm">
-                <span className="min-w-0 truncate text-muted" title={formatDetailLabel(item.label)}>
-                  {formatDetailLabel(item.label)}
-                </span>
+                {href ? (
+                  <a href={href} target="_blank" rel="noopener noreferrer" className="min-w-0 truncate text-primary underline-offset-4 hover:underline" title={label}>
+                    {label}
+                  </a>
+                ) : (
+                  <span className="min-w-0 truncate text-muted" title={label}>{label}</span>
+                )}
                 <span className="shrink-0 font-semibold tabular-nums text-foreground">{numberFormatter.format(item.count)}</span>
               </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       ) : null}
+    </article>
+  );
+}
+
+function readableProductLabel(item: AnalyticsProductItem): string {
+  if (!item.handle) return item.label;
+  return item.handle.replaceAll("-", " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function TopProductsCard({ items }: Readonly<{ items: AnalyticsProductItem[] }>) {
+  return (
+    <article className="overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
+      <h3 className="border-b border-border px-4 py-3 text-base font-bold text-foreground sm:px-5">Top viewed products</h3>
+      {items.length ? (
+        <div className="divide-y divide-border">
+          {items.map((item) => {
+            const label = readableProductLabel(item);
+            const content = (
+              <span className="min-w-0">
+                <span className="block truncate" title={label}>{label}</span>
+                {item.sku ? <span className="mt-0.5 block truncate text-xs text-muted">SKU: {item.sku}</span> : null}
+              </span>
+            );
+            return (
+              <div key={`${item.handle ?? item.productId ?? item.label}:${item.sku ?? ""}`} className="flex items-center justify-between gap-4 px-4 py-3 text-sm sm:px-5">
+                {item.handle ? (
+                  <a
+                    href={`/products/${encodeURIComponent(item.handle)}?analytics_preview=1`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="min-w-0 text-primary underline-offset-4 hover:underline"
+                    title={item.productId ?? label}
+                  >
+                    {content}
+                  </a>
+                ) : <span className="min-w-0 text-muted">{content}</span>}
+                <span className="shrink-0 font-semibold tabular-nums text-foreground">{numberFormatter.format(item.count)}</span>
+              </div>
+            );
+          })}
+        </div>
+      ) : <p className="px-4 py-6 text-sm text-muted sm:px-5">No data in this range.</p>}
     </article>
   );
 }
@@ -241,16 +294,17 @@ function Dashboard({ data }: Readonly<{ data: AnalyticsOverview }>) {
 
       <section id="traffic" className="scroll-mt-6 pt-8">
         <SectionHeading>Traffic summaries</SectionHeading>
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           <BreakdownTable title="Top countries" items={data.countries} formatLabel={countryLabel} />
           <BreakdownTable title="Devices" items={data.devices} />
           <BreakdownTable title="Browsers" items={data.browsers} formatLabel={(label) => label} />
           <BreakdownTable title="Operating systems" items={data.operatingSystems} formatLabel={(label) => label} />
           <BreakdownTable title="Acquisition channels" items={data.acquisitionChannels} />
+          <BreakdownTable title="Landing pages" items={data.landingPages} formatLabel={(label) => label} />
         </div>
       </section>
 
-      <div className="grid gap-8 pt-8 xl:grid-cols-2">
+      <div className="grid gap-8 pt-8 xl:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
         <section id="search" className="scroll-mt-6">
           <SectionHeading>Search</SectionHeading>
           <SummaryCard
@@ -263,18 +317,22 @@ function Dashboard({ data }: Readonly<{ data: AnalyticsOverview }>) {
             details={data.search.topTerms}
             detailsTitle="Top search terms"
             formatDetailLabel={(label) => label}
+            detailHref={(item) => `/search?q=${encodeURIComponent(item.label)}&analytics_preview=1`}
           />
         </section>
 
         <section id="products" className="scroll-mt-6">
           <SectionHeading>Products</SectionHeading>
-          <SummaryCard
-            title="Homepage interactions"
-            stats={[{ label: "Hotspot product clicks", value: data.homepageInteractions.hotspotClicks }]}
-            details={data.homepageInteractions.topProducts}
-            detailsTitle="Top clicked products"
-            formatDetailLabel={(label) => label}
-          />
+          <div className="grid gap-4 md:grid-cols-2">
+            <TopProductsCard items={data.topViewedProducts} />
+            <SummaryCard
+              title="Homepage interactions"
+              stats={[{ label: "Hotspot product clicks", value: data.homepageInteractions.hotspotClicks }]}
+              details={data.homepageInteractions.topProducts}
+              detailsTitle="Top clicked products"
+              formatDetailLabel={(label) => label}
+            />
+          </div>
         </section>
       </div>
 

@@ -13,6 +13,8 @@ import JsonLd from "@/components/JsonLd";
 import { buildGlobalStructuredData } from "@/lib/structured-data";
 import PwaInstallPrompt from "@/components/PwaInstallPrompt";
 import FirstPartyAnalytics from "@/components/FirstPartyAnalytics";
+import AnalyticsPreviewMode from "@/components/AnalyticsPreviewMode";
+import { Suspense } from "react";
 
 const vercelAnalyticsEnabled = process.env.VERCEL === "1";
 
@@ -52,6 +54,9 @@ export default function RootLayout({
         <JsonLd id="site-structured-data" data={buildGlobalStructuredData()} />
         <ThemeProvider>
           <CookieConsentProvider>
+            <Suspense fallback={null}>
+              <AnalyticsPreviewMode />
+            </Suspense>
             <GoogleAnalytics />
             <FirstPartyAnalytics />
             <CartProvider>

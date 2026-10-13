@@ -13,6 +13,7 @@ import {
   type AnalyticsTheme,
   type AnalyticsThemeSource,
 } from "./first-party-shared";
+import { isAnalyticsPreviewActive } from "./preview";
 
 const VISITOR_KEY = "apex:analytics:visitor-id";
 const SESSION_KEY = "apex:analytics:session";
@@ -60,6 +61,7 @@ function internallyExcluded(): boolean {
 export function isFirstPartyAnalyticsEligible(): boolean {
   if (typeof window === "undefined") return false;
   if (window.location.pathname.startsWith("/admin")) return false;
+  if (isAnalyticsPreviewActive()) return false;
   return shouldCollectAnalytics({
     hostname: window.location.hostname,
     localEnabled: analyticsHostEnabled() && !PRODUCTION_HOSTS.has(window.location.hostname),
@@ -128,7 +130,11 @@ function newSession(nowMs: number): StoredSession {
 }
 
 function activeSession(nowMs = Date.now()): { session: StoredSession; isNew: boolean } | null {
-  if (!isFirstPartyAnalyticsEligible()) { clearFirstPartyAnalytics(); return null; }
+  if (!isFirstPartyAnalyticsEligible()) {
+    if (isAnalyticsPreviewActive()) clearQueuedAnalyticsEvents();
+    else clearFirstPartyAnalytics();
+    return null;
+  }
   let stored: StoredSession | null = null;
   const raw = readStorage(window.localStorage, SESSION_KEY);
   if (raw) try { stored = JSON.parse(raw) as StoredSession; } catch { stored = null; }
@@ -168,7 +174,9 @@ export function trackAnalyticsEvent(input: TrackAnalyticsEvent, options: { dedup
 }
 
 export async function flushAnalyticsEvents(useBeacon = false): Promise<void> {
-  if (typeof window === "undefined" || !isFirstPartyAnalyticsEligible() || !queue.length) return;
+  if (typeof window === "undefined") return;
+  if (isAnalyticsPreviewActive()) { clearQueuedAnalyticsEvents(); return; }
+  if (!isFirstPartyAnalyticsEligible() || !queue.length) return;
   if (flushTimer !== null) { window.clearTimeout(flushTimer); flushTimer = null; }
   const state = activeSession();
   if (!state) return;
@@ -186,13 +194,17 @@ export async function flushAnalyticsEvents(useBeacon = false): Promise<void> {
 }
 
 export function clearFirstPartyAnalytics() {
-  queue = [];
-  dedupeKeys.clear();
+  clearQueuedAnalyticsEvents();
   if (typeof window !== "undefined") {
-    if (flushTimer !== null) window.clearTimeout(flushTimer);
-    flushTimer = null;
     safeStorage(window.localStorage, (storage) => { storage.removeItem(VISITOR_KEY); storage.removeItem(SESSION_KEY); });
   }
+}
+
+export function clearQueuedAnalyticsEvents() {
+  queue = [];
+  dedupeKeys.clear();
+  if (typeof window !== "undefined" && flushTimer !== null) window.clearTimeout(flushTimer);
+  flushTimer = null;
 }
 
 export function updateAnalyticsTheme(theme: AnalyticsTheme) {
