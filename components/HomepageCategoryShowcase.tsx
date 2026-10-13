@@ -123,6 +123,7 @@ export default function HomepageCategoryShowcase({ categories }: HomepageCategor
                 handle={product.handle}
                 cardAction={product.cardAction}
                 reviewRating={product.reviewRating}
+                analyticsSource="homepage_category"
               />
             ))}
           </div>

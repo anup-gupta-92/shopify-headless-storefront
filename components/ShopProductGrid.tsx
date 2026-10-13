@@ -6,6 +6,7 @@ import ProductCard from "@/components/ProductCard";
 import ProductCardSkeleton from "@/components/ProductCardSkeleton";
 import { SHOP_PRODUCT_GRID_CLASSNAME } from "@/components/product-grid-layout";
 import type { CatalogPage } from "@/types/catalog";
+import type { AnalyticsSourceSurface } from "@/lib/analytics/first-party";
 
 interface ShopProductGridProps {
   initialPage: CatalogPage;
@@ -19,6 +20,7 @@ interface ShopProductGridProps {
     previousHref?: string;
     nextHref?: string;
   };
+  analyticsSource: Extract<AnalyticsSourceSurface, "shop" | "collection" | "search_results">;
 }
 
 export default function ShopProductGrid({
@@ -30,6 +32,7 @@ export default function ShopProductGrid({
   emptyDescription = "Try widening the price range or clearing a brand or category.",
   emptyActionLabel = "Clear filters",
   pagination,
+  analyticsSource,
 }: ShopProductGridProps) {
   const [products, setProducts] = useState(initialPage.products);
   const [pageInfo, setPageInfo] = useState(initialPage.pageInfo);
@@ -92,6 +95,7 @@ export default function ShopProductGrid({
           handle={product.handle}
           cardAction={product.cardAction}
           reviewRating={product.reviewRating}
+          analyticsSource={analyticsSource}
         />)}
         {loading && Array.from({ length: 3 }, (_, index) => <ProductCardSkeleton key={`loading-${index}`} />)}
       </div>

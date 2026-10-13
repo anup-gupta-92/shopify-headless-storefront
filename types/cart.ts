@@ -21,6 +21,7 @@ export interface CartLine {
     selectedOptions: SelectedOption[];
     image: ProductImage | null;
     product: {
+      id: string;
       title: string;
       handle: string;
       vendor: string;

@@ -17,7 +17,7 @@ export default function CartDrawer() {
 
   async function handleCheckout() {
     try {
-      const checkoutUrl = await prepareCheckout();
+      const checkoutUrl = await prepareCheckout("cart_drawer");
       flushSync(() => startNavigationProgress());
       window.location.assign(checkoutUrl);
     } catch {

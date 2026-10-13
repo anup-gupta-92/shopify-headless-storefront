@@ -43,7 +43,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   return (
     <main className="min-h-screen bg-background py-8 text-foreground sm:py-10">
       <div className="site-container">
-        {query.length >= 2 && <SearchAnalytics query={query} />}
+        {query.length >= 2 && searchPage && <SearchAnalytics query={query} resultCount={searchPage.totalCount} />}
         <nav aria-label="Breadcrumb" className="mb-5 text-sm text-muted">
           <ol className="flex items-center gap-2">
             <li><Link href="/" className="rounded hover:text-foreground focus-visible:outline-2 focus-visible:outline-primary">Home</Link></li>
@@ -90,6 +90,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
             emptyTitle={`No products found for “${query}”.`}
             emptyDescription="Try a broader search term or browse the full catalogue."
             emptyActionLabel="Browse all products"
+            analyticsSource="search_results"
           />
         )}
       </div>

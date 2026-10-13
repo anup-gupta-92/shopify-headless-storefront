@@ -75,6 +75,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
             initialPage={initialPage}
             queryString={queryString}
             pagination={{ previousHref, nextHref }}
+            analyticsSource="shop"
           />
         </ShopControls>
       </div>

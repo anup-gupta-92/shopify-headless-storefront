@@ -3,6 +3,13 @@
 import { sendGoogleEvent } from "@/lib/analytics/google";
 import type { Cart, CartAddLine, CartLine } from "@/types/cart";
 import type { Product, ProductVariant, SelectedOption } from "@/types/product";
+import { moneyAmountToMinorUnits } from "@/lib/shopify/pricing";
+import { trackAnalyticsEvent, type AnalyticsSourceSurface } from "@/lib/analytics/first-party";
+
+export interface CartAnalyticsContext {
+  sourceSurface: AnalyticsSourceSurface;
+  properties?: Record<string, unknown>;
+}
 
 export interface GoogleAnalyticsItem {
   item_id: string;
@@ -78,15 +85,32 @@ export function trackViewItem(product: Product, variant: ProductVariant | undefi
     ...(price !== null ? { value: price } : {}),
     items: [item],
   });
+  trackAnalyticsEvent({
+    eventName: "product_view",
+    pagePath: window.location.pathname,
+    pageType: "product",
+    sourceSurface: "product_page",
+    productId: product.id,
+    productHandle: product.handle,
+    variantId: variant?.id,
+    sku: variant?.productCode,
+  }, { dedupeKey: `product-view:${product.id ?? product.handle ?? product.title}` });
 }
 
-export function trackSearch(searchTerm: string) {
+export function trackSearch(searchTerm: string, resultCount?: number, sourceSurface: "header_search" | "search_results" = "search_results") {
   const normalized = searchTerm.trim();
   if (!normalized) return;
   sendGoogleEvent("search", { search_term: normalized });
+  if (resultCount !== undefined) trackAnalyticsEvent({
+    eventName: "search_performed",
+    pagePath: window.location.pathname,
+    pageType: "search",
+    sourceSurface,
+    properties: { query: normalized.slice(0, 200), result_count: resultCount },
+  });
 }
 
-export function trackAddToCart(cart: Cart, addedLines: CartAddLine[]) {
+export function trackAddToCart(cart: Cart, addedLines: CartAddLine[], context: CartAnalyticsContext) {
   const quantities = new Map<string, CartAddLine>();
   for (const line of addedLines) {
     const key = `${line.merchandiseId}\0${line.sellingPlanId ?? ""}`;
@@ -108,14 +132,47 @@ export function trackAddToCart(cart: Cart, addedLines: CartAddLine[]) {
     value: itemValue(items),
     items,
   });
+  for (const requested of quantities.values()) {
+    const line = cart.lines.find((candidate) => candidate.merchandise.id === requested.merchandiseId
+      && candidate.sellingPlanAllocation?.sellingPlan.id === requested.sellingPlanId);
+    if (!line) continue;
+    const lineMinor = moneyAmountToMinorUnits(line.cost.totalAmount.amount);
+    const valueMinor = lineMinor === undefined || line.quantity < 1
+      ? undefined : Math.floor((lineMinor * requested.quantity) / line.quantity);
+    const sellingPlan = line.sellingPlanAllocation?.sellingPlan;
+    trackAnalyticsEvent({
+      eventName: "add_to_cart",
+      pagePath: window.location.pathname,
+      sourceSurface: context.sourceSurface,
+      productId: line.merchandise.product.id,
+      productHandle: line.merchandise.product.handle,
+      variantId: line.merchandise.id,
+      sku: line.merchandise.productCode,
+      quantity: requested.quantity,
+      valueMinor,
+      currency: line.cost.totalAmount.currencyCode,
+      properties: {
+        purchase_type: sellingPlan ? "subscription" : "one_time",
+        ...(sellingPlan ? { selling_plan_id: sellingPlan.id, selling_plan_name: sellingPlan.name } : {}),
+        ...context.properties,
+      },
+    });
+  }
 }
 
-export function trackRemoveFromCart(line: CartLine) {
+export function trackRemoveFromCart(line: CartLine, sourceSurface: "cart_drawer" | "cart_page") {
   const item = cartLineItem(line);
   sendGoogleEvent("remove_from_cart", {
     currency: line.cost.totalAmount.currencyCode || "GBP",
     value: itemValue([item]),
     items: [item],
+  });
+  trackAnalyticsEvent({
+    eventName: "remove_from_cart", pagePath: window.location.pathname, sourceSurface,
+    productId: line.merchandise.product.id,
+    productHandle: line.merchandise.product.handle, variantId: line.merchandise.id,
+    sku: line.merchandise.productCode, quantity: line.quantity,
+    valueMinor: moneyAmountToMinorUnits(line.cost.totalAmount.amount), currency: line.cost.totalAmount.currencyCode,
   });
 }
 
@@ -127,24 +184,34 @@ export function trackViewCart(cart: Cart) {
     ...(value !== null ? { value } : {}),
     items: cart.lines.map((line) => cartLineItem(line)),
   });
+  trackAnalyticsEvent({
+    eventName: "cart_opened", pagePath: window.location.pathname, sourceSurface: "cart_drawer",
+    quantity: cart.totalQuantity, valueMinor: moneyAmountToMinorUnits(cart.cost.totalAmount.amount),
+    currency: currencyFromCart(cart),
+  });
 }
 
 export function trackPwaPromptShown(platform: "chromium" | "ios") {
   sendGoogleEvent("pwa_install_prompt_shown", { platform });
+  trackAnalyticsEvent({ eventName: "pwa_install_prompt_shown", sourceSurface: "site", properties: { platform } }, { dedupeKey: `pwa-prompt:${platform}` });
 }
 
 export function trackPwaInstallClicked(platform: "chromium" | "ios") {
   sendGoogleEvent("pwa_install_clicked", { platform });
+  trackAnalyticsEvent({ eventName: "pwa_install_clicked", sourceSurface: "site", properties: { platform } });
 }
 
 export function trackPwaInstalled() {
   sendGoogleEvent("pwa_installed", { platform: "chromium" });
+  trackAnalyticsEvent({ eventName: "pwa_installed", sourceSurface: "site", properties: { platform: "chromium" } });
 }
 
 export function trackPwaInstallDismissed(source: "not_now" | "native_prompt") {
   sendGoogleEvent("pwa_install_dismissed", { source });
+  trackAnalyticsEvent({ eventName: "pwa_install_dismissed", sourceSurface: "site", properties: { source } });
 }
 
 export function trackPwaLaunchedStandalone() {
   sendGoogleEvent("pwa_launched_standalone", {});
+  trackAnalyticsEvent({ eventName: "pwa_launched_standalone", sourceSurface: "site" }, { dedupeKey: "pwa-standalone-launch" });
 }

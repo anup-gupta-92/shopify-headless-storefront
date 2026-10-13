@@ -8,6 +8,7 @@ import {
   type ConsentCategory,
   type ConsentPreferences,
 } from "@/lib/consent";
+import { sendAnonymousConsentDecision } from "@/lib/analytics/first-party";
 
 interface CookieConsentContextValue {
   consent: ConsentPreferences | null;
@@ -31,9 +32,12 @@ export default function CookieConsentProvider({ children }: { children: React.Re
   const openerRef = useRef<HTMLElement | null>(null);
 
   const saveConsent = useCallback((analytics: boolean, marketing: boolean) => {
+    const action = consent ? "changed" : "initial";
+    const decision = analytics && marketing ? "accepted" : !analytics && !marketing ? "rejected" : "custom";
     setConsent(persistConsent({ analytics, marketing }));
+    sendAnonymousConsentDecision({ decision, analyticsAllowed: analytics, marketingAllowed: marketing, action });
     setPreferencesOpen(false);
-  }, []);
+  }, [consent]);
 
   const openPreferences = useCallback((opener?: HTMLElement | null) => {
     openerRef.current = opener ?? document.activeElement as HTMLElement | null;

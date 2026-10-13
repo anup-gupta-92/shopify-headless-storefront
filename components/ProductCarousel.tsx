@@ -148,6 +148,7 @@ export default function ProductCarousel({
                 cardAction={product.cardAction}
                 reviewRating={product.reviewRating}
                 compact
+                analyticsSource="homepage_best_sellers"
               />
             </div>
           ))}

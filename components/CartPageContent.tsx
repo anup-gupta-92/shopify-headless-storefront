@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useRef } from "react";
 import { flushSync } from "react-dom";
 import CartLineItem from "@/components/CartLineItem";
 import { useCart } from "@/components/CartProvider";
@@ -10,6 +11,7 @@ import {
   getUkCartVatInclusiveBreakdown,
   UK_VAT_RATE_PERCENT,
 } from "@/lib/shopify/pricing";
+import { trackAnalyticsEvent } from "@/lib/analytics/first-party";
 
 const focusClass = "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
 
@@ -24,6 +26,7 @@ function CartLoadingState() {
 }
 
 export default function CartPageContent() {
+  const cartTracked = useRef(false);
   const {
     cart,
     loading,
@@ -38,13 +41,22 @@ export default function CartPageContent() {
 
   async function handleCheckout() {
     try {
-      const checkoutUrl = await prepareCheckout();
+      const checkoutUrl = await prepareCheckout("cart_page");
       flushSync(() => startNavigationProgress());
       window.location.assign(checkoutUrl);
     } catch {
       // CartProvider owns the buyer-safe error state.
     }
   }
+
+  useEffect(() => {
+    if (loading || cartTracked.current) return;
+    cartTracked.current = true;
+    trackAnalyticsEvent({
+      eventName: "cart_opened", pagePath: "/cart", pageType: "cart", sourceSurface: "cart_page",
+      quantity: cart?.totalQuantity ?? 0,
+    });
+  }, [cart?.totalQuantity, loading]);
 
   if (loading && !cart && !error) return <CartLoadingState />;
 
@@ -108,8 +120,8 @@ export default function CartPageContent() {
               line={line}
               loading={loading}
               layout="page"
-              updateLine={updateLine}
-              removeLine={removeLine}
+              updateLine={(lineId, quantity) => updateLine(lineId, quantity, "cart_page")}
+              removeLine={(lineId) => removeLine(lineId, "cart_page")}
             />
           ))}
         </ul>

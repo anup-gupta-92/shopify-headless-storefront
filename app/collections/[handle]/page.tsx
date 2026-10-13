@@ -137,6 +137,7 @@ export default async function CollectionPage({ params, searchParams }: Collectio
             loadMorePath={`/api/collections/${encodeURIComponent(collection.handle)}`}
             clearHref={basePath}
             pagination={{ previousHref, nextHref }}
+            analyticsSource="collection"
           />
         </ShopControls>
       </div>

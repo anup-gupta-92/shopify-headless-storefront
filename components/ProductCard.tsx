@@ -7,6 +7,7 @@ import { useCart } from "@/components/CartProvider";
 import type { ProductSummary } from "@/types/product";
 import ReviewStars from "@/components/ReviewStars";
 import { formatMoney } from "@/lib/shopify/pricing";
+import type { AnalyticsSourceSurface } from "@/lib/analytics/first-party";
 
 interface ProductCardProps {
   title: string;
@@ -24,9 +25,10 @@ interface ProductCardProps {
   cardAction: ProductSummary["cardAction"];
   reviewRating?: ProductSummary["reviewRating"];
   compact?: boolean;
+  analyticsSource: Extract<AnalyticsSourceSurface, "homepage_category" | "homepage_best_sellers" | "shop" | "collection" | "search_results" | "recommendations">;
 }
 
-export default function ProductCard({ title, price, compareAtPrice, hasSaleVariant, startingVariantIsOnSale, sku, vendor, category, available = true, handle, imageUrl, imageAlt, cardAction, reviewRating, compact = false }: ProductCardProps) {
+export default function ProductCard({ title, price, compareAtPrice, hasSaleVariant, startingVariantIsOnSale, sku, vendor, category, available = true, handle, imageUrl, imageAlt, cardAction, reviewRating, compact = false, analyticsSource }: ProductCardProps) {
   const { addItem, loading: cartLoading } = useCart();
   const [adding, setAdding] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -38,7 +40,7 @@ export default function ProductCard({ title, price, compareAtPrice, hasSaleVaria
     setAdding(true);
     setError(null);
     try {
-      await addItem(cardAction.variantId, 1);
+      await addItem(cardAction.variantId, 1, undefined, { sourceSurface: analyticsSource });
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "This product could not be added. Please try again.");
     } finally {

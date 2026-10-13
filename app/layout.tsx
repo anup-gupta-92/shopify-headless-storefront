@@ -12,6 +12,7 @@ import { siteConfig } from "@/config/site";
 import JsonLd from "@/components/JsonLd";
 import { buildGlobalStructuredData } from "@/lib/structured-data";
 import PwaInstallPrompt from "@/components/PwaInstallPrompt";
+import FirstPartyAnalytics from "@/components/FirstPartyAnalytics";
 
 const vercelAnalyticsEnabled = process.env.VERCEL === "1";
 
@@ -52,6 +53,7 @@ export default function RootLayout({
         <ThemeProvider>
           <CookieConsentProvider>
             <GoogleAnalytics />
+            <FirstPartyAnalytics />
             <CartProvider>
               <Navbar />
               <div className="flex-grow">{children}</div>

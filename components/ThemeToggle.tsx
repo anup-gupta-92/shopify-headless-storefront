@@ -2,6 +2,7 @@
 
 import { useSyncExternalStore } from "react";
 import { useTheme } from "next-themes";
+import { trackAnalyticsEvent, updateAnalyticsTheme } from "@/lib/analytics/first-party";
 
 const emptySubscribe = () => () => {};
 
@@ -27,12 +28,20 @@ export default function ThemeToggle() {
   const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
   const dark = mounted && resolvedTheme === "dark";
 
+  function toggleTheme() {
+    const from = dark ? "dark" : "light";
+    const to = dark ? "light" : "dark";
+    setTheme(to);
+    updateAnalyticsTheme(to);
+    trackAnalyticsEvent({ eventName: "theme_changed", sourceSurface: "header", properties: { from, to, trigger: "header_toggle" } });
+  }
+
   return (
     <button
       type="button"
       role="switch"
       aria-checked={dark}
-      onClick={() => setTheme(dark ? "light" : "dark")}
+      onClick={toggleTheme}
       disabled={!mounted}
       className="relative inline-flex h-10 w-14 items-center justify-between rounded-full border border-border bg-surface px-1.5 text-muted transition-colors hover:bg-surface-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-wait disabled:opacity-60"
       aria-label={mounted ? `Use ${dark ? "light" : "dark"} theme` : "Loading theme preference"}

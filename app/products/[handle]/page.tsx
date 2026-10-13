@@ -119,6 +119,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
               handle={related.handle}
               cardAction={related.cardAction}
               reviewRating={related.reviewRating}
+              analyticsSource="recommendations"
             />)}
           </div>
         </section>}

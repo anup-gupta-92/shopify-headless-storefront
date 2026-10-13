@@ -22,7 +22,7 @@ interface ShopifyCartLine {
     availableForSale: boolean;
     selectedOptions: SelectedOption[];
     image: ProductImage | null;
-    product: { title: string; handle: string; vendor: string; productType: string };
+    product: { id: string; title: string; handle: string; vendor: string; productType: string };
   };
 }
 
@@ -82,7 +82,7 @@ const CART_FIELDS = `
           availableForSale
           selectedOptions { name value }
           image { url altText width height }
-          product { title handle vendor productType }
+          product { id title handle vendor productType }
         }
       }
     }
@@ -197,6 +197,7 @@ function mapLine(line: ShopifyCartLine): CartLine {
       selectedOptions: line.merchandise.selectedOptions,
       image: line.merchandise.image,
       product: {
+        id: line.merchandise.product.id,
         title: line.merchandise.product.title,
         handle: line.merchandise.product.handle,
         vendor: line.merchandise.product.vendor,

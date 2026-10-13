@@ -14,6 +14,7 @@ import ReviewStars from "@/components/ReviewStars";
 import { useCookieConsent } from "@/components/CookieConsentProvider";
 import { trackViewItem } from "@/lib/analytics/events";
 import ProductDispatchMessage from "@/components/ProductDispatchMessage";
+import { trackAnalyticsEvent } from "@/lib/analytics/first-party";
 
 export default function ProductInformation({ product }: { product: Product }) {
   const searchParams = useSearchParams();
@@ -118,12 +119,35 @@ export default function ProductInformation({ product }: { product: Product }) {
         selectedVariant.id,
         quantity,
         subscriptionSelected ? selectedSellingPlan?.sellingPlan.id : undefined,
+        { sourceSurface: "product_page" },
       );
     } catch (reason) {
       setCartError(reason instanceof Error ? reason.message : "Your item could not be added. Please try again.");
     } finally {
       setAdding(false);
     }
+  }
+
+  function choosePurchaseType(type: "one-time" | "subscription") {
+    if (!selectedVariant || type === purchaseSelection.type) return;
+    const plan = type === "subscription" ? selectedSellingPlan : undefined;
+    trackAnalyticsEvent({
+      eventName: "purchase_option_changed", pagePath: window.location.pathname, sourceSurface: "product_page",
+      productId: product.id, productHandle: product.handle, variantId: selectedVariant.id, sku: selectedVariant.productCode,
+      properties: { from: purchaseSelection.type === "one-time" ? "one_time" : "subscription", to: type === "one-time" ? "one_time" : "subscription", ...(plan ? { selling_plan_id: plan.sellingPlan.id, selling_plan_name: plan.sellingPlan.name } : {}) },
+    });
+    setPurchaseSelection({ variantId: selectedVariant.id, type, sellingPlanId: plan?.sellingPlan.id ?? null });
+  }
+
+  function chooseSellingPlan(sellingPlanId: string) {
+    if (!selectedVariant || sellingPlanId === selectedSellingPlan?.sellingPlan.id) return;
+    const plan = sellingPlanAllocations.find((allocation) => allocation.sellingPlan.id === sellingPlanId)?.sellingPlan;
+    trackAnalyticsEvent({
+      eventName: "purchase_option_changed", pagePath: window.location.pathname, sourceSurface: "product_page",
+      productId: product.id, productHandle: product.handle, variantId: selectedVariant.id, sku: selectedVariant.productCode,
+      properties: { from: "subscription", to: "subscription", selling_plan_id: sellingPlanId, selling_plan_name: plan?.name },
+    });
+    setPurchaseSelection({ variantId: selectedVariant.id, type: "subscription", sellingPlanId });
   }
 
   return (
@@ -175,11 +199,7 @@ export default function ProductInformation({ product }: { product: Product }) {
                 name={`${selectId}-purchase-type`}
                 value="one-time"
                 checked={!subscriptionSelected}
-                onChange={() => setPurchaseSelection({
-                  variantId: selectedVariant.id,
-                  type: "one-time",
-                  sellingPlanId: null,
-                })}
+                onChange={() => choosePurchaseType("one-time")}
                 className="size-4 accent-primary"
               />
               <span className="min-w-0 flex-1 font-medium">One-time purchase</span>
@@ -191,11 +211,7 @@ export default function ProductInformation({ product }: { product: Product }) {
                 name={`${selectId}-purchase-type`}
                 value="subscription"
                 checked={subscriptionSelected}
-                onChange={() => setPurchaseSelection({
-                  variantId: selectedVariant.id,
-                  type: "subscription",
-                  sellingPlanId: selectedSellingPlan.sellingPlan.id,
-                })}
+                onChange={() => choosePurchaseType("subscription")}
                 className="size-4 accent-primary"
               />
               <span className="min-w-0 flex-1 font-medium">
@@ -214,11 +230,7 @@ export default function ProductInformation({ product }: { product: Product }) {
                 <select
                   id={`${selectId}-selling-plan`}
                   value={selectedSellingPlan.sellingPlan.id}
-                  onChange={(event) => setPurchaseSelection({
-                    variantId: selectedVariant.id,
-                    type: "subscription",
-                    sellingPlanId: event.target.value,
-                  })}
+                  onChange={(event) => chooseSellingPlan(event.target.value)}
                   className="min-h-11 w-full min-w-0 rounded-lg border border-border bg-background px-3 text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                 >
                   {sellingPlanAllocations.map((allocation) => (

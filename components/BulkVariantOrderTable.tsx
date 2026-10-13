@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 import { useCart } from "@/components/CartProvider";
 import { startNavigationProgress } from "@/components/RouteLoadingSignal";
@@ -19,6 +19,7 @@ import {
 import { formatMoney, formatUkPriceExcludingVat } from "@/lib/shopify/pricing";
 import { formatUnitPrice, getBulkUnitPriceDisplay } from "@/lib/shopify/unit-price";
 import type { ProductVariant } from "@/types/product";
+import { trackAnalyticsEvent } from "@/lib/analytics/first-party";
 
 const focusClass = "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
 const cellButtonClass = `min-h-16 w-full rounded-lg border border-transparent bg-surface p-3 text-left transition hover:border-primary hover:bg-surface-muted disabled:cursor-not-allowed disabled:opacity-45 ${focusClass}`;
@@ -275,9 +276,19 @@ export default function BulkVariantOrderTable({ model }: { model: BulkOrderModel
   const [message, setMessage] = useState<{ kind: "error" | "success"; text: string } | null>(null);
   const [checkoutLinesFingerprint, setCheckoutLinesFingerprint] = useState<string | null>(null);
   const messageId = useId();
+  const interactionTracked = useRef(false);
   const { addLines, openDrawer, prepareCheckout, loading: cartLoading } = useCart();
   const evaluation = useMemo(() => model ? evaluateBulkOrder(model, quantities) : null, [model, quantities]);
   const showSummary = Boolean(evaluation && (evaluation.selectedQuantity > 0 || evaluation.errors.length > 0));
+
+  useEffect(() => {
+    if (!model || !evaluation || evaluation.selectedQuantity < 1 || interactionTracked.current) return;
+    interactionTracked.current = true;
+    trackAnalyticsEvent({
+      eventName: "bulk_order_interaction", pagePath: window.location.pathname, sourceSurface: "bulk_table",
+      properties: { bulk_mode: model.mode, product_title: model.productTitle },
+    }, { dedupeKey: `bulk-interaction:${window.location.pathname}:${model.productTitle}` });
+  }, [evaluation, model]);
 
   useEffect(() => {
     document.body.classList.toggle("bulk-order-summary-visible", showSummary);
@@ -329,7 +340,14 @@ export default function BulkVariantOrderTable({ model }: { model: BulkOrderModel
       if (checkoutLinesFingerprint === linesFingerprint) {
         openDrawer();
       } else {
-        await addLines(result.lines);
+        await addLines(result.lines, { analytics: { sourceSurface: "bulk_table", properties: {
+          bulk_mode: model!.mode,
+          selected_physical_quantity: result.selectedQuantity,
+          shopify_line_quantity: result.lines.reduce((sum, line) => sum + line.quantity, 0),
+          resolved_line_count: result.lines.length,
+          estimated_saving: result.estimatedSavingsMinor,
+          pack_saving: result.packSavingsMinor,
+        } } });
       }
       setQuantities({});
       setCheckoutLinesFingerprint(null);
@@ -347,10 +365,17 @@ export default function BulkVariantOrderTable({ model }: { model: BulkOrderModel
     setMessage(null);
     try {
       if (checkoutLinesFingerprint !== linesFingerprint) {
-        await addLines(result.lines, { openDrawer: false });
+        await addLines(result.lines, { openDrawer: false, analytics: { sourceSurface: "bulk_table", properties: {
+          bulk_mode: model!.mode,
+          selected_physical_quantity: result.selectedQuantity,
+          shopify_line_quantity: result.lines.reduce((sum, line) => sum + line.quantity, 0),
+          resolved_line_count: result.lines.length,
+          estimated_saving: result.estimatedSavingsMinor,
+          pack_saving: result.packSavingsMinor,
+        } } });
         setCheckoutLinesFingerprint(linesFingerprint);
       }
-      const checkoutUrl = await prepareCheckout();
+      const checkoutUrl = await prepareCheckout("bulk_table");
       flushSync(() => startNavigationProgress());
       window.location.assign(checkoutUrl);
     } catch (reason) {

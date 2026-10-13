@@ -66,8 +66,8 @@ test("OnlineStore has a production logo and conservative merchant policies", () 
   assert.deepEqual(store.logo, {
     "@type": "ImageObject",
     "@id": "https://www.apexbusinesssupplies.co.uk/#logo",
-    url: "https://www.apexbusinesssupplies.co.uk/images/logo-for-light.png",
-    contentUrl: "https://www.apexbusinesssupplies.co.uk/images/logo-for-light.png",
+    url: "https://www.apexbusinesssupplies.co.uk/images/logo-for-light.webp",
+    contentUrl: "https://www.apexbusinesssupplies.co.uk/images/logo-for-light.webp",
     width: 500,
     height: 500,
     caption: "Apex Business Supplies logo",

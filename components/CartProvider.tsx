@@ -3,10 +3,13 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import type { Cart, CartAddLine } from "@/types/cart";
 import {
+  type CartAnalyticsContext,
   trackAddToCart,
   trackRemoveFromCart,
   trackViewCart,
 } from "@/lib/analytics/events";
+import { trackAnalyticsEvent, type AnalyticsSourceSurface } from "@/lib/analytics/first-party";
+import { moneyAmountToMinorUnits } from "@/lib/shopify/pricing";
 
 interface CartContextValue {
   cart: Cart | null;
@@ -15,12 +18,12 @@ interface CartContextValue {
   checkoutLoading: boolean;
   drawerOpen: boolean;
   error: string | null;
-  addItem: (merchandiseId: string, quantity: number, sellingPlanId?: string) => Promise<void>;
-  addLines: (lines: CartAddLine[], options?: { openDrawer?: boolean }) => Promise<void>;
-  updateLine: (lineId: string, quantity: number) => Promise<void>;
-  removeLine: (lineId: string) => Promise<void>;
+  addItem: (merchandiseId: string, quantity: number, sellingPlanId?: string, analytics?: CartAnalyticsContext) => Promise<void>;
+  addLines: (lines: CartAddLine[], options?: { openDrawer?: boolean; analytics?: CartAnalyticsContext }) => Promise<void>;
+  updateLine: (lineId: string, quantity: number, sourceSurface?: "cart_drawer" | "cart_page") => Promise<void>;
+  removeLine: (lineId: string, sourceSurface?: "cart_drawer" | "cart_page") => Promise<void>;
   refreshCart: () => Promise<void>;
-  prepareCheckout: () => Promise<string>;
+  prepareCheckout: (sourceSurface?: AnalyticsSourceSurface) => Promise<string>;
   openDrawer: () => void;
   closeDrawer: () => void;
   clearError: () => void;
@@ -118,38 +121,50 @@ export default function CartProvider({ children }: { children: React.ReactNode }
     }
   }, []);
 
-  const addItem = useCallback(async (merchandiseId: string, quantity: number, sellingPlanId?: string) => {
+  const addItem = useCallback(async (merchandiseId: string, quantity: number, sellingPlanId?: string, analytics: CartAnalyticsContext = { sourceSurface: "product_page" }) => {
     const line = { merchandiseId, quantity, ...(sellingPlanId ? { sellingPlanId } : {}) };
     const nextCart = await mutate({ action: "add", ...line });
-    if (nextCart) trackAddToCart(nextCart, [line]);
+    if (nextCart) trackAddToCart(nextCart, [line], analytics);
     setDrawerOpen(true);
   }, [mutate]);
 
   const addLines = useCallback(async (
     lines: CartAddLine[],
-    options: { openDrawer?: boolean } = {},
+    options: { openDrawer?: boolean; analytics?: CartAnalyticsContext } = {},
   ) => {
     const nextCart = await mutate({ action: "addLines", lines });
-    if (nextCart) trackAddToCart(nextCart, lines);
+    if (nextCart) trackAddToCart(nextCart, lines, options.analytics ?? { sourceSurface: "bulk_table" });
     if (options.openDrawer !== false) setDrawerOpen(true);
   }, [mutate]);
 
-  const updateLine = useCallback(async (lineId: string, quantity: number) => {
-    await mutate({ action: "update", lineId, quantity });
-  }, [mutate]);
+  const updateLine = useCallback(async (lineId: string, quantity: number, sourceSurface: "cart_drawer" | "cart_page" = "cart_drawer") => {
+    const previous = cart?.lines.find((line) => line.id === lineId);
+    const nextCart = await mutate({ action: "update", lineId, quantity });
+    const next = nextCart?.lines.find((line) => line.id === lineId);
+    if (previous && next) trackAnalyticsEvent({
+      eventName: "cart_quantity_changed", pagePath: window.location.pathname, sourceSurface,
+      productId: next.merchandise.product.id,
+      productHandle: next.merchandise.product.handle, variantId: next.merchandise.id, sku: next.merchandise.productCode,
+      quantity: next.quantity, valueMinor: moneyAmountToMinorUnits(next.cost.totalAmount.amount), currency: next.cost.totalAmount.currencyCode,
+      properties: { from_quantity: previous.quantity, to_quantity: next.quantity },
+    });
+  }, [cart, mutate]);
 
-  const removeLine = useCallback(async (lineId: string) => {
+  const removeLine = useCallback(async (lineId: string, sourceSurface: "cart_drawer" | "cart_page" = "cart_drawer") => {
     const removedLine = cart?.lines.find((line) => line.id === lineId);
     await mutate({ action: "remove", lineId });
-    if (removedLine) trackRemoveFromCart(removedLine);
+    if (removedLine) trackRemoveFromCart(removedLine, sourceSurface);
   }, [cart, mutate]);
 
   useEffect(() => {
-    if (drawerOpen && !drawerWasOpen.current && cart?.lines.length) trackViewCart(cart);
+    if (drawerOpen && !drawerWasOpen.current) {
+      if (cart?.lines.length) trackViewCart(cart);
+      else trackAnalyticsEvent({ eventName: "cart_opened", pagePath: window.location.pathname, sourceSurface: "cart_drawer", quantity: 0 });
+    }
     drawerWasOpen.current = drawerOpen;
   }, [cart, drawerOpen]);
 
-  const prepareCheckout = useCallback(async () => {
+  const prepareCheckout = useCallback(async (sourceSurface: AnalyticsSourceSurface = "cart_drawer") => {
     if (checkoutInFlight.current || mutationInFlight.current) {
       throw new Error("Please wait for the current cart request to finish.");
     }
@@ -168,6 +183,11 @@ export default function CartProvider({ children }: { children: React.ReactNode }
         throw new Error(body?.error || "Checkout is temporarily unavailable. Please try again.");
       }
       if (!validCheckoutUrl(body?.checkoutUrl)) throw new Error("Checkout is temporarily unavailable. Please try again.");
+      trackAnalyticsEvent({
+        eventName: "checkout_started", pagePath: window.location.pathname, sourceSurface,
+        quantity: cart?.totalQuantity, valueMinor: cart ? moneyAmountToMinorUnits(cart.cost.totalAmount.amount) : undefined,
+        currency: cart?.cost.totalAmount.currencyCode,
+      }, { flush: true });
       return body.checkoutUrl;
     } catch (reason) {
       const message = reason instanceof Error ? reason.message : "Checkout is temporarily unavailable. Please try again.";
@@ -177,7 +197,7 @@ export default function CartProvider({ children }: { children: React.ReactNode }
       checkoutInFlight.current = false;
       setCheckoutLoading(false);
     }
-  }, []);
+  }, [cart]);
 
   const openDrawer = useCallback(() => setDrawerOpen(true), []);
   const closeDrawer = useCallback(() => setDrawerOpen(false), []);

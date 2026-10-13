@@ -11,6 +11,8 @@ import type {
   PredictiveProductResult,
   PredictiveSearchPayload,
 } from "@/types/search";
+import { markCommittedSearchSource } from "@/lib/analytics/first-party";
+import { trackSearch } from "@/lib/analytics/events";
 
 const EMPTY_RESULTS: PredictiveSearchPayload = {
   query: "",
@@ -222,6 +224,7 @@ export default function HeaderSearch({
     event.preventDefault();
     const normalized = query.trim().replace(/\s+/g, " ");
     if (normalized.length < 2) return;
+    markCommittedSearchSource("header_search");
     const params = new URLSearchParams({ q: normalized });
     navigateTo(`/search?${params.toString()}`);
   }
@@ -289,7 +292,10 @@ export default function HeaderSearch({
               active={activeIndex === index}
               optionId={`${listboxId}-option-${index}`}
               onActivate={setActiveIndex}
-              onSelect={closeSearch}
+              onSelect={() => {
+                trackSearch(query, allResults.length, "header_search");
+                closeSearch();
+              }}
             />
           );
         })}
@@ -353,6 +359,7 @@ export default function HeaderSearch({
           <button
             type="button"
             onClick={() => {
+              markCommittedSearchSource("header_search");
               const params = new URLSearchParams({ q: query.trim().replace(/\s+/g, " ") });
               navigateTo(`/search?${params.toString()}`);
             }}
