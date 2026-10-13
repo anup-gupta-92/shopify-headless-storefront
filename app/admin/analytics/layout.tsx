@@ -6,14 +6,10 @@ import ThemeToggle from "@/components/ThemeToggle";
 const adminNavigation = [
   { label: "Overview", href: "#overview" },
   { label: "Traffic", href: "#traffic" },
-  { label: "Countries", href: "#countries" },
-  { label: "Devices", href: "#devices" },
-  { label: "Search terms", href: "#search-terms" },
+  { label: "Search", href: "#search" },
   { label: "Products", href: "#products" },
   { label: "Cart & checkout", href: "#cart-checkout" },
-  { label: "Bulk ordering", href: "#bulk-ordering" },
-  { label: "Theme", href: "#theme" },
-  { label: "Consent", href: "#consent" },
+  { label: "Behaviour", href: "#behaviour" },
   { label: "404s", href: "#404s" },
 ] as const;
 
