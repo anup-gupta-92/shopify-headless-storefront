@@ -24,7 +24,7 @@ const rangeOptions: Array<{ value: AnalyticsOverviewRange; label: string }> = [
 ];
 
 const numberFormatter = new Intl.NumberFormat("en-GB");
-const controlClass = "min-h-10 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20";
+const controlClass = "min-h-10 min-w-0 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20";
 
 function formatRelativeRefresh(timestamp: number): string {
   const elapsed = Math.max(0, Math.floor(Date.now() / 1000) - timestamp);
@@ -96,6 +96,55 @@ function BreakdownTable({
       )}
     </section>
   );
+}
+
+function SummaryCard({
+  title,
+  stats,
+  details,
+  detailsTitle,
+  formatDetailLabel = humaniseLabel,
+}: Readonly<{
+  title: string;
+  stats: Array<{ label: string; value: string | number }>;
+  details?: AnalyticsBreakdownItem[];
+  detailsTitle?: string;
+  formatDetailLabel?: (label: string) => string;
+}>) {
+  return (
+    <article className="overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
+      <h3 className="border-b border-border px-4 py-3 text-base font-bold text-foreground sm:px-5">{title}</h3>
+      <dl className="divide-y divide-border">
+        {stats.map((stat) => (
+          <div key={stat.label} className="flex items-center justify-between gap-4 px-4 py-3 text-sm sm:px-5">
+            <dt className="text-muted">{stat.label}</dt>
+            <dd className="shrink-0 font-semibold tabular-nums text-foreground">
+              {typeof stat.value === "number" ? numberFormatter.format(stat.value) : stat.value}
+            </dd>
+          </div>
+        ))}
+      </dl>
+      {details?.length ? (
+        <div className="border-t border-border px-4 py-3 sm:px-5">
+          {detailsTitle ? <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted">{detailsTitle}</p> : null}
+          <div className="space-y-2">
+            {details.map((item) => (
+              <div key={item.label} className="flex items-center justify-between gap-4 text-sm">
+                <span className="min-w-0 truncate text-muted" title={formatDetailLabel(item.label)}>
+                  {formatDetailLabel(item.label)}
+                </span>
+                <span className="shrink-0 font-semibold tabular-nums text-foreground">{numberFormatter.format(item.count)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+    </article>
+  );
+}
+
+function SectionHeading({ children }: Readonly<{ children: React.ReactNode }>) {
+  return <h2 className="mb-3 text-sm font-semibold uppercase tracking-[0.14em] text-muted">{children}</h2>;
 }
 
 function SelectField({ label, name, defaultValue, children }: Readonly<{
@@ -180,18 +229,125 @@ function Dashboard({ data }: Readonly<{ data: AnalyticsOverview }>) {
     ["Add to cart", data.metrics.addToCart],
     ["Checkout started", data.metrics.checkoutStarted],
   ] as const;
+  const percentage = (value: number | null) => value === null
+    ? "—"
+    : new Intl.NumberFormat("en-GB", { style: "percent", maximumFractionDigits: 1 }).format(value);
 
   return (
     <>
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 2xl:grid-cols-6">
         {metrics.map(([label, value]) => <MetricCard key={label} label={label} value={value} />)}
       </div>
-      <div className="mt-6 grid gap-4 lg:grid-cols-2 2xl:grid-cols-4">
-        <BreakdownTable title="Top countries" items={data.countries} formatLabel={countryLabel} />
-        <BreakdownTable title="Devices" items={data.devices} />
-        <BreakdownTable title="Browsers" items={data.browsers} formatLabel={(label) => label} />
-        <BreakdownTable title="Acquisition channels" items={data.acquisitionChannels} />
+
+      <section id="traffic" className="scroll-mt-6 pt-8">
+        <SectionHeading>Traffic summaries</SectionHeading>
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
+          <BreakdownTable title="Top countries" items={data.countries} formatLabel={countryLabel} />
+          <BreakdownTable title="Devices" items={data.devices} />
+          <BreakdownTable title="Browsers" items={data.browsers} formatLabel={(label) => label} />
+          <BreakdownTable title="Operating systems" items={data.operatingSystems} formatLabel={(label) => label} />
+          <BreakdownTable title="Acquisition channels" items={data.acquisitionChannels} />
+        </div>
+      </section>
+
+      <div className="grid gap-8 pt-8 xl:grid-cols-2">
+        <section id="search" className="scroll-mt-6">
+          <SectionHeading>Search</SectionHeading>
+          <SummaryCard
+            title="Search overview"
+            stats={[
+              { label: "Total searches", value: data.search.total },
+              { label: "Unique search queries", value: data.search.uniqueQueries },
+              { label: "Zero-result searches", value: data.search.zeroResults },
+            ]}
+            details={data.search.topTerms}
+            detailsTitle="Top search terms"
+            formatDetailLabel={(label) => label}
+          />
+        </section>
+
+        <section id="products" className="scroll-mt-6">
+          <SectionHeading>Products</SectionHeading>
+          <SummaryCard
+            title="Homepage interactions"
+            stats={[{ label: "Hotspot product clicks", value: data.homepageInteractions.hotspotClicks }]}
+            details={data.homepageInteractions.topProducts}
+            detailsTitle="Top clicked products"
+            formatDetailLabel={(label) => label}
+          />
+        </section>
       </div>
+
+      <section id="cart-checkout" className="scroll-mt-6 pt-8">
+        <SectionHeading>Cart &amp; checkout</SectionHeading>
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <SummaryCard
+            title="Commerce funnel"
+            stats={[
+              { label: "Add to cart", value: data.commerce.addToCart },
+              { label: "Cart opened", value: data.commerce.cartOpened },
+              { label: "Checkout started", value: data.commerce.checkoutStarted },
+            ]}
+          />
+          <SummaryCard
+            title="Bulk ordering"
+            stats={[
+              { label: "Bulk-order interactions", value: data.bulkOrdering.interactions },
+              { label: "Sessions using bulk ordering", value: data.bulkOrdering.sessions },
+            ]}
+          />
+        </div>
+      </section>
+
+      <section id="behaviour" className="scroll-mt-6 pt-8">
+        <SectionHeading>Behaviour</SectionHeading>
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <SummaryCard
+            title="Theme usage"
+            stats={[
+              { label: "Initial light", value: data.theme.initialLight },
+              { label: "Initial dark", value: data.theme.initialDark },
+              { label: "Switched to light", value: data.theme.switchedToLight },
+              { label: "Switched to dark", value: data.theme.switchedToDark },
+              { label: "Total theme switches", value: data.theme.totalSwitches },
+            ]}
+          />
+          <SummaryCard
+            title="Consent"
+            stats={[
+              { label: "Accepted", value: data.consent.accepted },
+              { label: "Rejected", value: data.consent.rejected },
+              { label: "Acceptance rate", value: percentage(data.consent.acceptanceRate) },
+            ]}
+          />
+          <SummaryCard
+            title="PWA"
+            stats={[
+              { label: "Prompt shown", value: data.pwa.promptShown },
+              { label: "Install clicked", value: data.pwa.installClicked },
+              { label: "Dismissed", value: data.pwa.dismissed },
+              { label: "Installed", value: data.pwa.installed },
+              { label: "Standalone launches", value: data.pwa.standaloneLaunches },
+            ]}
+          />
+        </div>
+      </section>
+
+      <section id="404s" className="scroll-mt-6 pt-8">
+        <SectionHeading>404s</SectionHeading>
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <SummaryCard
+            title="Missing pages"
+            stats={[
+              { label: "Total 404 views", value: data.notFound.total },
+              { label: "Unique missing paths", value: data.notFound.uniquePaths },
+            ]}
+            details={data.notFound.topPaths}
+            detailsTitle="Top missing paths"
+            formatDetailLabel={(label) => label}
+          />
+        </div>
+      </section>
     </>
   );
 }
