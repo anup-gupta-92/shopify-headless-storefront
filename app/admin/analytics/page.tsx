@@ -60,10 +60,10 @@ function withSelectedOption(values: string[], selected: string | null): string[]
   return selected && !values.includes(selected) ? [selected, ...values] : values;
 }
 
-function MetricCard({ label, value }: Readonly<{ label: string; value: number }>) {
+function MetricCard({ label, value, help }: Readonly<{ label: string; value: number; help?: string }>) {
   return (
     <article className="rounded-xl border border-border bg-surface p-4 shadow-sm sm:p-5">
-      <p className="text-sm font-medium text-muted">{label}</p>
+      <p className="text-sm font-medium text-muted" title={help} aria-label={help ? `${label}. ${help}` : undefined}>{label}</p>
       <p className="mt-2 text-2xl font-extrabold tracking-tight text-foreground sm:text-3xl">
         {numberFormatter.format(value)}
       </p>
@@ -275,12 +275,12 @@ function DashboardFilters({ data, query }: Readonly<{
 
 function Dashboard({ data }: Readonly<{ data: AnalyticsOverview }>) {
   const metrics = [
-    ["Sessions", data.metrics.sessions],
-    ["Unique visitors", data.metrics.uniqueVisitors],
-    ["Page views", data.metrics.pageViews],
-    ["Product views", data.metrics.productViews],
-    ["Add to cart", data.metrics.addToCart],
-    ["Checkout started", data.metrics.checkoutStarted],
+    ["Sessions", data.metrics.sessions, undefined],
+    ["Unique visitors", data.metrics.uniqueVisitors, undefined],
+    ["Page views", data.metrics.pageViews, undefined],
+    ["Product views", data.metrics.productViews, undefined],
+    ["Add to cart events", data.metrics.addToCart, "Event count may include multiple actions from the same session."],
+    ["Checkout start events", data.metrics.checkoutStarted, "Event count may include multiple actions from the same session."],
   ] as const;
   const percentage = (value: number | null) => value === null
     ? "—"
@@ -289,7 +289,19 @@ function Dashboard({ data }: Readonly<{ data: AnalyticsOverview }>) {
   return (
     <>
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 2xl:grid-cols-6">
-        {metrics.map(([label, value]) => <MetricCard key={label} label={label} value={value} />)}
+        {metrics.map(([label, value, help]) => <MetricCard key={label} label={label} value={value} help={help} />)}
+      </div>
+
+      <div className="mt-4 max-w-4xl">
+        <SummaryCard
+          title="Commerce engagement"
+          stats={[
+            { label: "Sessions with add to cart", value: data.commerce.addToCartSessions },
+            { label: "Sessions with checkout start", value: data.commerce.checkoutStartedSessions },
+            { label: "Unique visitors with add to cart", value: data.commerce.addToCartVisitors },
+            { label: "Unique visitors with checkout start", value: data.commerce.checkoutStartedVisitors },
+          ]}
+        />
       </div>
 
       <section id="traffic" className="scroll-mt-6 pt-8">
@@ -342,9 +354,9 @@ function Dashboard({ data }: Readonly<{ data: AnalyticsOverview }>) {
           <SummaryCard
             title="Commerce funnel"
             stats={[
-              { label: "Add to cart", value: data.commerce.addToCart },
+              { label: "Add to cart events", value: data.commerce.addToCart },
               { label: "Cart opened", value: data.commerce.cartOpened },
-              { label: "Checkout started", value: data.commerce.checkoutStarted },
+              { label: "Checkout start events", value: data.commerce.checkoutStarted },
             ]}
           />
           <SummaryCard

@@ -69,8 +69,12 @@ export type AnalyticsOverview = {
   };
   commerce: {
     addToCart: number;
+    addToCartSessions: number;
+    addToCartVisitors: number;
     cartOpened: number;
     checkoutStarted: number;
+    checkoutStartedSessions: number;
+    checkoutStartedVisitors: number;
   };
   bulkOrdering: {
     interactions: number;
@@ -252,8 +256,12 @@ async function queryAnalyticsOverview(
         COALESCE(SUM(CASE WHEN e.event_name = 'page_view' THEN 1 ELSE 0 END), 0) AS page_views,
         COALESCE(SUM(CASE WHEN e.event_name = 'product_view' THEN 1 ELSE 0 END), 0) AS product_views,
         COALESCE(SUM(CASE WHEN e.event_name = 'add_to_cart' THEN 1 ELSE 0 END), 0) AS add_to_cart,
+        COUNT(DISTINCT CASE WHEN e.event_name = 'add_to_cart' THEN e.session_id END) AS add_to_cart_sessions,
+        COUNT(DISTINCT CASE WHEN e.event_name = 'add_to_cart' THEN s.visitor_id END) AS add_to_cart_visitors,
         COALESCE(SUM(CASE WHEN e.event_name = 'cart_opened' THEN 1 ELSE 0 END), 0) AS cart_opened,
         COALESCE(SUM(CASE WHEN e.event_name = 'checkout_started' THEN 1 ELSE 0 END), 0) AS checkout_started,
+        COUNT(DISTINCT CASE WHEN e.event_name = 'checkout_started' THEN e.session_id END) AS checkout_started_sessions,
+        COUNT(DISTINCT CASE WHEN e.event_name = 'checkout_started' THEN s.visitor_id END) AS checkout_started_visitors,
         COALESCE(SUM(CASE WHEN e.event_name = 'bulk_order_interaction' THEN 1 ELSE 0 END), 0) AS bulk_interactions,
         COUNT(DISTINCT CASE WHEN e.event_name = 'bulk_order_interaction' THEN e.session_id END) AS bulk_sessions,
         COALESCE(SUM(CASE WHEN e.event_name = 'theme_changed' THEN 1 ELSE 0 END), 0) AS theme_switches,
@@ -480,8 +488,12 @@ async function queryAnalyticsOverview(
     },
     commerce: {
       addToCart: count(eventRow, "add_to_cart"),
+      addToCartSessions: count(eventRow, "add_to_cart_sessions"),
+      addToCartVisitors: count(eventRow, "add_to_cart_visitors"),
       cartOpened: count(eventRow, "cart_opened"),
       checkoutStarted: count(eventRow, "checkout_started"),
+      checkoutStartedSessions: count(eventRow, "checkout_started_sessions"),
+      checkoutStartedVisitors: count(eventRow, "checkout_started_visitors"),
     },
     bulkOrdering: {
       interactions: count(eventRow, "bulk_interactions"),
@@ -519,7 +531,7 @@ async function queryAnalyticsOverview(
 
 const cachedAnalyticsOverview = unstable_cache(
   queryAnalyticsOverview,
-  ["analytics-overview-v4"],
+  ["analytics-overview-v5"],
   { revalidate: 3600, tags: ["analytics-overview"] },
 );
 
