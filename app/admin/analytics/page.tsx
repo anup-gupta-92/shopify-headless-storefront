@@ -292,16 +292,6 @@ function Dashboard({ data }: Readonly<{ data: AnalyticsOverview }>) {
         {metrics.map(([label, value, help]) => <MetricCard key={label} label={label} value={value} help={help} />)}
       </div>
 
-      <div className="mt-4 max-w-4xl">
-        <SummaryCard
-          title="Commerce engagement"
-          stats={[
-            { label: "Unique visitors with add to cart", value: data.commerce.addToCartVisitors },
-            { label: "Unique visitors with checkout start", value: data.commerce.checkoutStartedVisitors },
-          ]}
-        />
-      </div>
-
       <section id="traffic" className="scroll-mt-6 pt-8">
         <SectionHeading>Traffic summaries</SectionHeading>
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -353,8 +343,10 @@ function Dashboard({ data }: Readonly<{ data: AnalyticsOverview }>) {
             title="Commerce funnel"
             stats={[
               { label: "Add to cart events", value: data.commerce.addToCart },
-              { label: "Cart opened", value: data.commerce.cartOpened },
+              { label: "Unique visitors with add to cart", value: data.commerce.addToCartVisitors },
+              { label: "Cart opened events", value: data.commerce.cartOpened },
               { label: "Checkout start events", value: data.commerce.checkoutStarted },
+              { label: "Unique visitors with checkout start", value: data.commerce.checkoutStartedVisitors },
             ]}
           />
           <SummaryCard
