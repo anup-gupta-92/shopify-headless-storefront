@@ -296,8 +296,6 @@ function Dashboard({ data }: Readonly<{ data: AnalyticsOverview }>) {
         <SummaryCard
           title="Commerce engagement"
           stats={[
-            { label: "Sessions with add to cart", value: data.commerce.addToCartSessions },
-            { label: "Sessions with checkout start", value: data.commerce.checkoutStartedSessions },
             { label: "Unique visitors with add to cart", value: data.commerce.addToCartVisitors },
             { label: "Unique visitors with checkout start", value: data.commerce.checkoutStartedVisitors },
           ]}
