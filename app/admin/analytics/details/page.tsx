@@ -156,13 +156,12 @@ function SearchTermsTable({ rows, query }: Readonly<{ rows: SearchTermDetailRow[
   if (!rows.length) return <EmptyState>No search data for this period</EmptyState>;
   return (
     <div className="overflow-x-auto rounded-xl border border-border bg-surface shadow-sm">
-      <table className="w-full min-w-[44rem] border-collapse text-sm">
+      <table className="w-full min-w-[38rem] border-collapse text-sm">
         <thead className="border-b border-border bg-surface-muted/60">
           <tr>
             <SortHeader label="Search term" sortKey="query" query={query} />
             <SortHeader label="Search count" sortKey="searches" query={query} />
             <SortHeader label="Unique sessions" sortKey="sessions" query={query} />
-            <SortHeader label="Zero-result count" sortKey="zeroResults" query={query} />
             <th scope="col" className="whitespace-nowrap px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted">Result status</th>
           </tr>
         </thead>
@@ -177,7 +176,6 @@ function SearchTermsTable({ rows, query }: Readonly<{ rows: SearchTermDetailRow[
                 </td>
                 <NumberCell value={row.searchCount} />
                 <NumberCell value={row.uniqueSessions} />
-                <NumberCell value={row.zeroResultCount} />
                 <td className="whitespace-nowrap px-4 py-3 text-muted">{status}</td>
               </tr>
             );

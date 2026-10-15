@@ -90,7 +90,6 @@ const sortColumns: Record<AnalyticsDetailTab, Record<string, string>> = {
     query: "query_label",
     searches: "search_count",
     sessions: "unique_sessions",
-    zeroResults: "zero_result_count",
   },
 };
 
