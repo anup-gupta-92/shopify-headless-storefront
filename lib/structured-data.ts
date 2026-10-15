@@ -13,6 +13,7 @@ export const ORGANIZATION_ID = `${siteConfig.url}/#organization`;
 export const WEBSITE_ID = `${siteConfig.url}/#website`;
 export const MERCHANT_RETURN_POLICY_ID = `${siteConfig.url}/#merchant-return-policy`;
 export const SHIPPING_SERVICE_ID = `${siteConfig.url}/#uk-standard-shipping`;
+const PRODUCT_DESCRIPTION_MAX_LENGTH = 1_000;
 
 const businessDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
   .map((day) => `${SCHEMA_ORIGIN}/${day}`);
@@ -168,6 +169,15 @@ function commonSku(variants: ProductVariant[]): string | undefined {
   return skus.size === 1 ? [...skus][0] : undefined;
 }
 
+function productStructuredDataDescription(product: Product): string | undefined {
+  const description = conciseMetadataDescription(
+    product.description,
+    product.descriptionHtml ?? "",
+    PRODUCT_DESCRIPTION_MAX_LENGTH,
+  );
+  return description || undefined;
+}
+
 function offerFulfillmentPolicyReferences(): JsonLdObject {
   return {
     hasMerchantReturnPolicy: { "@id": MERCHANT_RETURN_POLICY_ID },
@@ -224,8 +234,7 @@ function buildOffers(product: Product, url: string): JsonLdObject | undefined {
 export function buildProductStructuredData(product: Product): JsonLdObject {
   const handle = product.handle?.trim();
   const url = `${siteConfig.url}/products/${encodeURIComponent(handle || "")}`;
-  const description = cleanMetadataText(product.seo?.description)
-    || conciseMetadataDescription(product.description, siteConfig.description);
+  const description = productStructuredDataDescription(product);
   const image = [...new Set([product.image, ...(product.images ?? []).map((item) => item.url)].filter(Boolean))];
   const variants = product.variants ?? [];
   const sku = commonSku(variants.filter((variant) => variant.available === true))
@@ -258,7 +267,7 @@ export function buildProductStructuredData(product: Product): JsonLdObject {
         "@id": `${url}#product`,
         name: product.title,
         url,
-        description,
+        ...(description ? { description } : {}),
         ...(image.length ? { image } : {}),
         ...(sku ? { sku } : {}),
         ...(product.vendor?.trim() ? { brand: { "@type": "Brand", name: product.vendor.trim() } } : {}),

@@ -153,6 +153,55 @@ test("invalid or absent review data is omitted", () => {
   assert.equal("aggregateRating" in schema, false);
 });
 
+test("product schema prefers Shopify plain description and leaves short text unchanged", () => {
+  const schema = graphNode(buildProductStructuredData(product({
+    description: "A short, useful product description.",
+    descriptionHtml: "<p>A different HTML description.</p>",
+    seo: { title: null, description: "A different SEO description." },
+  })), "Product")!;
+
+  assert.equal(schema.description, "A short, useful product description.");
+});
+
+test("product schema falls back to normalized plain text derived from description HTML", () => {
+  const schema = graphNode(buildProductStructuredData(product({
+    description: "  ",
+    descriptionHtml: `
+      <p>Protective &amp; durable<br>supplies.</p>
+      <ul><li>First item</li><li>Second&nbsp;item</li></ul>
+      <table><tr><td>Pack size</td><td>100</td></tr></table>
+    `,
+  })), "Product")!;
+  const description = schema.description as string;
+
+  assert.equal(
+    description,
+    "Protective & durable supplies. First item Second item Pack size 100",
+  );
+  assert.doesNotMatch(description, /<\/?(?:p|ul|li|table|tr|td|br)\b/i);
+  assert.doesNotMatch(description, /\s{2,}/);
+});
+
+test("product schema caps long descriptions at 1000 characters without splitting a word", () => {
+  const description = `${"useful ".repeat(160)}ending`;
+  const schema = graphNode(buildProductStructuredData(product({ description })), "Product")!;
+  const structuredDescription = schema.description as string;
+
+  assert.equal(structuredDescription.length <= 1_000, true);
+  assert.equal(structuredDescription.endsWith("…"), true);
+  assert.doesNotMatch(structuredDescription, /usef…$/);
+});
+
+test("product schema omits description when neither Shopify source has usable text", () => {
+  const schema = graphNode(buildProductStructuredData(product({
+    description: " ",
+    descriptionHtml: "<p> </p>",
+    seo: { title: null, description: "SEO fallback must not replace missing product copy." },
+  })), "Product")!;
+
+  assert.equal("description" in schema, false);
+});
+
 test("unavailable product emits OutOfStock rather than InStock", () => {
   const data = buildProductStructuredData(product({ variants: [variant("sold-out", "4.99", false)] }));
   const offer = offerFrom(data);
