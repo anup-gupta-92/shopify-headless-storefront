@@ -102,20 +102,20 @@ export type AnalyticsOverview = {
   filterOptions: AnalyticsFilterOptions;
 };
 
-type SearchValue = string | string[] | undefined;
+export type AnalyticsSearchValue = string | string[] | undefined;
 type QueryRow = Record<string, string | number | null>;
-type SqlFilter = { sql: string; values: Array<string | number> };
+export type AnalyticsSqlFilter = { sql: string; values: Array<string | number> };
 
-function firstValue(value: SearchValue): string | undefined {
+function firstValue(value: AnalyticsSearchValue): string | undefined {
   return Array.isArray(value) ? value[0] : value;
 }
 
-function cleanDimension(value: SearchValue): string | null {
+function cleanDimension(value: AnalyticsSearchValue): string | null {
   const candidate = firstValue(value)?.trim();
   return candidate && candidate.length <= 64 ? candidate : null;
 }
 
-export function parseAnalyticsDashboardQuery(searchParams: Record<string, SearchValue>): AnalyticsDashboardQuery {
+export function parseAnalyticsDashboardQuery(searchParams: Record<string, AnalyticsSearchValue>): AnalyticsDashboardQuery {
   const rangeValue = firstValue(searchParams.range);
   const range = ANALYTICS_OVERVIEW_RANGES.includes(rangeValue as AnalyticsOverviewRange)
     ? rangeValue as AnalyticsOverviewRange
@@ -159,12 +159,12 @@ function startOfUtcDay(timestampSeconds: number): number {
   return Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()) / 1000;
 }
 
-function rangeStart(range: AnalyticsOverviewRange, nowSeconds: number): number {
+export function analyticsRangeStart(range: AnalyticsOverviewRange, nowSeconds: number): number {
   const days = Number.parseInt(range, 10);
   return startOfUtcDay(nowSeconds) - (days - 1) * 86_400;
 }
 
-function dimensionFilters(alias: string, filters: AnalyticsDashboardFilters): SqlFilter {
+export function analyticsDimensionFilters(alias: string, filters: AnalyticsDashboardFilters): AnalyticsSqlFilter {
   const predicates: string[] = [];
   const values: string[] = [];
 
@@ -234,10 +234,10 @@ async function queryAnalyticsOverview(
 ): Promise<AnalyticsOverview> {
   const query: AnalyticsDashboardQuery = { range, countryMode, country, device, browser, os };
   const refreshedAt = Math.floor(Date.now() / 1000);
-  const startAt = rangeStart(range, refreshedAt);
+  const startAt = analyticsRangeStart(range, refreshedAt);
   const endAt = refreshedAt + 1;
   const db = await analyticsDatabase();
-  const sessionFilter = dimensionFilters("s", query);
+  const sessionFilter = analyticsDimensionFilters("s", query);
 
   const statements = [
     db.prepare(`

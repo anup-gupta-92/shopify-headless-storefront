@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import {
   analyticsDashboardQueryString,
   getAnalyticsOverview,
@@ -75,14 +76,19 @@ function BreakdownTable({
   title,
   items,
   formatLabel = humaniseLabel,
+  detailsHref,
 }: Readonly<{
   title: string;
   items: AnalyticsBreakdownItem[];
   formatLabel?: (label: string) => string;
+  detailsHref?: string;
 }>) {
   return (
     <section className="overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
-      <h2 className="border-b border-border px-4 py-3 text-base font-bold text-foreground sm:px-5">{title}</h2>
+      <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3 sm:px-5">
+        <h2 className="text-base font-bold text-foreground">{title}</h2>
+        {detailsHref ? <Link href={detailsHref} className="shrink-0 text-xs font-semibold text-primary underline-offset-4 hover:underline">View details</Link> : null}
+      </div>
       {items.length ? (
         <div className="divide-y divide-border">
           {items.map((item) => (
@@ -106,6 +112,7 @@ function SummaryCard({
   detailsTitle,
   formatDetailLabel = humaniseLabel,
   detailHref,
+  detailsHref,
 }: Readonly<{
   title: string;
   stats: Array<{ label: string; value: string | number }>;
@@ -113,10 +120,14 @@ function SummaryCard({
   detailsTitle?: string;
   formatDetailLabel?: (label: string) => string;
   detailHref?: (item: AnalyticsBreakdownItem) => string | null;
+  detailsHref?: string;
 }>) {
   return (
     <article className="overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
-      <h3 className="border-b border-border px-4 py-3 text-base font-bold text-foreground sm:px-5">{title}</h3>
+      <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3 sm:px-5">
+        <h3 className="text-base font-bold text-foreground">{title}</h3>
+        {detailsHref ? <Link href={detailsHref} className="shrink-0 text-xs font-semibold text-primary underline-offset-4 hover:underline">View details</Link> : null}
+      </div>
       <dl className="divide-y divide-border">
         {stats.map((stat) => (
           <div key={stat.label} className="flex items-center justify-between gap-4 px-4 py-3 text-sm sm:px-5">
@@ -159,10 +170,13 @@ function readableProductLabel(item: AnalyticsProductItem): string {
   return item.handle.replaceAll("-", " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
-function TopProductsCard({ items }: Readonly<{ items: AnalyticsProductItem[] }>) {
+function TopProductsCard({ items, detailsHref }: Readonly<{ items: AnalyticsProductItem[]; detailsHref: string }>) {
   return (
     <article className="overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
-      <h3 className="border-b border-border px-4 py-3 text-base font-bold text-foreground sm:px-5">Top viewed products</h3>
+      <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3 sm:px-5">
+        <h3 className="text-base font-bold text-foreground">Top viewed products</h3>
+        <Link href={detailsHref} className="shrink-0 text-xs font-semibold text-primary underline-offset-4 hover:underline">View details</Link>
+      </div>
       {items.length ? (
         <div className="divide-y divide-border">
           {items.map((item) => {
@@ -274,6 +288,8 @@ function DashboardFilters({ data, query }: Readonly<{
 }
 
 function Dashboard({ data }: Readonly<{ data: AnalyticsOverview }>) {
+  const detailsHref = (tab: "products" | "landing-pages" | "search-terms") =>
+    `/admin/analytics/details?tab=${tab}&${analyticsDashboardQueryString(data.query)}`;
   const metrics = [
     ["Sessions", data.metrics.sessions, undefined],
     ["Unique visitors", data.metrics.uniqueVisitors, undefined],
@@ -300,7 +316,7 @@ function Dashboard({ data }: Readonly<{ data: AnalyticsOverview }>) {
           <BreakdownTable title="Browsers" items={data.browsers} formatLabel={(label) => label} />
           <BreakdownTable title="Operating systems" items={data.operatingSystems} formatLabel={(label) => label} />
           <BreakdownTable title="Acquisition channels" items={data.acquisitionChannels} />
-          <BreakdownTable title="Landing pages" items={data.landingPages} formatLabel={(label) => label} />
+          <BreakdownTable title="Landing pages" items={data.landingPages} formatLabel={(label) => label} detailsHref={detailsHref("landing-pages")} />
         </div>
       </section>
 
@@ -318,13 +334,14 @@ function Dashboard({ data }: Readonly<{ data: AnalyticsOverview }>) {
             detailsTitle="Top search terms"
             formatDetailLabel={(label) => label}
             detailHref={(item) => `/search?q=${encodeURIComponent(item.label)}&analytics_preview=1`}
+            detailsHref={detailsHref("search-terms")}
           />
         </section>
 
         <section id="products" className="scroll-mt-6">
           <SectionHeading>Products</SectionHeading>
           <div className="grid gap-4 md:grid-cols-2">
-            <TopProductsCard items={data.topViewedProducts} />
+            <TopProductsCard items={data.topViewedProducts} detailsHref={detailsHref("products")} />
             <SummaryCard
               title="Homepage interactions"
               stats={[{ label: "Hotspot product clicks", value: data.homepageInteractions.hotspotClicks }]}

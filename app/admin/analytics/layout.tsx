@@ -4,13 +4,13 @@ import AdminMobileNavigation from "@/components/AdminMobileNavigation";
 import ThemeToggle from "@/components/ThemeToggle";
 
 const adminNavigation = [
-  { label: "Overview", href: "#overview" },
-  { label: "Traffic", href: "#traffic" },
-  { label: "Search", href: "#search" },
-  { label: "Products", href: "#products" },
-  { label: "Cart & checkout", href: "#cart-checkout" },
-  { label: "Behaviour", href: "#behaviour" },
-  { label: "404s", href: "#404s" },
+  { label: "Overview", href: "/admin/analytics#overview" },
+  { label: "Traffic", href: "/admin/analytics#traffic" },
+  { label: "Search", href: "/admin/analytics#search" },
+  { label: "Products", href: "/admin/analytics#products" },
+  { label: "Cart & checkout", href: "/admin/analytics#cart-checkout" },
+  { label: "Behaviour", href: "/admin/analytics#behaviour" },
+  { label: "404s", href: "/admin/analytics#404s" },
 ] as const;
 
 const navigationClass = "rounded-lg px-3 py-2 text-sm font-medium text-muted transition hover:bg-surface-muted hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
@@ -19,7 +19,7 @@ function AdminNavigation() {
   return (
     <nav aria-label="Analytics sections" className="flex flex-col gap-1">
       {adminNavigation.map((item) => (
-        <a key={item.href} href={item.href} className={navigationClass}>{item.label}</a>
+        <Link key={item.href} href={item.href} className={navigationClass}>{item.label}</Link>
       ))}
       <div className="my-2 border-t border-border" />
       <Link href="/" className={navigationClass}>Go to main site</Link>

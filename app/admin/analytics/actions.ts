@@ -9,11 +9,15 @@ export async function refreshAnalytics(formData: FormData) {
 
   if (typeof returnTo === "string") {
     const parsed = new URL(returnTo, "https://www.apexbusinesssupplies.co.uk");
-    if (parsed.origin === "https://www.apexbusinesssupplies.co.uk" && parsed.pathname === "/admin/analytics") {
+    if (
+      parsed.origin === "https://www.apexbusinesssupplies.co.uk"
+      && (parsed.pathname === "/admin/analytics" || parsed.pathname === "/admin/analytics/details")
+    ) {
       destination = `${parsed.pathname}${parsed.search}`;
     }
   }
 
   updateTag("analytics-overview");
+  updateTag("analytics-details");
   redirect(destination);
 }
