@@ -65,16 +65,19 @@ test("oversized properties, invalid events and source surfaces are rejected", ()
   assert.throws(() => validateAnalyticsBatch(batch({ sourceSurface: "footer_magic" }), now), /invalid_source_surface/);
 });
 
-test("404 and homepage hotspot events are approved", () => {
+test("404, homepage hotspot and product share events are approved", () => {
   const parsed = validateAnalyticsBatch({
     ...batch({}),
     events: [
       { eventId: "404-event", eventName: "404_view", occurredAt: now, pagePath: "/missing", sourceSurface: "site", properties: { requested_path: "/missing" } },
       { eventId: "hotspot-event", eventName: "product_hotspot_clicked", occurredAt: now, pagePath: "/", sourceSurface: "homepage_tagged_image", productId: "gid://shopify/Product/1", productHandle: "example", properties: { hotspot_index: 0 } },
+      { eventId: "share-event", eventName: "product_share_clicked", occurredAt: now, pagePath: "/products/example", pageType: "product", sourceSurface: "product_page", productId: "gid://shopify/Product/1", productHandle: "example", variantId: "gid://shopify/ProductVariant/2", sku: "SKU-2" },
     ],
   }, now);
-  assert.deepEqual(parsed.events.map((event) => event.eventName), ["404_view", "product_hotspot_clicked"]);
+  assert.deepEqual(parsed.events.map((event) => event.eventName), ["404_view", "product_hotspot_clicked", "product_share_clicked"]);
   assert.equal(parsed.events[1].sourceSurface, "homepage_tagged_image");
+  assert.equal(parsed.events[2].variantId, "gid://shopify/ProductVariant/2");
+  assert.equal(parsed.events[2].sku, "SKU-2");
 });
 
 test("anonymous rejected consent is valid without a visitor or session", () => {

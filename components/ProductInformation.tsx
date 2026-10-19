@@ -15,6 +15,7 @@ import { useCookieConsent } from "@/components/CookieConsentProvider";
 import { trackViewItem } from "@/lib/analytics/events";
 import ProductDispatchMessage from "@/components/ProductDispatchMessage";
 import { trackAnalyticsEvent } from "@/lib/analytics/first-party";
+import { siteConfig } from "@/config/site";
 
 export default function ProductInformation({ product }: { product: Product }) {
   const searchParams = useSearchParams();
@@ -253,6 +254,15 @@ export default function ProductInformation({ product }: { product: Product }) {
         vendor={product.vendor}
         tags={product.tags}
         collectionHandles={product.collectionHandles}
+        share={{
+          title: product.title,
+          canonicalUrl: `${siteConfig.url}/products/${encodeURIComponent(product.handle ?? "")}`,
+          variantQueryValue: selectedVariant ? variantUrlId(selectedVariant.id) : undefined,
+          productId: product.id,
+          productHandle: product.handle,
+          variantId: selectedVariant?.id,
+          sku: selectedVariant?.productCode,
+        }}
       />
 
       {options.map((option, index) => <div key={option.name} className="mt-5">

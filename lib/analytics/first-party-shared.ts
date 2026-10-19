@@ -1,5 +1,5 @@
 export const ANALYTICS_EVENT_NAMES = [
-  "session_started", "page_view", "404_view", "product_view", "product_hotspot_clicked", "catalog_view", "search_performed",
+  "session_started", "page_view", "404_view", "product_view", "product_hotspot_clicked", "product_share_clicked", "catalog_view", "search_performed",
   "add_to_cart", "remove_from_cart", "cart_opened", "cart_quantity_changed", "checkout_started",
   "bulk_order_interaction", "purchase_option_changed", "theme_changed",
   "pwa_install_prompt_shown", "pwa_install_clicked", "pwa_install_dismissed", "pwa_installed",

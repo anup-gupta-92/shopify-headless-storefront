@@ -7,6 +7,21 @@ import {
   NORMAL_DELIVERY_ESTIMATE,
   type ProductDispatchCriteria,
 } from "@/lib/product-dispatch";
+import ProductShareButton from "@/components/ProductShareButton";
+
+interface ProductShareDetails {
+  title: string;
+  canonicalUrl: string;
+  variantQueryValue?: string;
+  productId?: string;
+  productHandle?: string;
+  variantId?: string;
+  sku?: string;
+}
+
+interface ProductDispatchMessageProps extends ProductDispatchCriteria {
+  share: ProductShareDetails;
+}
 
 const DELIVERY_INFORMATION = "Same-day dispatch applies to eligible orders placed within the cutoff time. Delivery times are not guaranteed and depend on the courier. Orders placed outside dispatch hours or on non-working days will be dispatched on the next working day.";
 
@@ -67,14 +82,14 @@ function DeliveryInformation() {
   );
 }
 
-function Message({ children, showDeliveryInformation = false }: { children: string; showDeliveryInformation?: boolean }) {
+function Message({ children, share, showDeliveryInformation = false }: { children: string; share: ProductShareDetails; showDeliveryInformation?: boolean }) {
   const finalSpace = children.lastIndexOf(" ");
   const leadingText = finalSpace >= 0 ? children.slice(0, finalSpace + 1) : "";
   const finalWord = finalSpace >= 0 ? children.slice(finalSpace + 1) : children;
 
   return (
-    <div className="mt-4 rounded-lg border border-primary/30 bg-primary/10 px-4 py-3 text-foreground">
-      <p aria-live="polite" aria-atomic="true" className="text-sm font-semibold">
+    <div className="mt-4 flex min-w-0 items-start gap-2 rounded-lg border border-primary/30 bg-primary/10 py-2.5 pl-4 pr-2 text-foreground">
+      <p aria-live="polite" aria-atomic="true" className="min-w-0 flex-1 py-1.5 text-sm font-semibold">
         {showDeliveryInformation ? (
           <>
             {leadingText}
@@ -85,11 +100,12 @@ function Message({ children, showDeliveryInformation = false }: { children: stri
           </>
         ) : children}
       </p>
+      <ProductShareButton {...share} />
     </div>
   );
 }
 
-function NormalProductDispatchMessage() {
+function NormalProductDispatchMessage({ share }: { share: ProductShareDetails }) {
   // Keep server and initial client markup stable; client time replaces only
   // this safe static estimate after hydration when the cutoff is still open.
   const [message, setMessage] = useState(NORMAL_DELIVERY_ESTIMATE);
@@ -108,13 +124,13 @@ function NormalProductDispatchMessage() {
     };
   }, []);
 
-  return <Message showDeliveryInformation>{message}</Message>;
+  return <Message share={share} showDeliveryInformation>{message}</Message>;
 }
 
-export default function ProductDispatchMessage(criteria: ProductDispatchCriteria) {
+export default function ProductDispatchMessage({ share, ...criteria }: ProductDispatchMessageProps) {
   if (isSpecialDispatchProduct(criteria)) {
-    return <Message>Delivery estimate: 3–5 business days</Message>;
+    return <Message share={share}>Delivery estimate: 3–5 business days</Message>;
   }
 
-  return <NormalProductDispatchMessage />;
+  return <NormalProductDispatchMessage share={share} />;
 }
