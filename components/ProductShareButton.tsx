@@ -111,9 +111,11 @@ export default function ProductShareButton({
           strokeLinecap="round"
           strokeLinejoin="round"
         >
-          <path d="M12 16V3" />
-          <path d="m7 8 5-5 5 5" />
-          <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7" />
+          <circle cx="18" cy="5" r="2.5" />
+          <circle cx="6" cy="12" r="2.5" />
+          <circle cx="18" cy="19" r="2.5" />
+          <path d="m8.2 10.7 7.6-4.4" />
+          <path d="m8.2 13.3 7.6 4.4" />
         </svg>
       </button>
       <span
