@@ -78,6 +78,11 @@ export type AnalyticsOverview = {
     interactions: number;
     sessions: number;
   };
+  productSharing: {
+    clicks: number;
+    uniqueVisitors: number;
+    topProducts: AnalyticsProductItem[];
+  };
   consent: {
     accepted: number;
     rejected: number;
@@ -260,6 +265,8 @@ async function queryAnalyticsOverview(
         COUNT(DISTINCT CASE WHEN e.event_name = 'checkout_started' THEN s.visitor_id END) AS checkout_started_visitors,
         COALESCE(SUM(CASE WHEN e.event_name = 'bulk_order_interaction' THEN 1 ELSE 0 END), 0) AS bulk_interactions,
         COUNT(DISTINCT CASE WHEN e.event_name = 'bulk_order_interaction' THEN e.session_id END) AS bulk_sessions,
+        COALESCE(SUM(CASE WHEN e.event_name = 'product_share_clicked' THEN 1 ELSE 0 END), 0) AS product_share_clicks,
+        COUNT(DISTINCT CASE WHEN e.event_name = 'product_share_clicked' THEN s.visitor_id END) AS product_share_visitors,
         COALESCE(SUM(CASE WHEN e.event_name = 'theme_changed' THEN 1 ELSE 0 END), 0) AS theme_switches,
         COALESCE(SUM(CASE WHEN e.event_name = 'theme_changed' AND json_extract(e.properties_json, '$.to') = 'light' THEN 1 ELSE 0 END), 0) AS switched_to_light,
         COALESCE(SUM(CASE WHEN e.event_name = 'theme_changed' AND json_extract(e.properties_json, '$.to') = 'dark' THEN 1 ELSE 0 END), 0) AS switched_to_dark,
@@ -291,7 +298,7 @@ async function queryAnalyticsOverview(
       WHERE e.occurred_at >= ? AND e.occurred_at < ?${sessionFilter.sql}
         AND e.event_name IN (
           'page_view', 'product_view', 'add_to_cart', 'cart_opened', 'checkout_started',
-          'bulk_order_interaction', 'theme_changed', 'search_performed', '404_view',
+          'bulk_order_interaction', 'product_share_clicked', 'theme_changed', 'search_performed', '404_view',
           'product_hotspot_clicked', 'pwa_install_prompt_shown', 'pwa_install_clicked',
           'pwa_install_dismissed', 'pwa_installed', 'pwa_launched_standalone'
         )
@@ -423,6 +430,20 @@ async function queryAnalyticsOverview(
           AND COALESCE(NULLIF(product_handle, ''), NULLIF(product_id, '')) IS NOT NULL
         GROUP BY label, handle ORDER BY total DESC, label ASC LIMIT 5
       )
+      UNION ALL
+      SELECT dimension, label, total, handle, product_id, sku FROM (
+        SELECT
+          'shared_product' AS dimension,
+          COALESCE(NULLIF(product_handle, ''), NULLIF(product_id, ''), NULLIF(sku, '')) AS label,
+          COUNT(*) AS total,
+          NULLIF(product_handle, '') AS handle,
+          MIN(NULLIF(product_id, '')) AS product_id,
+          MIN(NULLIF(sku, '')) AS sku
+        FROM filtered_events
+        WHERE event_name = 'product_share_clicked'
+          AND COALESCE(NULLIF(product_handle, ''), NULLIF(product_id, ''), NULLIF(sku, '')) IS NOT NULL
+        GROUP BY label, handle ORDER BY total DESC, label ASC LIMIT 5
+      )
     `).bind(
       startAt, endAt, ...sessionFilter.values,
       startAt, endAt, ...sessionFilter.values,
@@ -493,6 +514,11 @@ async function queryAnalyticsOverview(
       interactions: count(eventRow, "bulk_interactions"),
       sessions: count(eventRow, "bulk_sessions"),
     },
+    productSharing: {
+      clicks: count(eventRow, "product_share_clicks"),
+      uniqueVisitors: count(eventRow, "product_share_visitors"),
+      topProducts: productBreakdown(topListResult.results, "shared_product"),
+    },
     consent: {
       accepted,
       rejected,
@@ -525,7 +551,7 @@ async function queryAnalyticsOverview(
 
 const cachedAnalyticsOverview = unstable_cache(
   queryAnalyticsOverview,
-  ["analytics-overview-v5"],
+  ["analytics-overview-v6"],
   { revalidate: 3600, tags: ["analytics-overview"] },
 );
 

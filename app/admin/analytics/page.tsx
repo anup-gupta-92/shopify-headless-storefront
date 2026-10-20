@@ -210,6 +210,65 @@ function TopProductsCard({ items, detailsHref }: Readonly<{ items: AnalyticsProd
   );
 }
 
+function ProductSharingCard({
+  clicks,
+  uniqueVisitors,
+  products,
+}: Readonly<{
+  clicks: number;
+  uniqueVisitors: number;
+  products: AnalyticsProductItem[];
+}>) {
+  return (
+    <article className="overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
+      <div className="border-b border-border px-4 py-3 sm:px-5">
+        <h3 className="text-base font-bold text-foreground">Product sharing</h3>
+      </div>
+      <dl className="divide-y divide-border">
+        <div className="flex items-center justify-between gap-4 px-4 py-3 text-sm sm:px-5">
+          <dt className="text-muted">Share button clicks</dt>
+          <dd className="shrink-0 font-semibold tabular-nums text-foreground">{numberFormatter.format(clicks)}</dd>
+        </div>
+        <div className="flex items-center justify-between gap-4 px-4 py-3 text-sm sm:px-5">
+          <dt className="text-muted">Unique visitors who shared</dt>
+          <dd className="shrink-0 font-semibold tabular-nums text-foreground">{numberFormatter.format(uniqueVisitors)}</dd>
+        </div>
+      </dl>
+      {products.length ? (
+        <div className="border-t border-border px-4 py-3 sm:px-5">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted">Top shared products</p>
+          <div className="space-y-2">
+            {products.map((product) => {
+              const label = readableProductLabel(product);
+              const content = <span className="min-w-0 truncate" title={label}>{label}</span>;
+              return (
+                <div key={`${product.handle ?? product.productId ?? product.label}:${product.sku ?? ""}`} className="flex items-center justify-between gap-4 text-sm">
+                  {product.handle ? (
+                    <a
+                      href={`/products/${encodeURIComponent(product.handle)}?analytics_preview=1`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="min-w-0 truncate text-primary underline-offset-4 hover:underline"
+                      title={product.productId ?? label}
+                    >
+                      {content}
+                    </a>
+                  ) : <span className="min-w-0 truncate text-muted">{content}</span>}
+                  <span className="shrink-0 font-semibold tabular-nums text-foreground">{numberFormatter.format(product.count)}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ) : (
+        <p className="border-t border-border px-4 py-5 text-sm text-muted sm:px-5">
+          {clicks ? "No product details available" : "No product shares yet"}
+        </p>
+      )}
+    </article>
+  );
+}
+
 function SectionHeading({ children }: Readonly<{ children: React.ReactNode }>) {
   return <h2 className="mb-3 text-sm font-semibold uppercase tracking-[0.14em] text-muted">{children}</h2>;
 }
@@ -372,6 +431,11 @@ function Dashboard({ data }: Readonly<{ data: AnalyticsOverview }>) {
               { label: "Bulk-order interactions", value: data.bulkOrdering.interactions },
               { label: "Sessions using bulk ordering", value: data.bulkOrdering.sessions },
             ]}
+          />
+          <ProductSharingCard
+            clicks={data.productSharing.clicks}
+            uniqueVisitors={data.productSharing.uniqueVisitors}
+            products={data.productSharing.topProducts}
           />
         </div>
       </section>
