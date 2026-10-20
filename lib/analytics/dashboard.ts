@@ -430,24 +430,26 @@ async function queryAnalyticsOverview(
           AND COALESCE(NULLIF(product_handle, ''), NULLIF(product_id, '')) IS NOT NULL
         GROUP BY label, handle ORDER BY total DESC, label ASC LIMIT 5
       )
-      UNION ALL
-      SELECT dimension, label, total, handle, product_id, sku FROM (
-        SELECT
-          'shared_product' AS dimension,
-          COALESCE(NULLIF(product_handle, ''), NULLIF(product_id, ''), NULLIF(sku, '')) AS label,
-          COUNT(*) AS total,
-          NULLIF(product_handle, '') AS handle,
-          MIN(NULLIF(product_id, '')) AS product_id,
-          MIN(NULLIF(sku, '')) AS sku
-        FROM filtered_events
-        WHERE event_name = 'product_share_clicked'
-          AND COALESCE(NULLIF(product_handle, ''), NULLIF(product_id, ''), NULLIF(sku, '')) IS NOT NULL
-        GROUP BY label, handle ORDER BY total DESC, label ASC LIMIT 5
-      )
     `).bind(
       startAt, endAt, ...sessionFilter.values,
       startAt, endAt, ...sessionFilter.values,
     ),
+    db.prepare(`
+      SELECT
+        COALESCE(NULLIF(e.product_handle, ''), NULLIF(e.product_id, ''), NULLIF(e.sku, '')) AS label,
+        COUNT(*) AS total,
+        NULLIF(e.product_handle, '') AS handle,
+        MIN(NULLIF(e.product_id, '')) AS product_id,
+        MIN(NULLIF(e.sku, '')) AS sku
+      FROM analytics_events AS e
+      INNER JOIN analytics_sessions AS s ON s.session_id = e.session_id
+      WHERE e.occurred_at >= ? AND e.occurred_at < ?${sessionFilter.sql}
+        AND e.event_name = 'product_share_clicked'
+        AND COALESCE(NULLIF(e.product_handle, ''), NULLIF(e.product_id, ''), NULLIF(e.sku, '')) IS NOT NULL
+      GROUP BY label, handle
+      ORDER BY total DESC, label ASC
+      LIMIT 5
+    `).bind(startAt, endAt, ...sessionFilter.values),
     db.prepare(`
       SELECT
         COALESCE(SUM(CASE WHEN decision = 'accepted' THEN count ELSE 0 END), 0) AS accepted,
@@ -457,8 +459,8 @@ async function queryAnalyticsOverview(
     `).bind(utcDate(startAt), utcDate(refreshedAt)),
   ];
 
-  const [sessionResult, eventResult, breakdownResult, optionResult, topListResult, consentResult] = await db.batch<QueryRow>(statements);
-  if (!sessionResult.success || !eventResult.success || !breakdownResult.success || !optionResult.success || !topListResult.success || !consentResult.success) {
+  const [sessionResult, eventResult, breakdownResult, optionResult, topListResult, sharedProductResult, consentResult] = await db.batch<QueryRow>(statements);
+  if (!sessionResult.success || !eventResult.success || !breakdownResult.success || !optionResult.success || !topListResult.success || !sharedProductResult.success || !consentResult.success) {
     throw new Error("Analytics overview query failed");
   }
 
@@ -517,7 +519,13 @@ async function queryAnalyticsOverview(
     productSharing: {
       clicks: count(eventRow, "product_share_clicks"),
       uniqueVisitors: count(eventRow, "product_share_visitors"),
-      topProducts: productBreakdown(topListResult.results, "shared_product"),
+      topProducts: sharedProductResult.results.map((row) => ({
+        label: typeof row.label === "string" ? row.label : "",
+        count: count(row, "total"),
+        handle: typeof row.handle === "string" ? row.handle : null,
+        productId: typeof row.product_id === "string" ? row.product_id : null,
+        sku: typeof row.sku === "string" ? row.sku : null,
+      })).filter((item) => item.label),
     },
     consent: {
       accepted,
@@ -551,7 +559,7 @@ async function queryAnalyticsOverview(
 
 const cachedAnalyticsOverview = unstable_cache(
   queryAnalyticsOverview,
-  ["analytics-overview-v6"],
+  ["analytics-overview-v7"],
   { revalidate: 3600, tags: ["analytics-overview"] },
 );
 
