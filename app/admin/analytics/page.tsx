@@ -61,10 +61,23 @@ function withSelectedOption(values: string[], selected: string | null): string[]
   return selected && !values.includes(selected) ? [selected, ...values] : values;
 }
 
-function MetricCard({ label, value, help }: Readonly<{ label: string; value: number; help?: string }>) {
+function MetricCard({
+  label,
+  value,
+  help,
+  detailsHref,
+}: Readonly<{
+  label: string;
+  value: number;
+  help?: string;
+  detailsHref?: string;
+}>) {
   return (
     <article className="rounded-xl border border-border bg-surface p-4 shadow-sm sm:p-5">
-      <p className="text-sm font-medium text-muted" title={help} aria-label={help ? `${label}. ${help}` : undefined}>{label}</p>
+      <div className="flex items-start justify-between gap-2">
+        <p className="min-w-0 text-sm font-medium text-muted" title={help} aria-label={help ? `${label}. ${help}` : undefined}>{label}</p>
+        {detailsHref ? <a href={detailsHref} className="shrink-0 text-xs font-semibold text-primary underline-offset-4 hover:underline">View more</a> : null}
+      </div>
       <p className="mt-2 text-2xl font-extrabold tracking-tight text-foreground sm:text-3xl">
         {numberFormatter.format(value)}
       </p>
@@ -350,12 +363,12 @@ function Dashboard({ data }: Readonly<{ data: AnalyticsOverview }>) {
   const detailsHref = (tab: "products" | "landing-pages" | "search-terms") =>
     `/admin/analytics/details?tab=${tab}&${analyticsDashboardQueryString(data.query)}`;
   const metrics = [
-    ["Sessions", data.metrics.sessions, undefined],
-    ["Unique visitors", data.metrics.uniqueVisitors, undefined],
-    ["Page views", data.metrics.pageViews, undefined],
-    ["Product views", data.metrics.productViews, undefined],
-    ["Add to cart events", data.metrics.addToCart, "Event count may include multiple actions from the same session."],
-    ["Checkout start events", data.metrics.checkoutStarted, "Event count may include multiple actions from the same session."],
+    ["Sessions", data.metrics.sessions, undefined, undefined],
+    ["Unique visitors", data.metrics.uniqueVisitors, undefined, undefined],
+    ["Page views", data.metrics.pageViews, undefined, "#traffic"],
+    ["Product views", data.metrics.productViews, undefined, "#products"],
+    ["Add to cart events", data.metrics.addToCart, "Event count may include multiple actions from the same session.", "#cart-checkout"],
+    ["Checkout start events", data.metrics.checkoutStarted, "Event count may include multiple actions from the same session.", "#cart-checkout"],
   ] as const;
   const percentage = (value: number | null) => value === null
     ? "—"
@@ -364,7 +377,9 @@ function Dashboard({ data }: Readonly<{ data: AnalyticsOverview }>) {
   return (
     <>
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 2xl:grid-cols-6">
-        {metrics.map(([label, value, help]) => <MetricCard key={label} label={label} value={value} help={help} />)}
+        {metrics.map(([label, value, help, detailsHref]) => (
+          <MetricCard key={label} label={label} value={value} help={help} detailsHref={detailsHref} />
+        ))}
       </div>
 
       <section id="traffic" className="scroll-mt-6 pt-8">
