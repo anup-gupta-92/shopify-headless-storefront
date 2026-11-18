@@ -17,6 +17,7 @@ import AnalyticsPreviewMode from "@/components/AnalyticsPreviewMode";
 import { Suspense } from "react";
 
 const vercelAnalyticsEnabled = process.env.VERCEL === "1";
+const shopifyStorefrontAccessToken = process.env.SHOPIFY_STOREFRONT_PUBLIC_TOKEN?.trim() ?? "";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
@@ -53,7 +54,7 @@ export default function RootLayout({
       <body className="flex min-h-screen flex-col antialiased">
         <JsonLd id="site-structured-data" data={buildGlobalStructuredData()} />
         <ThemeProvider>
-          <CookieConsentProvider>
+          <CookieConsentProvider shopifyStorefrontAccessToken={shopifyStorefrontAccessToken}>
             <Suspense fallback={null}>
               <AnalyticsPreviewMode />
             </Suspense>

@@ -25,6 +25,7 @@ export default defineConfig({
       }),
       SHOPIFY_STORE_DOMAIN: bindings.secret(),
       SHOPIFY_STOREFRONT_PRIVATE_TOKEN: bindings.secret(),
+      SHOPIFY_STOREFRONT_PUBLIC_TOKEN: bindings.secret(),
       SHOPIFY_STOREFRONT_API_VERSION: bindings.text("2026-07"),
       JUDGEME_SHOP_DOMAIN: bindings.secret(),
       JUDGEME_PUBLIC_TOKEN: bindings.secret(),

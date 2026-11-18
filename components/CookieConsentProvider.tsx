@@ -9,6 +9,7 @@ import {
   type ConsentPreferences,
 } from "@/lib/consent";
 import { sendAnonymousConsentDecision } from "@/lib/analytics/first-party";
+import { syncShopifyCustomerPrivacy } from "@/lib/shopify/customer-privacy";
 
 interface CookieConsentContextValue {
   consent: ConsentPreferences | null;
@@ -23,7 +24,13 @@ const CookieConsentContext = createContext<CookieConsentContextValue | null>(nul
 const focusClass = "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
 const subscribeToHydration = () => () => undefined;
 
-export default function CookieConsentProvider({ children }: { children: React.ReactNode }) {
+export default function CookieConsentProvider({
+  children,
+  shopifyStorefrontAccessToken,
+}: {
+  children: React.ReactNode;
+  shopifyStorefrontAccessToken: string;
+}) {
   const [consent, setConsent] = useState<ConsentPreferences | null>(() => getStoredConsent());
   const ready = useSyncExternalStore(subscribeToHydration, () => true, () => false);
   const [preferencesOpen, setPreferencesOpen] = useState(false);
@@ -36,8 +43,9 @@ export default function CookieConsentProvider({ children }: { children: React.Re
     const decision = analytics && marketing ? "accepted" : !analytics && !marketing ? "rejected" : "custom";
     setConsent(persistConsent({ analytics, marketing }));
     sendAnonymousConsentDecision({ decision, analyticsAllowed: analytics, marketingAllowed: marketing, action });
+    void syncShopifyCustomerPrivacy({ analytics, marketing, storefrontAccessToken: shopifyStorefrontAccessToken });
     setPreferencesOpen(false);
-  }, [consent]);
+  }, [consent, shopifyStorefrontAccessToken]);
 
   const openPreferences = useCallback((opener?: HTMLElement | null) => {
     openerRef.current = opener ?? document.activeElement as HTMLElement | null;
