@@ -1,4 +1,4 @@
-import { bindings, defineConfig, defineWorker } from "cf/config";
+import { bindings, defineConfig, defineWorker, triggers } from "cf/config";
 
 export default defineConfig({
   worker: defineWorker({
@@ -9,6 +9,16 @@ export default defineConfig({
     assets: { notFoundHandling: "none" },
     workersDev: false,
     previewUrls: false,
+    triggers: [
+      triggers.fetch({
+        pattern: "www.apexbusinesssupplies.co.uk/*",
+        zone: "apexbusinesssupplies.co.uk",
+      }),
+      triggers.fetch({
+        pattern: "apexbusinesssupplies.co.uk/*",
+        zone: "apexbusinesssupplies.co.uk",
+      }),
+    ],
     observability: {
       enabled: true,
       logs: { enabled: true },
