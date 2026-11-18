@@ -4,7 +4,15 @@ import { useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
 import { getDefaultVariant, type Product } from "@/types/product";
 import { useSearchParams } from "next/navigation";
-import { resolveVariant, variantUrlId } from "@/lib/product-options";
+import {
+  availableOptionValues,
+  completeUniqueOptionSelections,
+  initialSelectedVariant,
+  resolveSelectedVariant,
+  selectionsFromVariant,
+  updateOptionSelection,
+  variantUrlId,
+} from "@/lib/product-options";
 import { formatMoney, formatUkPriceExcludingVat, validCompareAtPrice } from "@/lib/shopify/pricing";
 import { isQuantityOptionName } from "@/lib/shopify/bulk-order";
 import { formatUnitPrice, getBulkUnitPriceDisplay } from "@/lib/shopify/unit-price";
@@ -21,42 +29,68 @@ export default function ProductInformation({ product }: { product: Product }) {
   const searchParams = useSearchParams();
   const variants = product.variants ?? [];
   const requestedId = searchParams.get("variant");
-  const selectedVariant = variants.find((variant) => variantUrlId(variant.id) === requestedId || variant.id === requestedId)
-    ?? variants.find((variant) => variant.available !== false) ?? getDefaultVariant(product);
+  const options = (product.options ?? []).filter((option) => !(option.name === "Title" && option.values.length === 1 && option.values[0] === "Default Title"));
+  const requiresOptionSelection = options.length > 0 && variants.length > 1;
+  const initialVariant = initialSelectedVariant(variants, requestedId, requiresOptionSelection, getDefaultVariant(product));
+  const [selections, setSelections] = useState(() => selectionsFromVariant(initialVariant));
   const [purchaseSelection, setPurchaseSelection] = useState<{
     variantId: string | undefined;
     type: "one-time" | "subscription";
     sellingPlanId: string | null;
-  }>({ variantId: selectedVariant?.id, type: "one-time", sellingPlanId: null });
-  const selections = Object.fromEntries(selectedVariant?.selectedOptions?.map(({ name, value }) => [name, value]) ?? []);
-  const options = (product.options ?? []).filter((option) => !(option.name === "Title" && option.values.length === 1 && option.values[0] === "Default Title"));
-  function chooseVariant(id: string) {
-    const nextVariant = variants.find((variant) => variant.id === id);
+  }>({ variantId: initialVariant?.id, type: "one-time", sellingPlanId: null });
+  const selectedVariant = requiresOptionSelection
+    ? resolveSelectedVariant(variants, options, selections)
+    : variants.find((variant) => variant.id === purchaseSelection.variantId);
+  const observedUrlVariantRef = useRef(requestedId);
+  const internalUrlUpdatesRef = useRef<Array<string | null>>([]);
+
+  function selectPurchaseVariant(nextVariant: typeof selectedVariant) {
     const nextAllocations = nextVariant?.sellingPlanAllocations ?? [];
     setPurchaseSelection((current) => {
+      if (!nextVariant) return { variantId: undefined, type: "one-time", sellingPlanId: null };
       if (current.type !== "subscription" || !nextAllocations.length) {
-        return { variantId: id, type: "one-time", sellingPlanId: null };
+        return { variantId: nextVariant.id, type: "one-time", sellingPlanId: null };
       }
       const compatiblePlan = nextAllocations.find((allocation) =>
         allocation.sellingPlan.id === current.sellingPlanId,
       ) ?? nextAllocations[0];
       return {
-        variantId: id,
+        variantId: nextVariant.id,
         type: "subscription",
         sellingPlanId: compatiblePlan.sellingPlan.id,
       };
     });
-    const url = new URL(window.location.href);
-    url.searchParams.set("variant", variantUrlId(id));
-    window.history.pushState(null, "", url);
   }
-  function chooseOption(name: string, value: string) {
-    const exact = resolveVariant(variants, { ...selections, [name]: value });
-    // If a combination does not exist, retain the changed dimension and select
-    // an available real variant. The other selectors reflect the resolved variant.
-    const candidates = variants.filter((variant) => variant.selectedOptions?.some((option) => option.name === name && option.value === value));
-    const next = exact ?? candidates.find((variant) => variant.available !== false) ?? candidates[0];
-    if (next) chooseVariant(next.id);
+
+  function updateVariantUrl(nextVariant: typeof selectedVariant) {
+    const url = new URL(window.location.href);
+    const nextUrlId = nextVariant ? variantUrlId(nextVariant.id) : null;
+    internalUrlUpdatesRef.current.push(nextUrlId);
+    if (nextUrlId) {
+      url.searchParams.set("variant", nextUrlId);
+      window.history.pushState(null, "", url);
+    } else {
+      url.searchParams.delete("variant");
+      window.history.replaceState(null, "", url);
+    }
+  }
+
+  function chooseVariant(id: string) {
+    const nextVariant = variants.find((variant) => variant.id === id);
+    setSelections(selectionsFromVariant(nextVariant));
+    selectPurchaseVariant(nextVariant);
+    updateVariantUrl(nextVariant);
+  }
+
+  function chooseOption(optionIndex: number, value: string) {
+    const clearedSelections = updateOptionSelection(options, selections, optionIndex, value);
+    const nextSelections = value
+      ? completeUniqueOptionSelections(variants, options, clearedSelections, optionIndex + 1)
+      : clearedSelections;
+    const nextVariant = resolveSelectedVariant(variants, options, nextSelections);
+    setSelections(nextSelections);
+    selectPurchaseVariant(nextVariant);
+    updateVariantUrl(nextVariant);
   }
   const [quantity, setQuantity] = useState(1);
   const [adding, setAdding] = useState(false);
@@ -103,6 +137,21 @@ export default function ProductInformation({ product }: { product: Product }) {
   const productCode = selectedVariant?.productCode?.trim();
   const hasOptions = (product.variants?.length ?? 0) > 1;
   const controlClass = "inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-border bg-surface text-foreground hover:bg-surface-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-40";
+
+  useEffect(() => {
+    if (requestedId === observedUrlVariantRef.current) return;
+    observedUrlVariantRef.current = requestedId;
+    const internalUpdateIndex = internalUrlUpdatesRef.current.findIndex((value) => value === requestedId);
+    if (internalUpdateIndex >= 0) {
+      internalUrlUpdatesRef.current.splice(0, internalUpdateIndex + 1);
+      return;
+    }
+    const nextVariant = initialSelectedVariant(variants, requestedId, requiresOptionSelection, getDefaultVariant(product));
+    setSelections(selectionsFromVariant(nextVariant));
+    selectPurchaseVariant(nextVariant);
+  // The URL is the navigation source of truth; product data is stable for this mounted product page.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [requestedId]);
 
   useEffect(() => {
     const productKey = product.id ?? product.handle ?? product.title;
@@ -265,16 +314,32 @@ export default function ProductInformation({ product }: { product: Product }) {
         }}
       />
 
-      {options.map((option, index) => <div key={option.name} className="mt-5">
-        <label htmlFor={`${selectId}-${index}`} className="mb-2 block text-sm font-semibold">{option.name}</label>
-        <select id={`${selectId}-${index}`} value={selections[option.name] ?? ""} onChange={(event) => chooseOption(option.name, event.target.value)} className="min-h-12 w-full min-w-0 rounded-lg border border-border bg-surface px-3 text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
-          {option.values.map((value) => {
-            const match = resolveVariant(variants, { ...selections, [option.name]: value });
-            const possible = variants.some((variant) => variant.selectedOptions?.some((entry) => entry.name === option.name && entry.value === value));
-            return <option key={value} value={value} disabled={!possible}>{value}{match?.available === false ? " — Unavailable" : !match ? " — Other options change" : ""}</option>;
-          })}
-        </select>
-      </div>)}
+      {options.map((option, index) => {
+        const previousOption = options[index - 1];
+        const enabled = index === 0 || options.slice(0, index).every((entry) => Boolean(selections[entry.name]));
+        const values = availableOptionValues(variants, options, selections, index);
+        const optionLabel = option.name.toLocaleLowerCase("en-GB");
+        const placeholder = enabled
+          ? `Select ${optionLabel}`
+          : `Select ${previousOption.name.toLocaleLowerCase("en-GB")} first`;
+        return <div key={option.name} className="mt-5">
+          <label htmlFor={`${selectId}-${index}`} className="mb-2 block text-sm font-semibold">{option.name}</label>
+          <select
+            id={`${selectId}-${index}`}
+            value={selections[option.name] ?? ""}
+            disabled={!enabled}
+            onChange={(event) => chooseOption(index, event.target.value)}
+            className="min-h-12 w-full min-w-0 rounded-lg border border-border bg-surface px-3 text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:bg-surface-muted disabled:text-muted"
+          >
+            {requiresOptionSelection && <option value="">{placeholder}</option>}
+            {values.map((value) => {
+              const nextSelections = updateOptionSelection(options, selections, index, value);
+              const match = resolveSelectedVariant(variants, options, nextSelections);
+              return <option key={value} value={value}>{value}{match?.available === false ? " — Unavailable" : ""}</option>;
+            })}
+          </select>
+        </div>;
+      })}
       {!options.length && hasOptions && <div className="mt-5">
         <label htmlFor={selectId} className="mb-2 block text-sm font-semibold">Options</label>
         <select id={selectId} value={selectedVariant?.id ?? ""} onChange={(event) => chooseVariant(event.target.value)} className="min-h-12 w-full rounded-lg border border-border bg-surface px-3">
