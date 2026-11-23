@@ -33,8 +33,8 @@ export type PaidTrafficSessionRow = {
   utmMedium: string | null;
   utmCampaign: string | null;
   productViews: number;
-  addToCartEvents: number;
-  checkoutStartEvents: number;
+  addedToCart: boolean;
+  checkoutStarted: boolean;
 };
 
 export type PaidTrafficTimelineEvent = {
@@ -147,6 +147,15 @@ function optionValues(row: QueryRow | undefined, key: string): string[] {
   }
 }
 
+function sessionActivityFilter(alias: string, activity: PaidTrafficQuery["activity"]): string {
+  if (activity === "added_to_cart") return `WHERE ${alias}.has_add_to_cart = 1`;
+  if (activity === "checkout_started") return `WHERE ${alias}.has_checkout_start = 1`;
+  if (activity === "no_cart_activity") {
+    return `WHERE ${alias}.has_add_to_cart = 0 AND ${alias}.has_checkout_start = 0`;
+  }
+  return "";
+}
+
 async function queryPaidTrafficReport(
   range: PaidTrafficQuery["range"],
   countryMode: PaidTrafficQuery["countryMode"],
@@ -156,11 +165,12 @@ async function queryPaidTrafficReport(
   utmMedium: string | null,
   utmCampaign: string | null,
   device: PaidTrafficQuery["device"],
+  activity: PaidTrafficQuery["activity"],
   page: number,
   sessionId: string | null,
 ): Promise<PaidTrafficReport> {
   const query: PaidTrafficQuery = {
-    range, countryMode, country, acquisition, utmSource, utmMedium, utmCampaign, device, page, sessionId,
+    range, countryMode, country, acquisition, utmSource, utmMedium, utmCampaign, device, activity, page, sessionId,
   };
   const refreshedAt = Math.floor(Date.now() / 1000);
   const startAt = analyticsRangeStart(range, refreshedAt);
@@ -170,6 +180,7 @@ async function queryPaidTrafficReport(
   const filtered = sessionFilters("s", query);
   const comparisonFilter = sessionFilters("s", query, false);
   const sessionChannel = acquisitionChannelSql("s");
+  const sessionActivityWhere = sessionActivityFilter("a", activity);
 
   const activityCte = `
     WITH filtered_sessions AS (
@@ -179,6 +190,27 @@ async function queryPaidTrafficReport(
       SELECT
         s.session_id,
         MAX(CASE WHEN e.event_name = 'product_view' THEN 1 ELSE 0 END) AS has_product_view,
+        MAX(CASE WHEN e.event_name = 'add_to_cart' THEN 1 ELSE 0 END) AS has_add_to_cart,
+        MAX(CASE WHEN e.event_name = 'checkout_started' THEN 1 ELSE 0 END) AS has_checkout_start
+      FROM filtered_sessions AS s
+      LEFT JOIN analytics_events AS e
+        ON e.session_id = s.session_id
+        AND e.occurred_at >= ? AND e.occurred_at < ?
+        AND e.event_name IN ('product_view', 'add_to_cart', 'checkout_started')
+      GROUP BY s.session_id
+    )`;
+
+  const sessionRowsCte = `
+    WITH filtered_sessions AS (
+      SELECT s.* FROM analytics_sessions AS s
+      WHERE s.started_at >= ? AND s.started_at < ?${filtered.sql}
+    ), session_activity AS (
+      SELECT
+        s.session_id, s.started_at,
+        ${sessionChannel} AS acquisition_channel,
+        COALESCE(NULLIF(s.landing_path, ''), '/') AS landing_path,
+        s.utm_source, s.utm_medium, s.utm_campaign,
+        COALESCE(SUM(CASE WHEN e.event_name = 'product_view' THEN 1 ELSE 0 END), 0) AS product_views,
         MAX(CASE WHEN e.event_name = 'add_to_cart' THEN 1 ELSE 0 END) AS has_add_to_cart,
         MAX(CASE WHEN e.event_name = 'checkout_started' THEN 1 ELSE 0 END) AS has_checkout_start
       FROM filtered_sessions AS s
@@ -263,33 +295,21 @@ async function queryPaidTrafficReport(
       startAt, endAt, startAt, endAt, startAt, endAt,
       startAt, endAt, startAt, endAt, startAt, endAt,
     ),
-    db.prepare(`
-      WITH filtered_sessions AS (
-        SELECT s.* FROM analytics_sessions AS s
-        WHERE s.started_at >= ? AND s.started_at < ?${filtered.sql}
-      )
+    db.prepare(`${sessionRowsCte}
       SELECT
-        s.session_id, s.started_at,
-        ${sessionChannel} AS acquisition_channel,
-        COALESCE(NULLIF(s.landing_path, ''), '/') AS landing_path,
-        s.utm_source, s.utm_medium, s.utm_campaign,
-        COALESCE(SUM(CASE WHEN e.event_name = 'product_view' THEN 1 ELSE 0 END), 0) AS product_views,
-        COALESCE(SUM(CASE WHEN e.event_name = 'add_to_cart' THEN 1 ELSE 0 END), 0) AS add_to_cart_events,
-        COALESCE(SUM(CASE WHEN e.event_name = 'checkout_started' THEN 1 ELSE 0 END), 0) AS checkout_start_events
-      FROM filtered_sessions AS s
-      LEFT JOIN analytics_events AS e
-        ON e.session_id = s.session_id
-        AND e.occurred_at >= ? AND e.occurred_at < ?
-        AND e.event_name IN ('product_view', 'add_to_cart', 'checkout_started')
-      GROUP BY s.session_id
-      ORDER BY s.started_at DESC, s.session_id ASC
+        a.session_id, a.started_at, a.acquisition_channel, a.landing_path,
+        a.utm_source, a.utm_medium, a.utm_campaign, a.product_views,
+        a.has_add_to_cart, a.has_checkout_start
+      FROM session_activity AS a
+      ${sessionActivityWhere}
+      ORDER BY a.started_at DESC, a.session_id ASC
       LIMIT ? OFFSET ?
     `).bind(startAt, endAt, ...filtered.values, startAt, endAt, PAGE_SIZE, offset),
-    db.prepare(`
+    db.prepare(`${sessionRowsCte}
       SELECT COUNT(*) AS total
-      FROM analytics_sessions AS s
-      WHERE s.started_at >= ? AND s.started_at < ?${filtered.sql}
-    `).bind(startAt, endAt, ...filtered.values),
+      FROM session_activity AS a
+      ${sessionActivityWhere}
+    `).bind(startAt, endAt, ...filtered.values, startAt, endAt),
   ];
 
   if (sessionId) {
@@ -320,8 +340,8 @@ async function queryPaidTrafficReport(
       utmMedium: stringValue(row, "utm_medium"),
       utmCampaign: stringValue(row, "utm_campaign"),
       productViews: count(row, "product_views"),
-      addToCartEvents: count(row, "add_to_cart_events"),
-      checkoutStartEvents: count(row, "checkout_start_events"),
+      addedToCart: count(row, "has_add_to_cart") === 1,
+      checkoutStarted: count(row, "has_checkout_start") === 1,
     }];
   });
   const totalRows = count(countResult.results[0], "total");
@@ -374,7 +394,7 @@ async function queryPaidTrafficReport(
 
 const cachedPaidTrafficReport = unstable_cache(
   queryPaidTrafficReport,
-  ["analytics-paid-traffic-v2"],
+  ["analytics-paid-traffic-v3"],
   { revalidate: 3600, tags: ["analytics-paid-traffic"] },
 );
 
@@ -388,6 +408,7 @@ export function getPaidTrafficReport(query: PaidTrafficQuery): Promise<PaidTraff
     query.utmMedium,
     query.utmCampaign,
     query.device,
+    query.activity,
     query.page,
     query.sessionId,
   );

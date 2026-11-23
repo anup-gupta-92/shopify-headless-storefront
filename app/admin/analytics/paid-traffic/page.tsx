@@ -101,7 +101,7 @@ function PaidTrafficFilters({ data, query }: Readonly<{
         </form>
       </div>
 
-      <form action="/admin/analytics/paid-traffic" method="get" className="mt-4 grid grid-cols-2 gap-3 border-t border-border pt-4 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-[repeat(7,minmax(0,1fr))_auto] 2xl:items-end">
+      <form action="/admin/analytics/paid-traffic" method="get" className="mt-4 grid grid-cols-2 gap-3 border-t border-border pt-4 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-[repeat(8,minmax(0,1fr))_auto] 2xl:items-end">
         <SelectField label="Date range" name="range" defaultValue={query.range}>
           {PAID_TRAFFIC_RANGES.map((range) => <option key={range} value={range}>Last {range.slice(0, -1)} days</option>)}
         </SelectField>
@@ -131,6 +131,12 @@ function PaidTrafficFilters({ data, query }: Readonly<{
         <SelectField label="Device" name="device" defaultValue={query.device ?? ""}>
           <option value="">All devices</option>
           {devices.map((device) => <option key={device} value={device}>{humanise(device)}</option>)}
+        </SelectField>
+        <SelectField label="Session activity" name="activity" defaultValue={query.activity}>
+          <option value="all">All sessions</option>
+          <option value="added_to_cart">Added to Cart</option>
+          <option value="checkout_started">Checkout Started</option>
+          <option value="no_cart_activity">No Cart Activity</option>
         </SelectField>
         <button type="submit" className="min-h-10 self-end rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
           Apply filters
@@ -228,17 +234,29 @@ function NumberCell({ value }: Readonly<{ value: number }>) {
   return <td className="px-4 py-3 text-right font-medium tabular-nums text-foreground">{numberFormatter.format(value)}</td>;
 }
 
+function ActivityCell({ active }: Readonly<{ active: boolean }>) {
+  return (
+    <td className="whitespace-nowrap px-4 py-3 text-center font-semibold">
+      {active ? (
+        <span className="text-emerald-600 dark:text-emerald-400"><span aria-hidden="true">✓</span> Yes</span>
+      ) : (
+        <span className="text-muted" aria-label="No">—</span>
+      )}
+    </td>
+  );
+}
+
 function SessionsTable({ data }: Readonly<{ data: PaidTrafficReport }>) {
   if (!data.sessions.length) {
     return <div className="mt-3 rounded-xl border border-border bg-surface px-5 py-10 text-center text-sm text-muted shadow-sm">No sessions match these filters.</div>;
   }
   return (
     <div className="mt-3 overflow-x-auto rounded-xl border border-border bg-surface shadow-sm">
-      <table className="w-full min-w-[82rem] border-collapse text-sm">
+      <table className="w-full min-w-[88rem] border-collapse text-sm">
         <thead className="border-b border-border bg-surface-muted/60">
           <tr>
             {[
-              "Session", "Started (UTC)", "Acquisition", "Landing page", "UTM source", "UTM medium", "UTM campaign", "Product views", "Add to cart", "Checkout status",
+              "Session", "Started (UTC)", "Acquisition", "Landing page", "UTM source", "UTM medium", "UTM campaign", "Product views", "Added to Cart", "Checkout Started",
             ].map((label) => <th key={label} scope="col" className="whitespace-nowrap px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted">{label}</th>)}
           </tr>
         </thead>
@@ -257,8 +275,8 @@ function SessionsTable({ data }: Readonly<{ data: PaidTrafficReport }>) {
               <td className="px-4 py-3 text-muted">{session.utmMedium ?? "—"}</td>
               <td className="max-w-xs truncate px-4 py-3 text-muted" title={session.utmCampaign ?? undefined}>{session.utmCampaign ?? "—"}</td>
               <NumberCell value={session.productViews} />
-              <NumberCell value={session.addToCartEvents} />
-              <td className="whitespace-nowrap px-4 py-3 font-medium text-foreground">{session.checkoutStartEvents ? `Started (${session.checkoutStartEvents})` : "Not started"}</td>
+              <ActivityCell active={session.addedToCart} />
+              <ActivityCell active={session.checkoutStarted} />
             </tr>
           ))}
         </tbody>

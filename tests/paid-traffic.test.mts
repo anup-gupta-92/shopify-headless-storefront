@@ -13,6 +13,7 @@ test("paid traffic defaults to a 30-day Paid Search cohort", () => {
   assert.equal(query.acquisition, "paid_search");
   assert.equal(query.page, 1);
   assert.equal(query.countryMode, "all");
+  assert.equal(query.activity, "all");
 });
 
 test("paid traffic filters are bounded and bookmarkable", () => {
@@ -24,6 +25,7 @@ test("paid traffic filters are bounded and bookmarkable", () => {
     utmMedium: "cpc",
     utmCampaign: "mailing bags",
     device: "mobile",
+    activity: "added_to_cart",
     page: "3",
     session: "anonymous-session-id",
   });
@@ -36,6 +38,7 @@ test("paid traffic filters are bounded and bookmarkable", () => {
     utmMedium: "cpc",
     utmCampaign: "mailing bags",
     device: "mobile",
+    activity: "added_to_cart",
     page: 3,
     sessionId: "anonymous-session-id",
   });
@@ -44,6 +47,16 @@ test("paid traffic filters are bounded and bookmarkable", () => {
   assert.equal(params.get("acquisition"), "google_merchant");
   assert.equal(params.get("utmCampaign"), "mailing bags");
   assert.equal(params.get("session"), "anonymous-session-id");
+  assert.equal(params.get("activity"), "added_to_cart");
+});
+
+test("session activity filters are allowlisted and bookmarkable", () => {
+  for (const activity of ["all", "added_to_cart", "checkout_started", "no_cart_activity"] as const) {
+    const query = parsePaidTrafficQuery({ activity });
+    assert.equal(query.activity, activity);
+  }
+  assert.equal(parsePaidTrafficQuery({ activity: "invented" }).activity, "all");
+  assert.equal(new URLSearchParams(paidTrafficQueryString(parsePaidTrafficQuery({ activity: "all" }))).has("activity"), false);
 });
 
 test("all-channel comparison can be selected without inventing a channel", () => {

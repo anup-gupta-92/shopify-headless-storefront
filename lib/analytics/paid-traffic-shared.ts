@@ -15,6 +15,13 @@ export const PAID_TRAFFIC_CHANNELS = [
 ] as const;
 export type PaidTrafficChannel = (typeof PAID_TRAFFIC_CHANNELS)[number];
 export type PaidTrafficCountryMode = "all" | "include" | "exclude";
+export const PAID_TRAFFIC_ACTIVITIES = [
+  "all",
+  "added_to_cart",
+  "checkout_started",
+  "no_cart_activity",
+] as const;
+export type PaidTrafficActivity = (typeof PAID_TRAFFIC_ACTIVITIES)[number];
 
 export type PaidTrafficQuery = {
   range: PaidTrafficRange;
@@ -25,6 +32,7 @@ export type PaidTrafficQuery = {
   utmMedium: string | null;
   utmCampaign: string | null;
   device: "mobile" | "desktop" | "tablet" | "unknown" | null;
+  activity: PaidTrafficActivity;
   page: number;
   sessionId: string | null;
 };
@@ -61,6 +69,7 @@ export function parsePaidTrafficQuery(
       ? requestedAcquisition as PaidTrafficChannel
       : "paid_search";
   const requestedDevice = firstValue(searchParams.device)?.trim().toLowerCase();
+  const requestedActivity = firstValue(searchParams.activity)?.trim();
   const requestedPage = Number.parseInt(firstValue(searchParams.page) ?? "1", 10);
   const sessionId = cleanDimension(searchParams.session, 128);
 
@@ -75,6 +84,9 @@ export function parsePaidTrafficQuery(
     device: deviceValues.has(requestedDevice ?? "")
       ? requestedDevice as PaidTrafficQuery["device"]
       : null,
+    activity: PAID_TRAFFIC_ACTIVITIES.includes(requestedActivity as PaidTrafficActivity)
+      ? requestedActivity as PaidTrafficActivity
+      : "all",
     page: Number.isInteger(requestedPage) && requestedPage > 0 ? Math.min(requestedPage, 10_000) : 1,
     sessionId,
   };
@@ -90,6 +102,7 @@ export function paidTrafficQueryString(query: PaidTrafficQuery): string {
   if (query.utmMedium) params.set("utmMedium", query.utmMedium);
   if (query.utmCampaign) params.set("utmCampaign", query.utmCampaign);
   if (query.device) params.set("device", query.device);
+  if (query.activity !== "all") params.set("activity", query.activity);
   if (query.page > 1) params.set("page", String(query.page));
   if (query.sessionId) params.set("session", query.sessionId);
   return params.toString();
