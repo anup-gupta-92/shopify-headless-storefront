@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { refreshAnalytics } from "@/app/admin/analytics/actions";
+import { formatAnalyticsTimestamp } from "@/lib/analytics/admin-date";
 import {
   getPaidTrafficReport,
   type PaidTrafficChannelComparison,
@@ -22,11 +23,6 @@ export const metadata: Metadata = {
 
 const numberFormatter = new Intl.NumberFormat("en-GB");
 const percentFormatter = new Intl.NumberFormat("en-GB", { style: "percent", maximumFractionDigits: 1 });
-const dateTimeFormatter = new Intl.DateTimeFormat("en-GB", {
-  dateStyle: "medium",
-  timeStyle: "short",
-  timeZone: "UTC",
-});
 const controlClass = "min-h-10 min-w-0 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20";
 
 function humanise(value: string): string {
@@ -256,7 +252,7 @@ function SessionsTable({ data }: Readonly<{ data: PaidTrafficReport }>) {
         <thead className="border-b border-border bg-surface-muted/60">
           <tr>
             {[
-              "Session", "Started (UTC)", "Acquisition", "Landing page", "UTM source", "UTM medium", "UTM campaign", "Product views", "Added to Cart", "Checkout Started",
+              "Session", "Started (UK)", "Acquisition", "Landing page", "UTM source", "UTM medium", "UTM campaign", "Product views", "Added to Cart", "Checkout Started",
             ].map((label) => <th key={label} scope="col" className="whitespace-nowrap px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted">{label}</th>)}
           </tr>
         </thead>
@@ -268,7 +264,7 @@ function SessionsTable({ data }: Readonly<{ data: PaidTrafficReport }>) {
                   {session.sessionId.slice(0, 8)}…
                 </Link>
               </td>
-              <td className="whitespace-nowrap px-4 py-3 text-muted">{dateTimeFormatter.format(new Date(session.startedAt * 1000))}</td>
+              <td className="whitespace-nowrap px-4 py-3 text-muted">{formatAnalyticsTimestamp(session.startedAt)}</td>
               <td className="whitespace-nowrap px-4 py-3 text-muted">{humanise(session.acquisitionChannel)}</td>
               <td className="max-w-xs truncate px-4 py-3 text-muted" title={session.landingPath}>{session.landingPath}</td>
               <td className="px-4 py-3 text-muted">{session.utmSource ?? "—"}</td>
@@ -324,7 +320,7 @@ function SessionTimeline({ data }: Readonly<{ data: PaidTrafficReport }>) {
             const product = sessionProductLabel(event);
             return (
               <li key={event.eventId} className="grid gap-1 px-4 py-3 text-sm sm:grid-cols-[10rem_minmax(0,1fr)] sm:gap-4 sm:px-5">
-                <time className="text-xs tabular-nums text-muted">{dateTimeFormatter.format(new Date(event.occurredAt * 1000))}</time>
+                <time className="text-xs tabular-nums text-muted">{formatAnalyticsTimestamp(event.occurredAt)}</time>
                 <div className="min-w-0">
                   <p className="font-semibold text-foreground">{humanise(event.eventName)}</p>
                   <p className="mt-0.5 break-words text-xs text-muted">
