@@ -6,6 +6,7 @@ import ThemeToggle from "@/components/ThemeToggle";
 const adminNavigation = [
   { label: "Overview", href: "/admin/analytics#overview" },
   { label: "Traffic", href: "/admin/analytics#traffic" },
+  { label: "Paid traffic", href: "/admin/analytics/paid-traffic" },
   { label: "Search", href: "/admin/analytics#search" },
   { label: "Products", href: "/admin/analytics#products" },
   { label: "Cart & checkout", href: "/admin/analytics#cart-checkout" },

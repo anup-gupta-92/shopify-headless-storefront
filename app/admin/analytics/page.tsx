@@ -389,7 +389,11 @@ function Dashboard({ data }: Readonly<{ data: AnalyticsOverview }>) {
           <BreakdownTable title="Devices" items={data.devices} />
           <BreakdownTable title="Browsers" items={data.browsers} formatLabel={(label) => label} />
           <BreakdownTable title="Operating systems" items={data.operatingSystems} formatLabel={(label) => label} />
-          <BreakdownTable title="Acquisition channels" items={data.acquisitionChannels} />
+          <BreakdownTable
+            title="Acquisition channels"
+            items={data.acquisitionChannels}
+            detailsHref={`/admin/analytics/paid-traffic?${analyticsDashboardQueryString(data.query)}&acquisition=paid_search`}
+          />
           <BreakdownTable title="Landing pages" items={data.landingPages} formatLabel={(label) => label} detailsHref={detailsHref("landing-pages")} />
         </div>
       </section>

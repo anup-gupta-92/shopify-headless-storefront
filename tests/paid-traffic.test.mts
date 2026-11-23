@@ -1,0 +1,57 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import {
+  funnelRate,
+  paidTrafficQueryString,
+  parsePaidTrafficQuery,
+} from "../lib/analytics/paid-traffic-shared.ts";
+
+test("paid traffic defaults to a 30-day Paid Search cohort", () => {
+  const query = parsePaidTrafficQuery({});
+  assert.equal(query.range, "30d");
+  assert.equal(query.acquisition, "paid_search");
+  assert.equal(query.page, 1);
+  assert.equal(query.countryMode, "all");
+});
+
+test("paid traffic filters are bounded and bookmarkable", () => {
+  const query = parsePaidTrafficQuery({
+    range: "7d",
+    countryFilter: "exclude:IN",
+    acquisition: "google_merchant",
+    utmSource: "google",
+    utmMedium: "cpc",
+    utmCampaign: "mailing bags",
+    device: "mobile",
+    page: "3",
+    session: "anonymous-session-id",
+  });
+  assert.deepEqual(query, {
+    range: "7d",
+    countryMode: "exclude",
+    country: "IN",
+    acquisition: "google_merchant",
+    utmSource: "google",
+    utmMedium: "cpc",
+    utmCampaign: "mailing bags",
+    device: "mobile",
+    page: 3,
+    sessionId: "anonymous-session-id",
+  });
+  const params = new URLSearchParams(paidTrafficQueryString(query));
+  assert.equal(params.get("countryFilter"), "exclude:IN");
+  assert.equal(params.get("acquisition"), "google_merchant");
+  assert.equal(params.get("utmCampaign"), "mailing bags");
+  assert.equal(params.get("session"), "anonymous-session-id");
+});
+
+test("all-channel comparison can be selected without inventing a channel", () => {
+  const query = parsePaidTrafficQuery({ acquisition: "all" });
+  assert.equal(query.acquisition, null);
+  assert.equal(new URLSearchParams(paidTrafficQueryString(query)).get("acquisition"), "all");
+});
+
+test("funnel rates use a defined denominator and never divide by zero", () => {
+  assert.equal(funnelRate(4, 10), 0.4);
+  assert.equal(funnelRate(0, 0), null);
+});

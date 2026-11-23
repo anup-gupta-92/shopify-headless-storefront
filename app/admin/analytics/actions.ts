@@ -11,7 +11,11 @@ export async function refreshAnalytics(formData: FormData) {
     const parsed = new URL(returnTo, "https://www.apexbusinesssupplies.co.uk");
     if (
       parsed.origin === "https://www.apexbusinesssupplies.co.uk"
-      && (parsed.pathname === "/admin/analytics" || parsed.pathname === "/admin/analytics/details")
+      && (
+        parsed.pathname === "/admin/analytics"
+        || parsed.pathname === "/admin/analytics/details"
+        || parsed.pathname === "/admin/analytics/paid-traffic"
+      )
     ) {
       destination = `${parsed.pathname}${parsed.search}`;
     }
@@ -19,5 +23,6 @@ export async function refreshAnalytics(formData: FormData) {
 
   updateTag("analytics-overview");
   updateTag("analytics-details");
+  updateTag("analytics-paid-traffic");
   redirect(destination);
 }
