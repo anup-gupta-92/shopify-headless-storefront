@@ -3,6 +3,7 @@ import "server-only";
 import { unstable_cache } from "next/cache";
 import { analyticsDatabase } from "@/lib/analytics/server";
 import { analyticsRangeStart } from "@/lib/analytics/dashboard";
+import { acquisitionChannelSql } from "@/lib/analytics/first-party-shared";
 import {
   type PaidTrafficChannel,
   type PaidTrafficQuery,
@@ -103,7 +104,7 @@ function sessionFilters(alias: string, query: PaidTrafficQuery, includeAcquisiti
     values.push(query.country);
   }
   if (includeAcquisition && query.acquisition) {
-    predicates.push(`COALESCE(NULLIF(${alias}.acquisition_channel, ''), 'unknown') = ?`);
+    predicates.push(`${acquisitionChannelSql(alias)} = ?`);
     values.push(query.acquisition);
   }
   if (query.utmSource) {
@@ -168,6 +169,7 @@ async function queryPaidTrafficReport(
   const db = await analyticsDatabase();
   const filtered = sessionFilters("s", query);
   const comparisonFilter = sessionFilters("s", query, false);
+  const sessionChannel = acquisitionChannelSql("s");
 
   const activityCte = `
     WITH filtered_sessions AS (
@@ -200,11 +202,11 @@ async function queryPaidTrafficReport(
       WITH filtered_sessions AS (
         SELECT s.* FROM analytics_sessions AS s
         WHERE s.started_at >= ? AND s.started_at < ?${comparisonFilter.sql}
-          AND COALESCE(NULLIF(s.acquisition_channel, ''), 'unknown') IN (${comparisonChannels.map(() => "?").join(", ")})
+          AND ${sessionChannel} IN (${comparisonChannels.map(() => "?").join(", ")})
       ), session_activity AS (
         SELECT
           s.session_id,
-          COALESCE(NULLIF(s.acquisition_channel, ''), 'unknown') AS channel,
+          ${sessionChannel} AS channel,
           MAX(CASE WHEN e.event_name = 'product_view' THEN 1 ELSE 0 END) AS has_product_view,
           MAX(CASE WHEN e.event_name = 'add_to_cart' THEN 1 ELSE 0 END) AS has_add_to_cart,
           MAX(CASE WHEN e.event_name = 'checkout_started' THEN 1 ELSE 0 END) AS has_checkout_start
@@ -239,8 +241,8 @@ async function queryPaidTrafficReport(
           WHERE started_at >= ? AND started_at < ? GROUP BY label ORDER BY label
         )) AS devices,
         (SELECT json_group_array(label) FROM (
-          SELECT COALESCE(NULLIF(acquisition_channel, ''), 'unknown') AS label FROM analytics_sessions
-          WHERE started_at >= ? AND started_at < ? GROUP BY label ORDER BY label
+          SELECT ${sessionChannel} AS label FROM analytics_sessions AS s
+          WHERE s.started_at >= ? AND s.started_at < ? GROUP BY label ORDER BY label
         )) AS acquisition_channels,
         (SELECT json_group_array(label) FROM (
           SELECT utm_source AS label FROM analytics_sessions
@@ -268,7 +270,7 @@ async function queryPaidTrafficReport(
       )
       SELECT
         s.session_id, s.started_at,
-        COALESCE(NULLIF(s.acquisition_channel, ''), 'unknown') AS acquisition_channel,
+        ${sessionChannel} AS acquisition_channel,
         COALESCE(NULLIF(s.landing_path, ''), '/') AS landing_path,
         s.utm_source, s.utm_medium, s.utm_campaign,
         COALESCE(SUM(CASE WHEN e.event_name = 'product_view' THEN 1 ELSE 0 END), 0) AS product_views,
@@ -372,7 +374,7 @@ async function queryPaidTrafficReport(
 
 const cachedPaidTrafficReport = unstable_cache(
   queryPaidTrafficReport,
-  ["analytics-paid-traffic-v1"],
+  ["analytics-paid-traffic-v2"],
   { revalidate: 3600, tags: ["analytics-paid-traffic"] },
 );
 

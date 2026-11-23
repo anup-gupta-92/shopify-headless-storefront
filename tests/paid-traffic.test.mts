@@ -5,6 +5,7 @@ import {
   paidTrafficQueryString,
   parsePaidTrafficQuery,
 } from "../lib/analytics/paid-traffic-shared.ts";
+import { acquisitionChannelSql } from "../lib/analytics/first-party-shared.ts";
 
 test("paid traffic defaults to a 30-day Paid Search cohort", () => {
   const query = parsePaidTrafficQuery({});
@@ -54,4 +55,13 @@ test("all-channel comparison can be selected without inventing a channel", () =>
 test("funnel rates use a defined denominator and never divide by zero", () => {
   assert.equal(funnelRate(4, 10), 0.4);
   assert.equal(funnelRate(0, 0), null);
+});
+
+test("historical acquisition SQL uses stored evidence and a safe table alias", () => {
+  const sql = acquisitionChannelSql("s");
+  assert.match(sql, /click_id_type/);
+  assert.match(sql, /product_sync/);
+  assert.match(sql, /sag_organic/);
+  assert.match(sql, /google_shopping/);
+  assert.throws(() => acquisitionChannelSql("s; DROP TABLE analytics_sessions"), /invalid_analytics_sql_alias/);
 });

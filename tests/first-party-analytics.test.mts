@@ -92,9 +92,34 @@ test("attribution is evidence-based", () => {
   assert.equal(classifyAcquisition({}), "direct");
   assert.equal(classifyAcquisition({ referrerHost: "www.google.co.uk" }), "organic_search");
   assert.equal(classifyAcquisition({ hasGoogleClickId: true }), "paid_search");
-  assert.equal(classifyAcquisition({ utmMedium: "shopping" }), "google_shopping");
+  assert.equal(classifyAcquisition({ utmMedium: "shopping" }), "google_merchant");
+  assert.equal(classifyAcquisition({ utmMedium: "shopping", hasGoogleClickId: true }), "google_shopping");
   assert.equal(classifyAcquisition({ hasMerchantClickId: true }), "google_merchant");
   assert.equal(classifyAcquisition({ referrerHost: "chatgpt.com" }), "ai_referral");
+});
+
+test("Shopify product-sync attribution requires paid-click evidence for Google Shopping", () => {
+  const productSync = {
+    utmSource: "google",
+    utmMedium: "product_sync",
+    utmCampaign: "sag_organic",
+  };
+
+  assert.equal(classifyAcquisition(productSync), "google_merchant");
+  assert.equal(classifyAcquisition({ ...productSync, hasMerchantClickId: true }), "google_merchant");
+  assert.equal(classifyAcquisition({ ...productSync, hasGoogleClickId: true }), "google_shopping");
+  assert.equal(classifyAcquisition({ utmMedium: "shopping" }), "google_merchant");
+});
+
+test("paid Google click evidence takes precedence over srsltid", () => {
+  assert.equal(classifyAcquisition({ hasGoogleClickId: true, hasMerchantClickId: true }), "paid_search");
+  assert.equal(classifyAcquisition({
+    utmSource: "google",
+    utmMedium: "product_sync",
+    utmCampaign: "sag_organic",
+    hasGoogleClickId: true,
+    hasMerchantClickId: true,
+  }), "google_shopping");
 });
 
 test("session attribution and click-ID state are constrained before D1", () => {
