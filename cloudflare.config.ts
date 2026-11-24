@@ -11,11 +11,11 @@ export default defineConfig({
     previewUrls: false,
     triggers: [
       triggers.fetch({
-        pattern: "www.apexbusinesssupplies.co.uk/*",
+        pattern: "apexbusinesssupplies.co.uk/*",
         zone: "apexbusinesssupplies.co.uk",
       }),
       triggers.fetch({
-        pattern: "apexbusinesssupplies.co.uk/*",
+        pattern: "www.apexbusinesssupplies.co.uk/*",
         zone: "apexbusinesssupplies.co.uk",
       }),
     ],
