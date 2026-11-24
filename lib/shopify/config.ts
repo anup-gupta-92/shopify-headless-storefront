@@ -29,3 +29,19 @@ export function getShopifyStorefrontApiVersion(): string {
   }
   return version;
 }
+
+export function getShopifyAdminClientId(): string {
+  return requiredEnv("SHOPIFY_ADMIN_CLIENT_ID");
+}
+
+export function getShopifyAdminClientSecret(): string {
+  return requiredEnv("SHOPIFY_ADMIN_CLIENT_SECRET");
+}
+
+export function getShopifyAdminApiVersion(): string {
+  const version = requiredEnv("SHOPIFY_ADMIN_API_VERSION");
+  if (!/^\d{4}-\d{2}$/.test(version)) {
+    throw new Error("Invalid SHOPIFY_ADMIN_API_VERSION: expected YYYY-MM");
+  }
+  return version;
+}

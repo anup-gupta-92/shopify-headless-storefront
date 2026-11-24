@@ -3,6 +3,15 @@ import Link from "next/link";
 import { refreshAnalytics } from "@/app/admin/analytics/actions";
 import { formatAnalyticsTimestamp } from "@/lib/analytics/admin-date";
 import {
+  formatOrderMatchDifference,
+  parseShopifyOrderMatchRequest,
+  selectCheckoutStart,
+  SHOPIFY_ORDER_MATCH_WINDOWS_HOURS,
+  sortOrdersByCheckoutProximity,
+  type CheckoutStartReference,
+  type ShopifyOrderMatchWindowHours,
+} from "@/lib/analytics/shopify-order-matching";
+import {
   getPaidTrafficReport,
   type PaidTrafficChannelComparison,
   type PaidTrafficReport,
@@ -15,6 +24,8 @@ import {
   parsePaidTrafficQuery,
   type PaidTrafficQuery,
 } from "@/lib/analytics/paid-traffic-shared";
+import { getShopifyOrdersCreatedBetween } from "@/lib/shopify/admin-orders";
+import type { ShopifyAdminOrderSummary } from "@/lib/shopify/admin-orders-shared";
 
 export const metadata: Metadata = {
   title: "Paid traffic | Apex Analytics",
@@ -338,18 +349,192 @@ function SessionTimeline({ data }: Readonly<{ data: PaidTrafficReport }>) {
   );
 }
 
+type ShopifyOrderMatchesState = {
+  checkoutEvents: CheckoutStartReference[];
+  selectedCheckout: CheckoutStartReference;
+  windowHours: ShopifyOrderMatchWindowHours;
+  orders: ShopifyAdminOrderSummary[];
+  ordersTruncated: boolean;
+  unavailable: boolean;
+};
+
+function currencyAmount(amount: string, currencyCode: string): string {
+  const numericAmount = Number(amount);
+  if (!Number.isFinite(numericAmount)) return `${currencyCode} ${amount}`;
+  try {
+    return new Intl.NumberFormat("en-GB", {
+      style: "currency",
+      currency: currencyCode,
+    }).format(numericAmount);
+  } catch {
+    return `${currencyCode} ${amount}`;
+  }
+}
+
+function OrderMatchControls({
+  query,
+  checkoutEvents,
+  selectedCheckout,
+  windowHours,
+}: Readonly<{
+  query: PaidTrafficQuery;
+  checkoutEvents: CheckoutStartReference[];
+  selectedCheckout: CheckoutStartReference;
+  windowHours: ShopifyOrderMatchWindowHours;
+}>) {
+  const preservedParams = new URLSearchParams(paidTrafficQueryString(query));
+  return (
+    <form action="/admin/analytics/paid-traffic" method="get" className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_10rem_auto] sm:items-end">
+      {[...preservedParams.entries()].map(([name, value]) => (
+        <input key={`${name}:${value}`} type="hidden" name={name} value={value} />
+      ))}
+      <SelectField label="Checkout start" name="checkoutEvent" defaultValue={selectedCheckout.eventId}>
+        {checkoutEvents.map((event) => (
+          <option key={event.eventId} value={event.eventId}>
+            {formatAnalyticsTimestamp(event.occurredAt)}
+          </option>
+        ))}
+      </SelectField>
+      <SelectField label="Match window" name="orderWindow" defaultValue={String(windowHours)}>
+        {SHOPIFY_ORDER_MATCH_WINDOWS_HOURS.map((hours) => (
+          <option key={hours} value={hours}>{hours} hours</option>
+        ))}
+      </SelectField>
+      <button type="submit" className="min-h-10 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+        Find matches
+      </button>
+    </form>
+  );
+}
+
+function ShopifyOrderCard({ order, checkoutStartedAt }: Readonly<{
+  order: ShopifyAdminOrderSummary;
+  checkoutStartedAt: number;
+}>) {
+  return (
+    <article className="rounded-xl border border-border bg-background p-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h3 className="font-bold text-foreground">{order.name}</h3>
+          <p className="mt-1 text-xs text-muted">
+            {formatAnalyticsTimestamp(order.createdAtSeconds)} · {formatOrderMatchDifference(checkoutStartedAt, order.createdAtSeconds)}
+          </p>
+        </div>
+        <div className="text-right">
+          <p className="font-bold tabular-nums text-foreground">{currencyAmount(order.totalAmount, order.currencyCode)}</p>
+          <p className="mt-1 text-xs text-muted">Payment: {order.financialStatus ? humanise(order.financialStatus) : "Unknown"}</p>
+        </div>
+      </div>
+      <ul className="mt-3 divide-y divide-border border-t border-border text-sm">
+        {order.lines.map((line, index) => (
+          <li key={`${line.variantId ?? line.sku ?? line.name}:${index}`} className="flex items-start justify-between gap-4 py-2.5">
+            <span className="min-w-0 break-words text-foreground">
+              {line.name}
+              {line.variantTitle && line.variantTitle !== "Default Title" ? <span className="block text-xs text-muted">{line.variantTitle}</span> : null}
+            </span>
+            <span className="shrink-0 tabular-nums text-muted">Qty {line.quantity}</span>
+          </li>
+        ))}
+      </ul>
+      {order.linesTruncated ? <p className="mt-2 text-xs text-muted">Additional line items are not shown.</p> : null}
+      <p className="mt-3 text-xs font-medium text-amber-700 dark:text-amber-300">Possible match — order timing does not confirm visitor attribution.</p>
+    </article>
+  );
+}
+
+function PossibleShopifyOrderMatches({ data, state }: Readonly<{
+  data: PaidTrafficReport;
+  state: ShopifyOrderMatchesState | null;
+}>) {
+  if (!state) return null;
+  return (
+    <section className="pt-8" aria-labelledby="possible-order-matches-heading">
+      <div className="rounded-xl border border-border bg-surface p-4 shadow-sm sm:p-5">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h2 id="possible-order-matches-heading" className="text-sm font-semibold uppercase tracking-[0.14em] text-muted">Possible Shopify Order Matches</h2>
+            <p className="mt-1 text-sm text-muted">Orders created after the selected checkout-start event.</p>
+          </div>
+          <p className="rounded-full bg-amber-500/10 px-3 py-1 text-xs font-semibold text-amber-700 dark:text-amber-300">Timing comparison only</p>
+        </div>
+
+        <div className="mt-4">
+          <OrderMatchControls
+            query={data.query}
+            checkoutEvents={state.checkoutEvents}
+            selectedCheckout={state.selectedCheckout}
+            windowHours={state.windowHours}
+          />
+        </div>
+
+        {state.unavailable ? (
+          <div className="mt-4 rounded-lg border border-border bg-surface-muted/50 px-4 py-4 text-sm text-muted">
+            Shopify orders are temporarily unavailable. The analytics session timeline is unaffected.
+          </div>
+        ) : state.orders.length ? (
+          <>
+            <div className="mt-4 grid gap-3 xl:grid-cols-2">
+              {state.orders.map((order) => (
+                <ShopifyOrderCard key={order.id} order={order} checkoutStartedAt={state.selectedCheckout.occurredAt} />
+              ))}
+            </div>
+            {state.ordersTruncated ? <p className="mt-3 text-xs text-muted">Showing the first 50 orders in this bounded window.</p> : null}
+          </>
+        ) : (
+          <div className="mt-4 rounded-lg border border-border bg-surface-muted/50 px-4 py-5 text-sm text-muted">
+            No Shopify orders were found within {state.windowHours} hours after this checkout start.
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
 export default async function PaidTrafficPage({
   searchParams,
 }: Readonly<{
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }>) {
-  const query = parsePaidTrafficQuery(await searchParams);
+  const rawSearchParams = await searchParams;
+  const query = parsePaidTrafficQuery(rawSearchParams);
+  const matchRequest = parseShopifyOrderMatchRequest(rawSearchParams);
   let data: PaidTrafficReport | null = null;
   try {
     data = await getPaidTrafficReport(query);
   } catch {
     // Normal Next development has no Workers binding. Production and vinext
     // resolve ANALYTICS_DB through the Cloudflare runtime.
+  }
+
+  let orderMatches: ShopifyOrderMatchesState | null = null;
+  if (data?.selectedSession) {
+    const checkoutEvents = data.checkoutStartEvents;
+    const selectedCheckout = selectCheckoutStart(checkoutEvents, matchRequest.checkoutEventId);
+    if (selectedCheckout) {
+      try {
+        const result = await getShopifyOrdersCreatedBetween(
+          selectedCheckout.occurredAt,
+          selectedCheckout.occurredAt + matchRequest.windowHours * 60 * 60,
+        );
+        orderMatches = {
+          checkoutEvents,
+          selectedCheckout,
+          windowHours: matchRequest.windowHours,
+          orders: sortOrdersByCheckoutProximity(result.orders, selectedCheckout.occurredAt),
+          ordersTruncated: result.ordersTruncated,
+          unavailable: false,
+        };
+      } catch {
+        orderMatches = {
+          checkoutEvents,
+          selectedCheckout,
+          windowHours: matchRequest.windowHours,
+          orders: [],
+          ordersTruncated: false,
+          unavailable: true,
+        };
+      }
+    }
   }
 
   return (
@@ -367,6 +552,7 @@ export default async function PaidTrafficPage({
               <Pagination data={data} />
             </section>
             <SessionTimeline data={data} />
+            <PossibleShopifyOrderMatches data={data} state={orderMatches} />
           </>
         ) : (
           <div className="mt-6 rounded-xl border border-border bg-surface p-6 text-sm text-muted shadow-sm">

@@ -68,6 +68,7 @@ export type PaidTrafficReport = {
   channelComparison: PaidTrafficChannelComparison[];
   sessions: PaidTrafficSessionRow[];
   timeline: PaidTrafficTimelineEvent[];
+  checkoutStartEvents: Array<{ eventId: string; occurredAt: number }>;
   selectedSession: PaidTrafficSessionRow | null;
   totalRows: number;
   totalPages: number;
@@ -323,11 +324,29 @@ async function queryPaidTrafficReport(
       ORDER BY e.occurred_at ASC, e.received_at ASC, e.event_id ASC
       LIMIT 100
     `).bind(sessionId, startAt, endAt, ...filtered.values));
+    statements.push(db.prepare(`
+      SELECT e.event_id, e.occurred_at
+      FROM analytics_events AS e
+      INNER JOIN analytics_sessions AS s ON s.session_id = e.session_id
+      WHERE s.session_id = ?
+        AND s.started_at >= ? AND s.started_at < ?${filtered.sql}
+        AND e.event_name = 'checkout_started'
+      ORDER BY e.occurred_at DESC, e.received_at DESC, e.event_id DESC
+      LIMIT 25
+    `).bind(sessionId, startAt, endAt, ...filtered.values));
   }
 
   const results = await db.batch<QueryRow>(statements);
   if (results.some((result) => !result.success)) throw new Error("Paid traffic analytics query failed");
-  const [funnelResult, comparisonResult, optionsResult, sessionsResult, countResult, timelineResult] = results;
+  const [
+    funnelResult,
+    comparisonResult,
+    optionsResult,
+    sessionsResult,
+    countResult,
+    timelineResult,
+    checkoutStartResult,
+  ] = results;
   const sessionRows: PaidTrafficSessionRow[] = sessionsResult.results.flatMap((row) => {
     const rowSessionId = stringValue(row, "session_id");
     if (!rowSessionId) return [];
@@ -376,6 +395,11 @@ async function queryPaidTrafficReport(
         quantity: typeof row.quantity === "number" ? row.quantity : null,
       }];
     }),
+    checkoutStartEvents: (checkoutStartResult?.results ?? []).flatMap((row) => {
+      const eventId = stringValue(row, "event_id");
+      const occurredAt = count(row, "occurred_at");
+      return eventId && occurredAt > 0 ? [{ eventId, occurredAt }] : [];
+    }),
     selectedSession: sessionId
       ? sessionRows.find((session) => session.sessionId === sessionId) ?? null
       : null,
@@ -394,7 +418,7 @@ async function queryPaidTrafficReport(
 
 const cachedPaidTrafficReport = unstable_cache(
   queryPaidTrafficReport,
-  ["analytics-paid-traffic-v3"],
+  ["analytics-paid-traffic-v4"],
   { revalidate: 3600, tags: ["analytics-paid-traffic"] },
 );
 
